@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>スレッドの可変性 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 中</p>
+  <h1 class="title">スレッドの可変性</h1>
+
+  <h2>概要</h2>
+  <p>スレッドについて、三つのことができない。</p>
+  <ol>
+    <li><strong>プロジェクト間の移動。</strong>置き場所を間違えたら立て直すしかない</li>
+    <li><strong>種別の変換。</strong>議論を課題に作り変えられない</li>
+    <li><strong>編集履歴。</strong>本文は編集できるが、以前の内容は残らない</li>
+  </ol>
+
+  <h2>先送りとした理由</h2>
+
+  <h3>移動</h3>
+  <p>移動を認めると、子孫の一括移動が発生する。
+  <a href="../../glossary.html#parent-child">親子関係</a>はプロジェクトをまたげないので、
+  親を移すと子も全部ついていく必要がある。</p>
+  <p>また、<a href="../../glossary.html#thread-id">スレッド識別子</a>の見た目が変わる。
+  番号は組織で通しているので同一性は保たれるが、
+  <code>WEB-7</code> が <code>BILL-7</code> になると、過去の記録との照合ができなくなる。</p>
+
+  <h3>種別の変換</h3>
+  <p>課題から議論への変換では、期間と進捗率を捨てることになる。
+  議論から課題への変換は情報が増えるだけなので成立するが、
+  片方向だけ許すと利用者が混乱する。</p>
+  <p>代わりに、<strong>議論を親、課題を子にする</strong>という手段を用意した。
+  「この課題はどの議論から出てきたのか」を辿る経路は確保されている。</p>
+
+  <h3>編集履歴</h3>
+  <p>履歴を残すと、差分の表示UIが必要になる。
+  そして<a href="../../features/comment/index.html">コメント</a>を不変にした設計との重みのバランスが崩れる。
+  コメントは記録として一切変えられないのに、本文だけ細かく追跡するのは一貫しない。</p>
+
+  <div class="note warn">
+    <span class="note-label">残っている歪み</span>
+    <p>本文が黙って書き換わると、それを前提に書かれたコメントが宙に浮く。
+    「編集済み」の印は付くが、<strong>何がどう変わったかはわからない</strong>。</p>
+    <p>コメント欄で合意した内容が、後から本文の書き換えで実質的に覆されても、
+    それを検出する手段がない。</p>
+  </div>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>プロジェクトの切り方を変えたいという要望が出たとき（1）</li>
+    <li>議論と課題の親子付けを忘れる事例が繰り返されたとき（2 の代替手段が機能していない合図）</li>
+    <li>本文の書き換えをめぐる認識の食い違いが起きたとき（3）</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+  <p>1 は、識別子の表示規則を先に決める必要がある。
+  移動後も元のキーで表示し続けるか、新しいキーに変えるか。
+  <strong>元のキーを残すなら、<code>threads</code> にキーの列を持たせることになり、
+  プロジェクトとの正規化が崩れる。</strong></p>
+  <p>3 は <code>thread_revisions</code> テーブルを作り、編集のたびに旧内容を書き込む。
+  <a href="../audit-log/index.html">監査ログ</a>と一緒に設計するのが素直である。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/thread/index.html"><span class="card-no">FEATURE</span><p class="card-title">スレッド</p><p class="card-desc">種別と親子</p></a>
+    <a class="card" href="../../features/project/index.html"><span class="card-no">FEATURE</span><p class="card-title">プロジェクト</p><p class="card-desc">移動できないことの帰結</p></a>
+    <a class="card" href="../audit-log/index.html"><span class="card-no">ISSUE</span><p class="card-title">監査ログ</p><p class="card-desc">履歴を扱う枠組み</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / スレッドの可変性</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

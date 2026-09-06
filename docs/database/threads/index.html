@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>threads | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">threads</h1>
+  <p class="lede">
+    課題も議論も質問も、この一つのテーブルに入る。
+    自己参照で無制限の階層を作り、種別ごとに使える列が変わる。
+    そのぶん制約が集中していて、このスキーマでいちばん読むべき場所になっている。
+  </p>
+
+  <h2>なぜ一つのテーブルにまとめたか</h2>
+
+  <p><a href="../../glossary.html#thread-type">種別</a>ごとにテーブルを分けることもできた。
+  分けなかったのは、三つが同じ一覧に並び、同じように<a href="../../glossary.html#parent-child">親子関係</a>でつながるからである。</p>
+
+  <p>種別をまたぐ親子を許した以上、<code>parent_thread_id</code> が三つのテーブルのどれを指すかわからない状態になる。
+  それを解くために型を判別する列を足すくらいなら、最初から一つのテーブルに置くほうが素直である。</p>
+
+  <p>代償として、使わない列が種別によって生じる。
+  議論と質問は <code>starts_on</code> も <code>ends_on</code> も持たない。
+  この空きは CHECK 制約で「必ず NULL であること」を強制し、意図しない値が入らないようにする。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE threads (
+  id                 uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id    uuid        NOT NULL,
+  project_id         uuid        NOT NULL,
+  number             integer     NOT NULL,
+  type               text        NOT NULL,
+  title              text        NOT NULL,
+  body               text        NOT NULL DEFAULT '',
+  body_edited_at     timestamptz,
+  progress           smallint    NOT NULL DEFAULT 0,
+  starts_on          date,
+  ends_on            date,
+  assignee_user_id   uuid        REFERENCES users(id),
+  parent_thread_id   uuid,
+  created_by_user_id uuid        NOT NULL REFERENCES users(id),
+  archived_at        timestamptz,
+  deleted_at         timestamptz,
+  created_at         timestamptz NOT NULL DEFAULT now(),
+  updated_at         timestamptz NOT NULL DEFAULT now(),
+
+  -- プロジェクトと組織の整合をデータベース側で保証する
+  CONSTRAINT threads_project_fk
+    FOREIGN KEY (project_id, organization_id)
+    REFERENCES projects (id, organization_id),
+
+  -- 親子は同じプロジェクトに閉じる
+  CONSTRAINT threads_parent_fk
+    FOREIGN KEY (parent_thread_id, project_id)
+    REFERENCES threads (id, project_id),
+
+  CONSTRAINT threads_id_project_uniq UNIQUE (id, project_id),
+
+  CONSTRAINT threads_type_valid
+    CHECK (type IN ('kadai', 'giron', 'shitsumon')),
+
+  CONSTRAINT threads_progress_range
+    CHECK (progress BETWEEN 0 AND 100),
+
+  -- 議論と質問は 0 か 100 しか取らない
+  CONSTRAINT threads_progress_binary_for_non_kadai
+    CHECK (type = 'kadai' OR progress IN (0, 100)),
+
+  -- 議論と質問は期間を持たない
+  CONSTRAINT threads_period_only_for_kadai
+    CHECK (type = 'kadai' OR (starts_on IS NULL AND ends_on IS NULL)),
+
+  -- 期間は両方入れるか両方空けるか
+  CONSTRAINT threads_period_paired
+    CHECK ((starts_on IS NULL) = (ends_on IS NULL)),
+
+  CONSTRAINT threads_period_ordered
+    CHECK (starts_on IS NULL OR starts_on &lt;= ends_on),
+
+  CONSTRAINT threads_not_own_parent
+    CHECK (parent_thread_id IS DISTINCT FROM id),
+
+  CONSTRAINT threads_delete_after_archive
+    CHECK (deleted_at IS NULL OR archived_at IS NOT NULL)
+);
+
+CREATE UNIQUE INDEX threads_number_uniq
+  ON threads (organization_id, number);
+
+CREATE INDEX threads_by_project
+  ON threads (project_id, updated_at DESC) WHERE deleted_at IS NULL;
+
+CREATE INDEX threads_by_assignee
+  ON threads (assignee_user_id, ends_on) WHERE deleted_at IS NULL;
+
+CREATE INDEX threads_by_parent
+  ON threads (parent_thread_id) WHERE deleted_at IS NULL;
+
+CREATE INDEX threads_gantt
+  ON threads (project_id, starts_on, ends_on)
+  WHERE type = 'kadai' AND deleted_at IS NULL AND archived_at IS NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>organization_id</code></td><td>uuid</td><td>プロジェクト経由でも辿れるが直接持つ。番号の一意性と権限判定に使う</td></tr>
+      <tr><td><code>number</code></td><td>integer</td><td><a href="../../glossary.html#thread-number">スレッド番号</a>。組織の中で通し番号</td></tr>
+      <tr><td><code>type</code></td><td>text</td><td><code>kadai</code> / <code>giron</code> / <code>shitsumon</code>。<strong>作成後は変更できない</strong></td></tr>
+      <tr><td><code>title</code></td><td>text</td><td>編集できる</td></tr>
+      <tr><td><code>body</code></td><td>text</td><td>Markdown。編集できる。空文字を既定とする</td></tr>
+      <tr><td><code>body_edited_at</code></td><td>timestamptz</td><td>本文かタイトルを編集した時刻。「編集済み」の印に使う</td></tr>
+      <tr><td><code>progress</code></td><td>smallint</td><td><a href="../../glossary.html#progress">進捗率</a>。課題は0から100、議論と質問は0か100</td></tr>
+      <tr><td><code>starts_on</code> / <code>ends_on</code></td><td>date</td><td><a href="../../glossary.html#period">期間</a>。課題のみ。時刻を持たない</td></tr>
+      <tr><td><code>assignee_user_id</code></td><td>uuid</td><td><a href="../../glossary.html#assignee">担当者</a>。ひとりまで。NULL を許す</td></tr>
+      <tr><td><code>parent_thread_id</code></td><td>uuid</td><td>親スレッド。同じプロジェクト内に限る</td></tr>
+      <tr><td><code>archived_at</code></td><td>timestamptz</td><td><a href="../../glossary.html#archive">アーカイブ</a>の時刻。読み取り専用になる</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>制約が守っていること</h2>
+
+  <h3>親子が同じプロジェクトに閉じる</h3>
+
+  <p><code>threads_parent_fk</code> は少し変わった形をしている。
+  親を指すのに <code>(parent_thread_id, project_id)</code> という二列で参照している。</p>
+
+<pre><code>FOREIGN KEY (parent_thread_id, project_id)
+REFERENCES threads (id, project_id)</code></pre>
+
+  <p>この形にすると、親の <code>project_id</code> が自分の <code>project_id</code> と一致していなければ外部キーが成立しない。
+  つまり<strong>親子がプロジェクトをまたげないことを、アプリケーションではなくデータベースが保証する</strong>。</p>
+
+  <p>同じ手法を <code>threads_project_fk</code> にも使い、
+  スレッドの組織とプロジェクトの組織が食い違う状態を拒否している。</p>
+
+  <div class="note warn">
+    <span class="note-label">循環参照はデータベースでは防げない</span>
+    <p>A の親が B、B の親が C、C の親が A、という状態を CHECK 制約で表す方法はない。
+    階層の深さに制限がないため、なおさら難しい。</p>
+    <p>親を設定するときにアプリケーション側で祖先を辿り、自分自身が現れないことを確認する。
+    再帰CTEで祖先を取得し、その中に対象のIDが含まれていれば拒否する。</p>
+  </div>
+
+  <h3>種別ごとの列の使い分け</h3>
+
+  <p>議論と質問が期間を持たないこと、進捗率が0か100しか取らないこと。
+  これらは画面の制御だけに任せず、CHECK 制約で書いている。</p>
+
+  <p>APIを直接叩かれた場合や、運用中の手作業でデータを触った場合に、
+  画面の制御は効かない。
+  <a href="../../glossary.html#open-close">オープンとクローズ</a>で表示するはずの質問に <code>progress = 45</code> が入ると、画面は何を出せばいいかわからなくなる。</p>
+
+  <h3>アーカイブを経ないと削除できない</h3>
+
+  <p><code>projects</code> と同じく、<code>deleted_at</code> は <code>archived_at</code> が埋まっていなければ設定できない。</p>
+
+  <h2>祖先と子孫を辿る</h2>
+
+  <p>階層に制限がないため、親子の探索は再帰CTEで行う。</p>
+
+<pre><code>-- ある スレッド の祖先をすべて取得する（循環の検出にも使う）
+WITH RECURSIVE ancestors AS (
+  SELECT id, parent_thread_id, 1 AS depth
+    FROM threads WHERE id = $1
+  UNION ALL
+  SELECT t.id, t.parent_thread_id, a.depth + 1
+    FROM threads t
+    JOIN ancestors a ON t.id = a.parent_thread_id
+   WHERE a.depth &lt; 50           -- 暴走を止める安全弁
+)
+SELECT id FROM ancestors WHERE id &lt;&gt; $1;</code></pre>
+
+  <p>深さの上限を50で切っているのは、万一循環が入り込んだときに問い合わせが止まらなくなることを防ぐためである。
+  仕様としての階層の上限ではない。</p>
+
+  <h2>ガントで使う問い合わせ</h2>
+
+<pre><code>-- 期間を持つ課題（時間軸に描くもの）
+SELECT id, number, title, progress, starts_on, ends_on, parent_thread_id
+  FROM threads
+ WHERE project_id  = $1
+   AND type        = 'kadai'
+   AND starts_on IS NOT NULL
+   AND archived_at IS NULL
+   AND deleted_at  IS NULL;
+
+-- 期間未設定の課題（図の下に別枠で並べるもの）
+SELECT id, number, title
+  FROM threads
+ WHERE project_id  = $1
+   AND type        = 'kadai'
+   AND starts_on IS NULL
+   AND archived_at IS NULL
+   AND deleted_at  IS NULL;</code></pre>
+
+  <p>二つ目の問い合わせがなければ、<a href="../../glossary.html#no-period">期間未設定</a>の課題はどこにも現れない。
+  ガントに載っていない課題があること自体に気づけなくなる。</p>
+
+  <h2>関係</h2>
+<pre class="figure">projects ──&lt; threads ──┬─&lt; comments
+                       ├─&lt; attachments
+                       ├─&lt; thread_tags &gt;── tags
+                       ├─&lt; watches &gt;── users
+                       ├─&lt; notifications
+                       └──↺ parent_thread_id（同じ project に閉じる）
+
+users ──┬─→ threads.created_by_user_id
+        └─→ threads.assignee_user_id</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../projects/index.html"><span class="card-no">TABLE</span><p class="card-title">projects</p><p class="card-desc">複合外部キーの相手</p></a>
+    <a class="card" href="../comments/index.html"><span class="card-no">TABLE</span><p class="card-title">comments</p><p class="card-desc">時系列で一本</p></a>
+    <a class="card" href="../thread_tags/index.html"><span class="card-no">TABLE</span><p class="card-title">thread_tags</p><p class="card-desc">タグとの結び</p></a>
+    <a class="card" href="../organizations/index.html"><span class="card-no">TABLE</span><p class="card-title">organizations</p><p class="card-desc">number の採番元</p></a>
+  </div>
+
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/thread/index.html"><span class="card-no">FEATURE</span><p class="card-title">スレッド</p><p class="card-desc">三つの種別と親子</p></a>
+    <a class="card" href="../../features/gantt/index.html"><span class="card-no">FEATURE</span><p class="card-title">ガントチャート</p><p class="card-desc">期間の使われ方</p></a>
+    <a class="card" href="../../features/dashboard/index.html"><span class="card-no">FEATURE</span><p class="card-title">担当スレッド一覧</p><p class="card-desc">assignee_user_id で絞る</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / threads</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

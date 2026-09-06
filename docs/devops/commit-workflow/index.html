@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コミットの流れ | ENISHI 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">DevOps 07</p>
+  <h1 class="title">コミットの流れ</h1>
+  <p class="lede">
+    メッセージを用意する側と、コミットする側を分けている。
+    用意されたものが自動で差し込まれ、使われたら片付く。
+    その受け渡しを二つのフックが担う。
+  </p>
+
+  <h2>なぜ分けているか</h2>
+
+  <p><code>.claude/CLAUDE.md</code> で、Claude には読み取り以外の Git 操作を禁じている。
+  そのため<strong>作業した本人がコミットを打てない</strong>。</p>
+
+  <p>作業内容を知っているのは作業した側で、
+  コミットの粒度とタイミングを決めるのは人である。
+  この二つを、ファイル一つの受け渡しでつないでいる。</p>
+
+<pre class="figure">作業する側                     git                      人
+    │                                                    │
+    │ .git/COMMIT_NEXTMSG へ書く                          │
+    │───────────────────────▶                            │
+    │                                                    │ git commit
+    │                    prepare-commit-msg ◀────────────│
+    │                        差し込む                      │
+    │                                                    │ 保存して閉じる
+    │                    post-commit                      │
+    │                        片付ける                      │</pre>
+
+  <h2>メッセージを用意する</h2>
+
+  <p><code>prepare-commit-message</code> スキルが <code>.git/COMMIT_NEXTMSG</code> へ書く。
+  既に何か書かれていて、そこへ統合できる内容なら統合する。</p>
+
+<pre><code>/{使用したスキル}
+{修正を加えた内容を5行以内}</code></pre>
+
+  <p>5行という上限は、変更内容の記述にかかる。
+  <code>Co-Authored-By</code> のような帰属の行は、その後ろに置く。</p>
+
+  <h2>差し込む（prepare-commit-msg）</h2>
+
+  <p><code>COMMIT_NEXTMSG</code> があれば、コミットメッセージの先頭へ流し込む。
+  そして <code>COMMIT_NEXTMSG.used</code> という旗を立てる。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>呼ばれ方</th><th><code>COMMIT_SOURCE</code></th><th>挙動</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>git commit</code></td><td>空</td><td>差し込む</td></tr>
+      <tr><td class="nowrap"><code>git commit -m ...</code></td><td><code>message</code></td><td>差し込まない</td></tr>
+      <tr><td class="nowrap">マージ、squash、テンプレート</td><td>それぞれ設定される</td><td>差し込まない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>すでに書く内容が決まっている場合に、用意したものが割り込むと邪魔になる。
+  <strong>引数なしの <code>git commit</code> のときだけ</strong>働く。</p>
+
+  <h2>片付ける（post-commit）</h2>
+
+  <p>旗が立っていれば、<code>COMMIT_NEXTMSG</code> と旗の両方を消す。</p>
+
+  <div class="note decide">
+    <span class="note-label">旗を見るのが要である</span>
+    <p>コミットのたびに無条件で消すと、<code>-m</code> で打ったコミットの後にも消える。
+    そのときのメッセージはまだ<strong>使われていない</strong>ので、次に回すべきものである。</p>
+    <p>逆に消さないと、次のコミットにも同じ内容が差し込まれる。
+    旗は「差し込みが実際に起きた」ことだけを伝える。</p>
+  </div>
+
+  <h2>確かめたこと</h2>
+
+  <p>二つのフックを続けて動かし、一連の流れを通した。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>確認</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td>引数なしの <code>git commit</code> で差し込まれるか</td><td>差し込まれる</td></tr>
+      <tr><td><code>-m</code> のときに差し込まれないか</td><td>差し込まれない</td></tr>
+      <tr><td>旗が無いときに <code>COMMIT_NEXTMSG</code> を消さないか</td><td>消さない</td></tr>
+      <tr><td>旗があるときに片付くか</td><td>両方消える</td></tr>
+      <tr><td><strong>続けてもう一度コミットしたとき、再利用されないか</strong></td><td>されない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>フックは版に残らない</h2>
+
+  <div class="note warn">
+    <span class="note-label">clone しても入らない</span>
+    <p><code>.git/hooks/</code> は git が管理する領域の中にあり、<strong>コミットの対象にならない</strong>。
+    そのため次の場合に失われる。</p>
+    <ul style="margin-bottom:0">
+      <li>他の人がこのリポジトリを clone したとき</li>
+      <li>git を初期化し直したとき</li>
+      <li>devcontainer を作り直したとき</li>
+    </ul>
+  </div>
+
+  <p>失われても壊れはしない。
+  <code>COMMIT_NEXTMSG</code> が差し込まれなくなるだけで、
+  普通にメッセージを書けばコミットはできる。
+  ただし<strong>気づかないまま用意したメッセージが使われない</strong>状態にはなる。</p>
+
+  <h3>版に残すなら</h3>
+
+  <p>追跡されるディレクトリへ移し、git にそこを見させる。</p>
+
+<pre><code># 一度だけ
+git config core.hooksPath .githooks</code></pre>
+
+  <p><code>.githooks/</code> に置けばコミットの対象になり、clone した人にも届く。
+  ただし <code>core.hooksPath</code> の設定自体は各自が一度実行する必要がある。
+  完全には自動にならない。</p>
+
+  <p>いまは <code>.git/hooks/</code> に直接置いてある。
+  関わる人が増えたときに移すことになる。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../documentation-rules/index.html"><span class="card-no">DEVOPS</span><p class="card-title">ドキュメント規約</p><p class="card-desc">書くときの決まり</p></a>
+    <a class="card" href="../coding-conventions/index.html"><span class="card-no">DEVOPS</span><p class="card-title">コーディング規約</p><p class="card-desc">書き方の決まり</p></a>
+    <a class="card" href="../continuous-integration/index.html"><span class="card-no">DEVOPS</span><p class="card-title">CI</p><p class="card-desc">push のあとに動くもの</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>開発と運用 / コミットの流れ</span>
+    <span>最終更新 2026-09-05</span>
+    <span>ENISHI 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

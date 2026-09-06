@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>organizations | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">organizations</h1>
+  <p class="lede">
+    テナントの境界。すべてのデータがこの下に入る。
+    加えて、<a href="../../glossary.html#thread-number">スレッド番号</a>の採番元でもある。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+  <p>マルチテナントの構成では、どのデータがどの顧客のものかを示す起点が要る。
+  <a href="../../glossary.html#organization">組織</a>がそれにあたる。</p>
+  <p>もう一つの役割が採番である。スレッド番号を組織の中で通し番号にすると決めたため、
+  「次に使う番号」をどこかに置く必要がある。組織ごとにシーケンスを作るのは扱いにくいので、この行に持たせた。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE organizations (
+  id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  name                text        NOT NULL,
+  slug                text        NOT NULL,
+  language            text        NOT NULL DEFAULT 'ja',
+  timezone            text        NOT NULL DEFAULT 'Asia/Tokyo',
+  next_thread_number  integer     NOT NULL DEFAULT 1,
+  deleted_at          timestamptz,
+  created_at          timestamptz NOT NULL DEFAULT now(),
+  updated_at          timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT organizations_name_not_blank
+    CHECK (btrim(name) &lt;&gt; ''),
+  CONSTRAINT organizations_slug_format
+    CHECK (slug ~ '^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$'),
+  CONSTRAINT organizations_language_supported
+    CHECK (language IN ('ja')),
+  CONSTRAINT organizations_next_number_positive
+    CHECK (next_thread_number &gt;= 1)
+);
+
+CREATE UNIQUE INDEX organizations_slug_key
+  ON organizations (slug) WHERE deleted_at IS NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>uuid</td><td>主キー</td></tr>
+      <tr><td><code>name</code></td><td>text</td><td>画面に出る組織名。変更できる</td></tr>
+      <tr><td><code>slug</code></td><td>text</td><td>URL に含まれる識別子。<code>/o/{slug}/...</code> の形で使う</td></tr>
+      <tr><td><code>language</code></td><td>text</td><td>表示言語。初期リリースでは <code>ja</code> のみ許可する</td></tr>
+      <tr><td><code>timezone</code></td><td>text</td><td>日時表示に使う。IANA のタイムゾーン名</td></tr>
+      <tr><td><code>next_thread_number</code></td><td>integer</td><td>次に払い出すスレッド番号。行ロックを取って加算する</td></tr>
+      <tr><td><code>deleted_at</code></td><td>timestamptz</td><td><a href="../../glossary.html#soft-delete">論理削除</a>の時刻</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="note-label">拡張を使わない</span>
+    <p>大文字小文字を区別しない識別子なので <code>citext</code> が候補になる。
+    採らなかった理由は二つある。</p>
+    <p>ひとつは、CHECK 制約の正規表現が小文字と数字しか許さないこと。
+    小文字しか格納できないなら、比較を大文字小文字非依存にする意味がない。</p>
+    <p>もうひとつは、<strong>Atlas が無料の範囲では <code>CREATE EXTENSION</code> を扱えない</strong>ことである。
+    メールアドレス（<a href="../users/index.html">users</a>、<a href="../invitations/index.html">invitations</a>）も
+    同じ理由で <code>text</code> にし、小文字に揃えて保存する。
+    このプロジェクトは拡張をひとつも使わない。</p>
+  </div>
+
+  <div class="note">
+    <span class="note-label">language に CHECK を置いた理由</span>
+    <p>選べる値がひとつしかないのに列を持つのは、後から列を足すほうが高くつくからである。
+    ただし列だけあって値の検証がないと、実装が対応していない値が入りうる。
+    対応言語を増やすときに CHECK も一緒に更新する、という手順を強制するために制約を置いた。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">organizations ──┬─&lt; organization_members &gt;── users
+                ├─&lt; projects
+                ├─&lt; tags
+                ├─&lt; invitations
+                ├─&lt; threads        （project 経由でも辿れるが直接も持つ）
+                ├─&lt; comments
+                ├─&lt; attachments
+                └─&lt; notifications</pre>
+
+  <p>スレッドやコメントは <code>projects</code> を辿れば組織にたどり着ける。
+  それでも <code>organization_id</code> を直接持たせているのは、権限判定を結合なしの等値条件で書けるようにするためである。</p>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../organization_members/index.html"><span class="card-no">TABLE</span><p class="card-title">organization_members</p><p class="card-desc">所属と役割</p></a>
+    <a class="card" href="../projects/index.html"><span class="card-no">TABLE</span><p class="card-title">projects</p><p class="card-desc">この組織のプロジェクト</p></a>
+    <a class="card" href="../threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">number の一意性はここで担保される</p></a>
+  </div>
+
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">複数所属、招待、役割</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / organizations</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

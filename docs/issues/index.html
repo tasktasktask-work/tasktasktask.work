@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>先送りした課題 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issues</p>
+  <h1 class="title">先送りした課題</h1>
+  <p class="lede">
+    初期リリースに入れなかったものを、理由とともに残す。
+    半年後に「なぜこれがないのか」と問われたとき、答えがここにあるようにしておく。
+  </p>
+
+  <div class="note">
+    <span class="note-label">完了した課題の扱い</span>
+    <p>対応が済んだ課題はサイドバーから外し、このページには残す。
+    決めた経緯は、実装した後も参照される。</p>
+  </div>
+
+  <h2>運用に穴が残っているもの</h2>
+  <p>仕様として決着はついたが、使う側に負担が残っている。実際に運用してみて判断する。</p>
+  <div class="cards">
+    <a class="card" href="rejection-representation/index.html"><span class="card-no">優先度 高</span><p class="card-title">却下の表現</p><p class="card-desc">進捗率だけでは「やらないと決めた」を表せない</p></a>
+    <a class="card" href="notification-enhancement/index.html"><span class="card-no">優先度 高</span><p class="card-title">通知の拡張</p><p class="card-desc">ウォッチが自動で付かないため、返信に気づけない</p></a>
+    <a class="card" href="full-text-search/index.html"><span class="card-no">優先度 高</span><p class="card-title">全文検索</p><p class="card-desc">絞り込みだけで数万件から探せるか</p></a>
+    <a class="card" href="origin-encryption/index.html"><span class="card-no">優先度 高</span><p class="card-title">オリジンまでの経路</p><p class="card-desc">VPS の80番が Cloudflare 以外にも開いている</p></a>
+  </div>
+
+  <h2>機能として足りていないもの</h2>
+  <p>あれば便利だが、初期リリースの範囲を超えると判断した。</p>
+  <div class="cards">
+    <a class="card" href="custom-workflow/index.html"><span class="card-no">優先度 中</span><p class="card-title">状態のカスタマイズ</p><p class="card-desc">組織ごとの工程を進捗率で表せない</p></a>
+    <a class="card" href="thread-mutability/index.html"><span class="card-no">優先度 中</span><p class="card-title">スレッドの可変性</p><p class="card-desc">移動できない、種別を変えられない、履歴が残らない</p></a>
+    <a class="card" href="gantt-enhancement/index.html"><span class="card-no">優先度 中</span><p class="card-title">ガントの拡張</p><p class="card-desc">ドラッグ編集と、課題間の依存関係</p></a>
+  </div>
+
+  <h2>運用が始まってから要るもの</h2>
+  <p>利用者が増え、実際にお金が動きはじめてから必要になる。</p>
+  <div class="cards">
+    <a class="card" href="virus-scan/index.html"><span class="card-no">優先度 中</span><p class="card-title">ウイルススキャン</p><p class="card-desc">添付ファイルの形式を制限しない構成の帰結</p></a>
+    <a class="card" href="audit-log/index.html"><span class="card-no">優先度 低</span><p class="card-title">監査ログ</p><p class="card-desc">誰が何をしたかを追えない</p></a>
+    <a class="card" href="i18n/index.html"><span class="card-no">優先度 低</span><p class="card-title">多言語対応</p><p class="card-desc">列は持つが、値は日本語しか選べない</p></a>
+    <a class="card" href="billing/index.html"><span class="card-no">優先度 低</span><p class="card-title">課金とプラン</p><p class="card-desc">マルチテナントだが、料金の仕組みがない</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>先送りした課題</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../sidebar.js" defer></script>
+</body>
+</html>

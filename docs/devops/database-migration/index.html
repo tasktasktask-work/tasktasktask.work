@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>スキーマ移行 | ENISHI 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">DevOps 03</p>
+  <h1 class="title">スキーマ移行</h1>
+  <p class="lede">
+    Atlas を使い、スキーマを宣言的に定義する。
+    テーブルと索引と制約は Atlas が見る。関数とトリガは見ない。
+    その線引きが、この構成のいちばん大事なところである。
+  </p>
+
+  <h2>Atlas を入れる</h2>
+
+  <p>Atlas は Node の依存ではなく、単体のバイナリである。
+  <code>pnpm install</code> では入らない。</p>
+
+<pre><code>ARCH=$(uname -m | sed "s/x86_64/amd64/;s/aarch64/arm64/")
+curl -fsSL -o atlas "https://release.ariga.io/atlas/atlas-linux-$ARCH-$(cat .atlas-version)"
+chmod +x atlas &amp;&amp; sudo mv atlas /usr/local/bin/</code></pre>
+
+  <p>入っていない状態で <code>pnpm schema:*</code> を実行すると、この手順を案内して止まる。</p>
+
+  <div class="note decide">
+    <span class="note-label">版は .atlas-version に固定してある</span>
+    <p><code>-latest</code> を使わない。<strong>canary ビルドが返る</strong>ためである。
+    実際に <code>-latest</code> で入れたときの版は <code>v1.3.4-cdeb6c3-canary</code> だった。
+    スキーマを移す道具が、日によって別のものになるのは避けたい。</p>
+    <p>この一つのファイルを、手元の手順と CI と Dockerfile が読む。
+    版を上げるときはここだけを書き換える。</p>
+  </div>
+
+  <h2>置き場所</h2>
+
+<pre class="figure">schema/            スキーマの正本。Atlas が読む
+  02_organizations.sql
+  03_users.sql
+  ...
+  10_notifications.sql
+
+db/
+  functions.sql    関数とトリガ。Atlas の管理下に置かない
+
+migrations/        Atlas が生成する。手で書かない
+  20260905155615_initial_schema.sql
+  atlas.sum
+
+atlas.hcl          接続先と、作業用データベースの指定</pre>
+
+  <div class="note warn">
+    <span class="note-label">Atlas が扱えないもの</span>
+    <p>無料の範囲では、<strong>拡張（<code>CREATE EXTENSION</code>）と関数とプロシージャを扱えない</strong>。
+    <code>schema/</code> に書くと <code>migrate diff</code> の時点でエラーになる。</p>
+<pre><code>Error: extensions are available to logged-in users only. Use 'atlas login' to access this feature
+Error: functions and procedures are available to logged-in users only.</code></pre>
+    <p>この制約が、二つの設計判断を導いた。</p>
+    <ul style="margin-bottom:0">
+      <li><strong>拡張を使わない。</strong>
+          <code>citext</code> をやめ、メールアドレスは小文字に揃えて <code>text</code> に保存する</li>
+      <li><strong>関数とトリガを分ける。</strong>
+          <code>db/functions.sql</code> に置き、マイグレーションの適用後に流す</li>
+    </ul>
+  </div>
+
+  <h3>分けた関数を Atlas が消しにいかないか</h3>
+
+  <p>確かめた。関数とトリガを手で作った状態で <code>migrate diff</code> を流しても、
+  Atlas は何も生成しない。読めないものは差分の対象にもならない。</p>
+
+<pre><code>$ atlas migrate diff after_triggers --env local
+The migration directory is synced with the desired state, no changes to be made</code></pre>
+
+  <div class="note warn">
+    <span class="note-label">Atlas Pro に移るときは見直す</span>
+    <p>この扱いが成り立つのは、Atlas が関数を読めないからである。
+    <code>atlas login</code> をして Pro の機能が有効になると、
+    <strong>Atlas は関数とトリガも差分の対象にする</strong>。
+    <code>schema/</code> に無いそれらを「消すべきもの」と判断しうる。</p>
+  </div>
+
+  <h2>作業用データベースが要る</h2>
+
+  <p>Atlas は差分を計算するために、空のデータベースを一つ使う。
+  そこに宣言どおりのスキーマを組み立て、実際のデータベースと比べる。
+  <strong>実行のたびに中身を作り直すので、他と共有してはいけない。</strong></p>
+
+<pre><code># .env
+DATABASE_URL="postgres://.../tasktasktask_work_local?sslmode=disable"
+ATLAS_DEV_URL="postgres://.../tasktasktask_work_atlas?search_path=public&amp;sslmode=disable"</code></pre>
+
+  <p>Docker があるなら <code>docker://postgres/18/dev?search_path=public</code> でもよい。
+  その場合はコンテナを都度立ち上げるので、データベースを用意しなくて済む。</p>
+
+  <div class="note">
+    <span class="note-label">.env はスクリプトが読む</span>
+    <p><code>atlas</code> は別のプロセスなので、<code>.env</code> の中身は自動では渡らない。
+    シェルに環境変数を入れずに <code>atlas</code> を直接叩くと、接続先が空になって
+    <code>sql/sqlclient: missing driver</code> で止まる。</p>
+    <p><code>pnpm schema:*</code> は <code>scripts/atlas.mjs</code> を経由し、
+    <code>.env</code> を読んでから <code>atlas</code> を起動する。
+    <strong><code>atlas</code> を直接叩かず、<code>pnpm</code> のスクリプトを使うこと。</strong></p>
+  </div>
+
+  <h2>手順</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>コマンド</th><th>すること</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>pnpm schema:diff &lt;名前&gt;</code></td><td><code>schema/</code> と現状の差を <code>migrations/</code> に書き出す</td></tr>
+      <tr><td class="nowrap"><code>pnpm schema:apply</code></td><td>未適用のマイグレーションを流し、続けて <code>db/functions.sql</code> を流す</td></tr>
+      <tr><td class="nowrap"><code>pnpm schema:status</code></td><td>どこまで適用されているかを見る</td></tr>
+      <tr><td class="nowrap"><code>pnpm schema:functions</code></td><td>関数とトリガだけを流し直す</td></tr>
+      <tr><td class="nowrap"><code>pnpm schema:lint</code></td><td>生成された移行を、下の規約に照らして検査する</td></tr>
+      <tr><td class="nowrap"><code>pnpm schema:hash</code></td><td><code>atlas.sum</code> を作り直す（手で直したときだけ）</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>変更するときは <code>schema/</code> のファイルを編集し、<code>pnpm schema:diff</code> で差分を作る。
+  <code>migrations/</code> を手で書かない。<code>atlas.sum</code> が合わなくなる。</p>
+
+  <h2>生成されたSQLを必ず読む</h2>
+
+  <div class="note warn">
+    <span class="note-label">これを守らないと壊れる</span>
+    <p>Atlas は「宣言に合わせる」ためのSQLを作る。
+    列の名前を変えたつもりでも、<strong>古い列を削除して新しい列を追加するSQLが生成されることがある</strong>。
+    データは失われる。</p>
+    <p>列名の変更、型の変更、制約の追加。
+    このいずれかを含む差分は、生成されたファイルを開いて確認する。
+    必要なら手で書き換え、<code>pnpm schema:hash</code> で <code>atlas.sum</code> を作り直す。</p>
+  </div>
+
+  <h2>移行の検査</h2>
+
+  <p><code>atlas migrate lint</code> は v0.38 から Pro 限定になった。
+  代わりに <code>pnpm schema:lint</code> が、<strong>以下に書く規約そのもの</strong>を検査する。
+  汎用の検査より、この構成で守りたいことを直接かけるほうが効く。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th class="nowrap">規則</th><th>拾うもの</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>destructive</code></td><td><code>DROP TABLE</code> / <code>DROP COLUMN</code> / <code>DROP CONSTRAINT</code></td></tr>
+      <tr><td class="nowrap"><code>column-type-change</code></td><td><code>ALTER COLUMN ... TYPE</code></td></tr>
+      <tr><td class="nowrap"><code>index-not-concurrent</code></td><td><code>CONCURRENTLY</code> のない索引作成</td></tr>
+      <tr><td class="nowrap"><code>check-not-valid</code></td><td><code>NOT VALID</code> のない CHECK 制約の追加</td></tr>
+      <tr><td class="nowrap"><code>set-not-null</code></td><td><code>SET NOT NULL</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>下の三つは、その移行で新しく作られたテーブルが対象なら見逃す。
+  走査すべき既存の行が無いためである。
+  最初の移行が素通りするのはこの理由による。</p>
+
+  <p>承知のうえで通したいときは、その文の直前に理由を書く。</p>
+
+<pre><code>-- lint-ok: 空のテーブルなので走査するデータがない
+CREATE INDEX "threads_by_x" ON "threads" ("x");</code></pre>
+
+  <p>理由を書かせるのは、抑制した判断が後から読めるようにするためである。</p>
+
+  <h2>破壊的な変更の手順</h2>
+
+  <p>列の削除や型の変更は、一度のデプロイで行わない。
+  アプリケーションの新旧が同時に動く瞬間があるためである。</p>
+
+  <ol>
+    <li><strong>足す。</strong>新しい列を NULL 許容で追加する。既存のコードは触らない</li>
+    <li><strong>両方書く。</strong>新旧の列に同じ値を書くコードをデプロイする</li>
+    <li><strong>埋める。</strong>既存行の新しい列を埋めるスクリプトを流す</li>
+    <li><strong>読み替える。</strong>読み取りを新しい列に切り替えてデプロイする</li>
+    <li><strong>消す。</strong>古い列を削除する</li>
+  </ol>
+
+  <p>各段階のあいだに、実際に動いていることを確認する時間を置く。
+  問題が起きたら前の段階に戻れる。</p>
+
+  <h2>制約の追加</h2>
+
+  <p>既存のテーブルに CHECK 制約や NOT NULL を足すとき、
+  Postgres はテーブル全体を走査してロックを取る。
+  数万件なら一瞬だが、習慣として <code>NOT VALID</code> を経由する。</p>
+
+<pre><code>-- 1. 既存行を検査せずに制約を足す（ロックが短い）
+ALTER TABLE threads
+  ADD CONSTRAINT threads_progress_range
+  CHECK (progress BETWEEN 0 AND 100) NOT VALID;
+
+-- 2. 別途、既存行を検査する（この間も書き込める）
+ALTER TABLE threads VALIDATE CONSTRAINT threads_progress_range;</code></pre>
+
+  <h2>インデックスの追加</h2>
+
+  <p>必ず <code>CONCURRENTLY</code> を付ける。
+  付けないと、作成中そのテーブルへの書き込みが止まる。</p>
+
+<pre><code>CREATE INDEX CONCURRENTLY threads_by_assignee
+  ON threads (assignee_user_id, ends_on) WHERE deleted_at IS NULL;</code></pre>
+
+  <p><strong>この文はトランザクションの中で実行できない。</strong>
+  Atlas の生成したファイルに他の文と混ざっていたら、別のファイルに分ける。</p>
+
+  <h2>適用のタイミング</h2>
+
+  <p>アプリケーションの起動時に自動で流さない。
+  コンテナが複数立ち上がると、同時に流れて衝突する。</p>
+
+  <p>デプロイの手順として、<strong>アプリケーションを入れ替える前に、独立した手順として実行する</strong>。
+  上の段階的な手順が成り立つのは、この順序を守る場合に限られる。</p>
+
+  <h2>適用したあとに確かめる</h2>
+
+  <p>制約が意図どおり効いているかは、実物でしか確かめられない。
+  <code>pnpm test</code> が、実データベースに対して次を検査する。</p>
+
+  <ul>
+    <li>議論と質問に期間を入れられないこと</li>
+    <li>議論と質問の進捗率が 0 か 100 しか取らないこと</li>
+    <li>親子が<a href="../../glossary.html#project">プロジェクト</a>をまたげないこと</li>
+    <li><a href="../../glossary.html#archive">アーカイブ</a>を経ないと削除できないこと</li>
+    <li><a href="../../glossary.html#thread-number">スレッド番号</a>が組織の中で一意であること</li>
+    <li><code>updated_at</code> のトリガが効いていること</li>
+    <li><code>date</code> 列が文字列として返ること</li>
+  </ul>
+
+  <p>各テストはトランザクションの中で走り、最後に巻き戻す。
+  後片付けを書かずに済み、テストどうしが干渉しない。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../database/index.html"><span class="card-no">DB</span><p class="card-title">データベース全体構成</p><p class="card-desc">15テーブルの関係</p></a>
+    <a class="card" href="../deployment/index.html"><span class="card-no">DEVOPS</span><p class="card-title">デプロイ構成</p><p class="card-desc">実行の手順</p></a>
+    <a class="card" href="../coding-conventions/index.html"><span class="card-no">DEVOPS</span><p class="card-title">コーディング規約</p><p class="card-desc">データベースが守れない不変条件</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>開発と運用 / スキーマ移行</span>
+    <span>最終更新 2026-09-05</span>
+    <span>ENISHI 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

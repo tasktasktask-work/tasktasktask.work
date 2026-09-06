@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>notifications | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">notifications</h1>
+  <p class="lede">
+    三つのきっかけで作られる。
+    アプリ内の一覧とメールの両方に同じ内容が届き、既読を持つのはアプリ内の側だけである。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+  <p>メールは送りっぱなしで、読んだかどうかをシステムは知らない。
+  何を見落としたかを確かめる場所として、アプリ内の一覧が要る。
+  その一覧の実体がこのテーブルである。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE notifications (
+  id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid        NOT NULL REFERENCES organizations(id),
+  user_id         uuid        NOT NULL REFERENCES users(id),
+  kind            text        NOT NULL,
+  thread_id       uuid        NOT NULL REFERENCES threads(id),
+  comment_id      uuid        REFERENCES comments(id),
+  actor_user_id   uuid        REFERENCES users(id),
+  read_at         timestamptz,
+  emailed_at      timestamptz,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT notifications_kind_valid
+    CHECK (kind IN ('mention', 'assigned', 'comment')),
+
+  -- mention と comment は必ずコメントに紐づく
+  CONSTRAINT notifications_comment_required
+    CHECK (kind = 'assigned' OR comment_id IS NOT NULL),
+
+  CONSTRAINT notifications_not_self
+    CHECK (actor_user_id IS DISTINCT FROM user_id)
+);
+
+CREATE INDEX notifications_inbox
+  ON notifications (user_id, created_at DESC);
+
+CREATE INDEX notifications_unread
+  ON notifications (user_id) WHERE read_at IS NULL;
+
+CREATE INDEX notifications_pending_email
+  ON notifications (created_at) WHERE emailed_at IS NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>user_id</code></td><td>uuid</td><td>受け取る人</td></tr>
+      <tr><td><code>kind</code></td><td>text</td><td><code>mention</code> / <code>assigned</code> / <code>comment</code></td></tr>
+      <tr><td><code>comment_id</code></td><td>uuid</td><td>きっかけになったコメント。<code>assigned</code> のときだけ NULL</td></tr>
+      <tr><td><code>actor_user_id</code></td><td>uuid</td><td>きっかけを作った人。受け取る人と同じにはならない</td></tr>
+      <tr><td><code>read_at</code></td><td>timestamptz</td><td>アプリ内で既読になった時刻</td></tr>
+      <tr><td><code>emailed_at</code></td><td>timestamptz</td><td>メールを送った時刻。NULL なら未送信</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>notifications_not_self</h3>
+  <p>自分の操作で自分に通知が来る状態を、データベース側で拒否する。
+  自分のコメントで自分に通知が届く一覧は、すぐに読まれなくなる。</p>
+
+  <h3>emailed_at を持つ理由</h3>
+  <p>メール送信は失敗しうるし、外部サービスへの呼び出しなので同期的に待ちたくない。
+  行を先に作り、未送信のものを後から拾って送る形にする。</p>
+  <p><code>notifications_pending_email</code> の部分インデックスは、この拾い出しのためにある。</p>
+
+  <h2>作られるとき</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>kind</th><th>作られるきっかけ</th><th>受け取る人</th></tr></thead>
+    <tbody>
+      <tr><td><code>mention</code></td><td>コメントか本文で <code>@</code> 指名された</td><td>指名された人</td></tr>
+      <tr><td><code>assigned</code></td><td><a href="../../glossary.html#assignee">担当者</a>に設定された</td><td>設定された人</td></tr>
+      <tr><td><code>comment</code></td><td>コメントが投稿された</td><td><a href="../watches/index.html">ウォッチ</a>している人</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>作成時に、受け取る人がそのプロジェクトを閲覧できるかを確認する。
+  通知の本文にはスレッドのタイトルが含まれるため、
+  閲覧権限のない人へ届くと、そこで<a href="../../glossary.html#private-project">非公開プロジェクト</a>の情報が漏れる。</p>
+
+  <h3>同じコメントで二重に作らない</h3>
+  <p>ウォッチしている人がメンションもされた場合、通知が二つできる。
+  投稿時に <code>mention</code> を先に作り、<code>comment</code> の生成では既に通知を受けた人を除く。</p>
+
+<pre><code>INSERT INTO notifications (organization_id, user_id, kind, thread_id, comment_id, actor_user_id)
+SELECT $1, w.user_id, 'comment', $2, $3, $4
+  FROM watches w
+ WHERE w.thread_id = $2
+   AND w.user_id &lt;&gt; $4
+   AND NOT EXISTS (
+     SELECT 1 FROM notifications n
+      WHERE n.comment_id = $3 AND n.user_id = w.user_id
+   );</code></pre>
+
+  <h2>メール通知を止めている人</h2>
+  <p><code>users.email_notifications_enabled</code> が偽の人には、
+  行は作るがメールは送らない。
+  アプリ内の一覧には出る。</p>
+
+  <div class="note decide">
+    <span class="note-label">この一つのスイッチが認証を守っている</span>
+    <p>メールを止める手段がないと、煩わしく感じた人が迷惑メールとして報告する。
+    報告が積み重なると送信ドメインの評価が下がる。</p>
+    <p>このシステムは<a href="../../features/authentication/index.html">認証</a>をメールに依存している。
+    <a href="../../glossary.html#magic-link">マジックリンク</a>が届かなくなれば、ログインそのものができない。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">users ──&lt; notifications &gt;── threads
+              │  │
+              │  └── comments（assigned 以外）
+              └── actor_user_id → users</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../watches/index.html"><span class="card-no">TABLE</span><p class="card-title">watches</p><p class="card-desc">comment 種別の宛先</p></a>
+    <a class="card" href="../comments/index.html"><span class="card-no">TABLE</span><p class="card-title">comments</p><p class="card-desc">きっかけ</p></a>
+    <a class="card" href="../users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">メール通知のオンオフ</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/notification/index.html"><span class="card-no">FEATURE</span><p class="card-title">通知とウォッチ</p><p class="card-desc">二つのチャネル</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / notifications</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

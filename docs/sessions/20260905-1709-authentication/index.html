@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>認証の実装 | ENISHI 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-05 17:09</p>
+  <h1 class="title">認証の実装</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="developing">developing</span></p>
+
+  <p class="lede">
+    ほかのすべてがここを前提にするので、最初に作った。
+    パスワードとマジックリンクの併用、10回失敗でのロック、そしてその解除まで。
+    通しで動くところまで確かめてある。
+  </p>
+
+  <h2>できたもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>ファイル</th><th>役割</th></tr></thead>
+    <tbody>
+      <tr><td><code>password.ts</code></td><td>Argon2id によるハッシュと照合。時間を揃えるための空回し</td></tr>
+      <tr><td><code>token.ts</code></td><td>URL に入れる値の生成とハッシュ。有効期間</td></tr>
+      <tr><td><code>session.ts</code></td><td>セッションの記録、引き当て、失効。<strong>データベースだけ</strong></td></tr>
+      <tr><td><code>cookie.ts</code></td><td><code>next/headers</code> との橋渡し。<strong>ここだけ</strong></td></tr>
+      <tr><td><code>queries.ts</code></td><td>ユーザーの取得、失敗回数、ロック</td></tr>
+      <tr><td><code>magic-link.ts</code></td><td>リンクの発行と使用</td></tr>
+      <tr><td><code>mail.ts</code></td><td>認証メールの文面</td></tr>
+      <tr><td><code>actions.ts</code></td><td>Server Actions。ログイン、リンク要求、ログアウト</td></tr>
+      <tr><td><code>LoginForm.tsx</code></td><td>ログイン画面</td></tr>
+      <tr><td><code>app/auth/magic/route.ts</code></td><td>メールのリンクの着地点</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>実装していないのは<a href="../../glossary.html#invitation">招待</a>からの登録、
+  組織管理者による手動のロック解除、SMTP での送信の三つである。</p>
+
+  <h2>通しで確かめたこと</h2>
+
+  <p>本物のフォーム送信で、10回失敗させるところから解除まで動かした。</p>
+
+<pre><code>誤ったパスワードで9回      → メールアドレスまたはパスワードが違います
+10回目                    → 同じ文言（ここでロックがかかる）
+ロック後に正しいパスワード → パスワードでのログインを停止しています
+                             ログイン用リンクを受け取ると、その場で解除されます
+
+コンソールに出たメール:
+  To: e2e@example.com
+  Subject: TASK3 のパスワードログインを停止しました
+
+リンクを開く              → 307 / へ、failed_login_count=0, locked=false
+解除後にパスワード        → 303、Cookie 発行（HttpOnly, SameSite=Lax）</code></pre>
+
+  <p>マジックリンクの一度きりも確かめた。
+  同じリンクを二度開くと <code>/login?magic=used</code> へ送られ、
+  「そのログイン用リンクは使用済みです」と出る。</p>
+
+  <h2>誰が登録しているかを外から測らせない</h2>
+
+  <p>パスワードが違うのか、そのアドレスが登録されていないのか。
+  どちらも同じ文言を返す。</p>
+
+  <p>それだけでは足りない。
+  アカウントが見つからないときに照合を省くと、応答が明らかに速くなる。
+  <strong>文言が同じでも、時間で判別できてしまう。</strong>
+  そのため見つからない場合も、ダミーのハッシュに対して照合を一度走らせる。</p>
+
+  <p>マジックリンクの要求も同じで、登録の有無にかかわらず
+  「送りました」と返す。</p>
+
+  <h2>テストできる形にするために切り分けた</h2>
+
+  <div class="note warn">
+    <span class="note-label">next/headers を読み込むと試せなくなる</span>
+    <p><code>next</code> パッケージには <code>exports</code> の定義が無く、
+    <code>next/headers</code> は Node の ESM では解決できない。
+    これを読み込んだファイルは、リクエストの外から動かせない。</p>
+  </div>
+
+  <p>最初はセッションの作成が、データベースへの記録と Cookie の設定を一度に行っていた。
+  この形だと、ロックの解除もトークンの一度きりも試せない。
+  <strong>間違えると締め出しか乗っ取りに直結する部分が、まるごと検査の外に出る。</strong></p>
+
+  <p>そこで二つに分けた。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>ファイル</th><th>役割</th><th>試せるか</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>session.ts</code></td><td>セッションの記録、引き当て、失効</td><td>試せる</td></tr>
+      <tr><td class="nowrap"><code>cookie.ts</code></td><td><code>next/headers</code> との橋渡しだけ</td><td>試せない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>結果として <code>tests/authentication.test.ts</code> に11件を置けた。
+  スキーマの15件とあわせて26件になっている。</p>
+
+<pre><code>✔ 照合できる / 8文字未満は受け付けない
+✔ 10 回連続で失敗するとロックする
+✔ 時間では解除されない
+✔ 成功したら失敗回数もロックも戻る
+✔ 使うとログインでき、セッションが作られる
+✔ ロックを解除する
+✔ 一度使うと無効になる
+✔ 期限が切れていたら使えない / 知らないトークンは使えない
+✔ 生の値をデータベースに残さない</code></pre>
+
+  <h2>import の書き方を決め直した</h2>
+
+  <p>解決系が三つある。TypeScript、Next（webpack）、そして Node である。
+  テストは Node が <code>src/</code> を直接読むため、三つすべてが解決できる形に揃える必要があった。</p>
+
+  <p><code>tsconfig.json</code> の <code>paths</code> による <code>@/</code> は
+  TypeScript しか知らないので Node が落ちる。
+  <code>package.json</code> の <code>imports</code> に移した。</p>
+
+  <p>拡張子も必ず書く。Node の ESM が補わないためである。
+  <code>#features/*</code> を <code>.ts</code> と <code>.tsx</code> の配列にする案も試したが、
+  webpack が後方の候補まで辿らず <code>.tsx</code> のファイルを解決できなかった。
+  <strong>常に拡張子を書く</strong>という一本の規則に落ち着いた。
+  <a href="../../devops/coding-conventions/index.html#imports">規約</a>に書いた。</p>
+
+  <h2>途中で見つけた穴</h2>
+
+  <div class="note warn">
+    <span class="note-label">仮実装のリダイレクトが循環していた</span>
+    <p><code>/</code> の仮実装が、ログインしていてもいなくても <code>/login</code> へ送っていた。
+    一方 <code>/login</code> はログイン済みなら <code>/</code> へ送る。
+    <strong>ログインに成功した瞬間から、二つの画面のあいだを往復し続ける</strong>。</p>
+    <p>ログイン後の着地点を作って解いた。
+    いまは表示名とログアウトだけの画面で、
+    組織とプロジェクトを実装したら <code>/o/{slug}</code> へ差し替える。</p>
+  </div>
+
+  <h2>あとから変えたこと</h2>
+
+  <h3>未認証でも /login へ送らない</h3>
+
+  <p>最初は未認証なら <code>/login</code> へリダイレクトしていた。
+  そのURLのままログイン画面を出す形に変えた。</p>
+
+  <p>行き先を <code>?next=</code> で持ち回る必要がなくなる。
+  <code>/o/acme/p/WEB/t/128</code> を開いた人は、そのURLでログインし、そのまま着地する。
+  ブラウザの履歴も汚れない。</p>
+
+  <p>戻り先はフォームの hidden 項目で運ぶので、利用者が書き換えられる。
+  <strong>素通しすると、細工したリンクを踏んだ人をログイン直後によそのサイトへ送り込める。</strong>
+  <code>return-to.ts</code> で毎回確かめ、テストで固定した。</p>
+
+<pre><code>/o/acme/p/WEB?tag=bug   → そのまま
+https://evil.example.com → /
+//evil.example.com       → /
+/\evil.example.com       → /
+途中に改行を含むもの      → /
+/auth/magic?token=...    → /</code></pre>
+
+  <p>実際のフォーム送信でも確かめた。
+  <code>/?tag=bug</code> でログインすると <code>/?tag=bug</code> へ戻り、
+  細工した戻り先はすべて <code>/</code> になる。</p>
+
+  <div class="note warn">
+    <span class="note-label">マジックリンクは元のURLへ戻れない</span>
+    <p>リンクはメールの中にある。どのURLで受け取ったかを覚えるには、
+    <code>magic_link_tokens</code> に列を足して持ち回る必要がある。
+    いまは <code>/</code> に着地する。</p>
+  </div>
+
+  <h3>制御構文のブロックを省略しない</h3>
+
+  <p><code>if (!user) redirect('/login');</code> のような書き方をやめた。
+  一文でも波括弧で囲む。</p>
+
+  <p>省略した形は、あとから一行足すときに壊れる。
+  波括弧が無いまま二行目を書くと条件の外に出るのに、インデントは揃うので読んでも気づけない。</p>
+
+  <p>Biome の <code>style/useBlockStatements</code> で機械的に止めた。
+  既存の17箇所も直してある。</p>
+
+  <h3>機能ディレクトリの説明を README.md にした</h3>
+
+  <p><code>.gitkeep</code> に説明を書いていたが、読まれることを前提にした文章なので
+  <code>README.md</code> に移した。10機能ぶんある。
+  対応する <code>docs/features/</code> のページへのリンクと、
+  そこに置くもの、守る決まりを書いてある。</p>
+
+  <h3>テストが終わるのに30秒かかっていた</h3>
+
+  <p>接続プールを閉じていなかった。
+  テストは通っているのに、空くまで終了が待たされる。
+  <code>after()</code> で <code>pool.end()</code> を呼んで 0.3 秒になった。</p>
+
+  <h2>次にやること</h2>
+
+  <ol>
+    <li><a href="../../features/organization/index.html">組織とメンバー</a>。招待からの登録がここに入る</li>
+    <li>権限判定のテスト。<code>VISIBLE_PROJECT_IDS</code> が非公開を漏らさないこと</li>
+    <li><a href="../../features/project/index.html">プロジェクト</a>、そして<a href="../../features/thread/index.html">スレッド</a></li>
+    <li>SMTP の送信実装。依存を決めてから</li>
+  </ol>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">SESSIONS</span><p class="card-title">セッション履歴</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../20260905-1454-project-initialization/index.html"><span class="card-no">SESSION</span><p class="card-title">プロジェクトの初期化</p><p class="card-desc">前のセッション</p></a>
+    <a class="card" href="../../features/authentication/index.html"><span class="card-no">FEATURE</span><p class="card-title">認証</p><p class="card-desc">仕様と実装の状況</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-05 認証の実装</span>
+    <span>最終更新 2026-09-05</span>
+    <span>ENISHI 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

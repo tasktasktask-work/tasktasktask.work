@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ページモック | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">UI Pages</p>
+  <h1 class="title">ページモック</h1>
+  <p class="lede">
+    6画面ある。どれもサンプルデータを入れた、読み込み直後の状態である。
+    実装の際はこの見た目を基準にする。
+  </p>
+
+  <h2>URL の構造</h2>
+<pre class="figure">/login                                  ログインと招待の受諾
+/o/{slug}                               プロジェクト一覧
+/o/{slug}/dashboard                     担当スレッドと通知
+/o/{slug}/p/{key}                       スレッド一覧
+/o/{slug}/p/{key}/gantt                 ガントチャート
+/o/{slug}/p/{key}/t/{number}            スレッド詳細</pre>
+
+  <p>組織を示す <code>{slug}</code> を必ず含める。
+  ひとりが複数の組織に所属するため、URLを見てどの組織かがわからないと取り違えが起きる。</p>
+
+  <p>スレッドのURLに使うのは <code>{number}</code> だけで、プロジェクトキーは重複しない。
+  番号は組織の中で通し番号なので、<code>/o/acme/p/WEB/t/128</code> の <code>WEB</code> と <code>128</code> は
+  どちらもプロジェクトを特定しうるが、キーのほうを人間向けの手がかりとして残している。</p>
+
+  <h2>画面</h2>
+  <div class="cards">
+    <a class="card" href="login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">パスワードとマジックリンクを一枚に</p></a>
+    <a class="card" href="o/[slug]/index.html"><span class="card-no">/o/{slug}</span><p class="card-title">プロジェクト一覧</p><p class="card-desc">組織に入って最初に見る</p></a>
+    <a class="card" href="o/[slug]/dashboard/index.html"><span class="card-no">/dashboard</span><p class="card-title">担当スレッド</p><p class="card-desc">プロジェクトをまたいで集める</p></a>
+    <a class="card" href="o/[slug]/p/[key]/index.html"><span class="card-no">/p/{key}</span><p class="card-title">スレッド一覧</p><p class="card-desc">平らに並べて絞り込む</p></a>
+    <a class="card" href="o/[slug]/p/[key]/gantt/index.html"><span class="card-no">/gantt</span><p class="card-title">ガントチャート</p><p class="card-desc">階層表示、読み取り専用</p></a>
+    <a class="card" href="o/[slug]/p/[key]/t/[number]/index.html"><span class="card-no">/t/{number}</span><p class="card-title">スレッド詳細</p><p class="card-desc">本文、属性、親子、コメント</p></a>
+  </div>
+
+  <h2>共通のレイアウト</h2>
+
+  <p>ログイン以外のすべての画面は、上帯と左帯を共有する。
+  Next.js の App Router では <code>app/o/[slug]/layout.tsx</code> にあたる。</p>
+
+<pre class="figure">┌────────────────────────────────────────────────┐
+│ [3] TASK3    株式会社アクメ acme    🔔3  [佐]  │ 上帯
+├──────────────┬─────────────────────────────────┤
+│ プロジェクト  │                                 │
+│  WEB 検索基盤 │   ページごとの内容               │
+│  BILL 請求   │                                 │
+│              │                                 │
+│ わたし        │                                 │
+│  担当スレッド │                                 │
+│  通知        │                                 │
+└──────────────┴─────────────────────────────────┘</pre>
+
+  <p>左帯に並ぶプロジェクトは、閲覧できるものだけである。
+  <a href="../../glossary.html#private-project">非公開プロジェクト</a>でメンバーでないものは表示されない。
+  ただし<a href="../../glossary.html#org-admin">組織管理者</a>にはすべて表示される。</p>
+
+  <h2>サンプルデータ</h2>
+  <p>すべての画面で同じ組織とプロジェクトを使う。</p>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>種類</th><th>値</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">組織</td><td>株式会社アクメ（<code>acme</code>）</td></tr>
+      <tr><td class="nowrap">プロジェクト</td><td><code>WEB</code> 検索基盤の刷新 / <code>BILL</code> 請求まわり</td></tr>
+      <tr><td class="nowrap">ユーザー</td><td>佐藤 明日香（閲覧者）、田中 亮、鈴木 一郎</td></tr>
+      <tr><td class="nowrap">スレッド</td><td>WEB-3 議論 / WEB-5 課題 / WEB-7 課題 / WEB-9 質問 ほか</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / ページモック</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

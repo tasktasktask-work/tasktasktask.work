@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>デプロイ構成の作り直し | ENISHI 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-06 08:15</p>
+  <h1 class="title">デプロイ構成の作り直し</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="developing">developing</span></p>
+
+  <p class="lede">
+    VPS では複数のサービスが動いている。
+    自前で一式を立てる形から、既にあるものへ相乗りする形へ変えた。
+    VPS にはソースコードを置かず、ビルド済みのイメージだけを送る。
+  </p>
+
+  <h2>変わったこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th></th><th>前</th><th>後</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">VPS に置くもの</td><td>ソースコード一式</td><td><code>compose.yaml</code> と <code>.env</code> と <code>data/attachments</code></td></tr>
+      <tr><td class="nowrap">イメージ</td><td>VPS 上でビルド</td><td>手元でビルドし、VPS のレジストリへ push</td></tr>
+      <tr><td class="nowrap">振り分け</td><td>Caddy を自前で立てる</td><td>稼働中の nginx-proxy へ <code>VIRTUAL_HOST</code> で相乗り</td></tr>
+      <tr><td class="nowrap">データベース</td><td>compose で一緒に立てる</td><td>稼働中の postgres へ <code>postgres-network</code> 越しに繋ぐ</td></tr>
+      <tr><td class="nowrap">TLS</td><td>Caddy が取得</td><td>Cloudflare が終端。VPS までは平文</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><code>Caddyfile</code> と、ルートの <code>compose.yaml</code> は消した。
+  代わりに <code>deploy/compose.yaml</code> を置いてある。これを VPS へ写す。</p>
+
+  <h2>マイグレーションをどう流すか</h2>
+
+  <p>イメージだけを送る形にすると、VPS 側に <code>schema/</code> も <code>migrations/</code> も Atlas も届かない。
+  <strong>「アプリを入れ替える前に独立した手順として流す」という規約を、実行する場所が無くなる。</strong></p>
+
+  <p>アプリの実行イメージにマイグレーションを同梱する形を採った。</p>
+
+<pre><code>docker compose run --rm app migrate</code></pre>
+
+  <p>実行時のイメージに Atlas のバイナリと <code>migrations/</code> と <code>db/functions.sql</code> を持ち込んでいる。
+  <code>pg</code> と <code>@node-rs/argon2</code> は Next の standalone 出力に取り込まれるので、
+  <code>apply-functions.mjs</code> もそのまま動く。</p>
+
+  <div class="note warn">
+    <span class="note-label">作業用データベースを本番に向けない</span>
+    <p>Atlas は差分計算に使うデータベースの中身を、実行のたびに作り直す。
+    <code>ATLAS_DEV_URL</code> が本番を指したまま実行すると、そこにあるデータが消える。</p>
+    <p>コンテナの中の <code>migrate</code> は <code>atlas.hcl</code> を経由せず、
+    <code>--url "$DATABASE_URL"</code> を直に渡している。
+    <code>apply</code> に作業用データベースは要らないので、<strong>渡す口ごと無くした</strong>。</p>
+    <p>手元の <code>pnpm schema:*</code> にも、二つが同じ値なら止まる検査を入れた。</p>
+  </div>
+
+  <h2>気づいたこと</h2>
+
+  <h3>アップロードが本番でだけ落ちるところだった</h3>
+
+  <p>nginx の <code>client_max_body_size</code> は既定 1MB である。
+  添付は1ファイル10MBまで許しているので、そのままなら本番でだけ 413 になる。</p>
+
+  <p>開発環境の <code>nginx.conf</code> は <code>512m</code> を直書きしているため、
+  <strong>手元では通り、本番でだけ落ちる</strong>。
+  試すまで気づけない類の食い違いである。</p>
+
+  <p>nginx-proxy はコンテナ側の <code>CLIENT_MAX_BODY_SIZE</code> を読むので、
+  <code>compose.yaml</code> で <code>12m</code> を指定した。
+  10MB ちょうどにしないのは、多部分形式の包みぶんを見込んでいるためである。</p>
+
+  <h3>Cloudflare と VPS のあいだが平文である</h3>
+
+  <p>SSL は Cloudflare が終端し、そこから VPS へは平文で届く。
+  VPS の IP へ直接届く経路があれば、セッションの Cookie もマジックリンクのURLも読める。
+  <code>X-Forwarded-For</code> も偽装できるので、<code>sessions.created_ip</code> は本物とは限らなくなる。</p>
+
+  <p>ファイアウォールで 80 番を Cloudflare の IP 範囲だけに限れば塞げる。
+  証明書の管理が要らないぶん、経路を暗号化するより手数が少ない。
+  <a href="../../issues/origin-encryption/index.html">オリジンまでの経路</a>に記録した。</p>
+
+  <h3>ボリュームの持ち主</h3>
+
+  <p>コンテナは <code>node</code>（uid 1000）で動く。
+  <code>data/attachments</code> がそのユーザーで書けなければ、添付のアップロードだけが失敗する。
+  画面は動くので、試すまで気づけない。</p>
+
+  <h2>確かめたこと、まだのこと</h2>
+
+  <div class="note ok">
+    <span class="note-label">イメージのビルドは通った</span>
+    <p><code>docker build</code> が通ることを確認した（2026-09-06）。
+    Atlas の取得も、standalone 出力の取り込みも問題なかった。</p>
+  </div>
+
+  <p>まだ動かしていないのは、そこから先である。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>手順</th><th>状態</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>docker build</code></td><td>確認済み。<a href="../20260906-1428-toolchain/index.html">その後の修正を経て再確認</a></td></tr>
+      <tr><td class="nowrap">レジストリへの push</td><td>未確認</td></tr>
+      <tr><td class="nowrap"><code>docker compose run --rm app migrate</code></td><td>未確認</td></tr>
+      <tr><td class="nowrap"><code>docker compose up -d</code> と nginx-proxy 越しの疎通</td><td>未確認</td></tr>
+      <tr><td class="nowrap"><code>data/attachments</code> への書き込み</td><td>未確認</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>最後の行は、画面が動いていても添付のときだけ失敗する形で現れる。
+  一度アップロードを試すまで分からない。</p>
+
+  <h2>次にやること</h2>
+
+  <ol>
+    <li>レジストリへ push し、VPS で <code>migrate</code> と <code>up -d</code> を試す</li>
+    <li>VPS の 80 番が Cloudflare 以外から届くかを確かめる</li>
+    <li>権限判定のテストと、<a href="../../features/organization/index.html">組織とメンバー</a>の実装</li>
+  </ol>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">SESSIONS</span><p class="card-title">セッション履歴</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../devops/deployment/index.html"><span class="card-no">DEVOPS</span><p class="card-title">デプロイ構成</p><p class="card-desc">手順と構成</p></a>
+    <a class="card" href="../../issues/origin-encryption/index.html"><span class="card-no">ISSUE</span><p class="card-title">オリジンまでの経路</p><p class="card-desc">平文で届くこと</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-06 デプロイ構成</span>
+    <span>最終更新 2026-09-05</span>
+    <span>ENISHI 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

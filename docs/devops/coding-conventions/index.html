@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コーディング規約 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">DevOps 02</p>
+  <h1 class="title">コーディング規約</h1>
+  <p class="lede">
+    ORM を使わない構成では、規律の一部を人が持つことになる。
+    ここに書くのは、機械が守ってくれないものだけである。
+  </p>
+
+  <h2>権限の条件を落とさない</h2>
+
+  <p>マルチテナントで最も起きてはならないのは、他社のデータが混ざることである。
+  <code>WHERE organization_id = $1</code> を書き忘れると、それが起きる。</p>
+
+  <div class="note decide">
+    <span class="note-label">規約</span>
+    <p><strong>データベースへのアクセスは、必ず組織を第一引数に取る関数を通す。</strong>
+    ページやAPIのハンドラから <code>pool.query</code> を直接呼ばない。</p>
+  </div>
+
+<pre><code>// 良い例：組織を型で強制する
+type OrgScope = { organizationId: string; userId: string };
+
+export async function listThreads(scope: OrgScope, projectId: string) {
+  return db.query(
+    `SELECT ... FROM threads
+      WHERE organization_id = $1 AND project_id = $2 AND deleted_at IS NULL`,
+    [scope.organizationId, projectId],
+  );
+}
+
+// 悪い例：呼ぶ側が条件を足すかどうかに依存する
+export async function listThreads(projectId: string) { ... }</code></pre>
+
+  <p><a href="../../database/index.html">すべてのテーブルが <code>organization_id</code> を直接持つ</a>のは、
+  この条件を結合なしで書けるようにするためである。</p>
+
+  <h2>閲覧できるかの判定を一箇所に置く</h2>
+
+  <p><a href="../../glossary.html#private-project">非公開プロジェクト</a>の判定は、
+  公開設定、プロジェクトメンバー、組織管理者の三つを見る必要がある。
+  この論理を各所に散らすと、必ずどこかで漏れる。</p>
+
+<pre><code>// 一箇所にだけ書く
+export function visibleProjectsSubquery(userId: string): string {
+  return `
+    SELECT p.id FROM projects p
+     WHERE p.deleted_at IS NULL
+       AND (p.visibility = 'public' AND EXISTS (...組織メンバー...)
+            OR EXISTS (...project_members...)
+            OR EXISTS (...組織管理者...))`;
+}</code></pre>
+
+  <p>スレッドの一覧も、<a href="../../features/dashboard/index.html">担当スレッド一覧</a>も、
+  <a href="../../issues/full-text-search/index.html">将来の検索</a>も、この副問い合わせを使う。</p>
+
+  <h2>一覧の取得は一回のクエリで済ませる</h2>
+
+  <p>ORM がないため N+1 は自動では検出されない。
+  一覧を作るとき、行ごとにクエリを投げない。</p>
+
+  <p>スレッド一覧はタグと担当者と子の件数を必要とするが、
+  <code>LEFT JOIN LATERAL</code> や <code>json_agg</code> でまとめて取る。</p>
+
+<pre><code>SELECT t.*,
+       u.display_name AS assignee_name,
+       COALESCE(tags.list, '[]'::json) AS tags,
+       (SELECT count(*) FROM threads c
+         WHERE c.parent_thread_id = t.id AND c.deleted_at IS NULL) AS child_count
+  FROM threads t
+  LEFT JOIN users u ON u.id = t.assignee_user_id
+  LEFT JOIN LATERAL (
+    SELECT json_agg(json_build_object('name', g.name, 'color', g.color)) AS list
+      FROM thread_tags tt JOIN tags g ON g.id = tt.tag_id
+     WHERE tt.thread_id = t.id
+  ) tags ON true
+ WHERE ...</code></pre>
+
+  <h2>SQL の書き方</h2>
+
+  <ul>
+    <li>SQL は文字列リテラルとして書き、値は必ずプレースホルダで渡す。文字列連結で値を埋め込まない</li>
+    <li>キーワードは大文字、識別子は小文字</li>
+    <li><code>SELECT *</code> を本番のコードで使わない。列が増えたときに何が返るかが変わる</li>
+    <li>論理削除の条件（<code>deleted_at IS NULL</code>）を書き忘れない。削除済みが混ざる</li>
+  </ul>
+
+  <h2 id="app-invariants">データベースが守れない不変条件</h2>
+
+  <p>制約の多くはスキーマ側に置いた。
+  <a href="../../database/threads/index.html">親子がプロジェクトをまたがないこと</a>のように、
+  複合外部キーで表現できるものもある。</p>
+
+  <p>それでも次の三つは、書く手段がない。
+  <strong>アプリケーション側で守る。守り忘れても、データベースは何も言わない。</strong></p>
+
+  <h3>親子の循環参照</h3>
+
+  <p>階層に深さの制限がないため、CHECK では表現できない。
+  親を設定するときに祖先を辿り、自分自身が現れないことを確認する。</p>
+
+<pre><code>WITH RECURSIVE ancestors AS (
+  SELECT id, parent_thread_id, 1 AS depth
+    FROM threads WHERE id = $1        -- 親にしようとしているスレッド
+  UNION ALL
+  SELECT t.id, t.parent_thread_id, a.depth + 1
+    FROM threads t
+    JOIN ancestors a ON t.id = a.parent_thread_id
+   WHERE a.depth &lt; 50                 -- 万一の循環で問い合わせが止まらなくなるのを防ぐ
+)
+SELECT EXISTS (SELECT 1 FROM ancestors WHERE id = $2) AS would_cycle;</code></pre>
+
+  <p>深さ50は仕様上の上限ではなく、暴走を止める安全弁である。</p>
+
+  <h3>最後の組織管理者を外せない</h3>
+
+  <p>行数の下限は CHECK では書けない。
+  役割を変更するときと、メンバーを外すときの両方で確認する。</p>
+
+<pre><code>-- 同じトランザクションの中で、外したあとに管理者が残るかを見る
+SELECT count(*) &gt; 0 AS has_admin
+  FROM organization_members
+ WHERE organization_id = $1
+   AND role = 'admin'
+   AND deleted_at IS NULL
+   AND user_id &lt;&gt; $2;</code></pre>
+
+  <p>これを怠ると、組織が誰にも操作できない状態になる。
+  復旧にはデータベースへの直接の介入が要る。</p>
+
+  <h3>プロジェクトキーは作成後に変更できない</h3>
+
+  <p>形式は CHECK で縛れるが、「作成後は変えられない」は更新時の判断になる。
+  プロジェクトを更新する関数で、<code>key</code> を受け取らない形にするのが確実である。</p>
+
+<pre><code>// 良い例：更新できる項目だけを引数にする
+type ProjectUpdate = { name: string; description: string; visibility: Visibility };
+
+// 悪い例：全項目を受け取り、key を無視する実装に頼る
+type ProjectUpdate = Partial&lt;Project&gt;;</code></pre>
+
+  <p>型で受け取れなくしておけば、うっかり渡す経路そのものがなくなる。</p>
+
+  <h2 id="lazy">モジュールの読み込みで実行時の設定を要求しない</h2>
+
+  <p>接続先や送信先といった実行時の設定は、
+  <strong>最初に使われるときに読む</strong>。読み込んだ瞬間に読まない。</p>
+
+<pre><code>// 書かない：読み込みだけで DATABASE_URL を要求する
+export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+
+// 書く：最初に触られたときに作る
+export const pool = lazy(createPool);</code></pre>
+
+  <div class="note warn">
+    <span class="note-label">イメージを作るのに本番の設定が要る状態になる</span>
+    <p><code>next build</code> はページの情報を集めるために、モジュールを読み込む。
+    読み込みで設定を要求すると、<strong>ビルドが接続先を求めて失敗する</strong>。</p>
+    <p>この誤りは長く隠れる。開発機には <code>.env</code> があり、
+    それがビルド文脈へ写り込んでいるあいだは通ってしまう。
+    <a href="../deployment/index.html">.dockerignore</a> で <code>.env</code> を外した時点で、
+    初めて表に出た。</p>
+  </div>
+
+  <p><code>#lib/lazy.ts</code> がこの遅延を引き受ける。
+  呼ぶ側の書き方は変わらない。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>対象</th><th>読み込み時</th><th>最初に触ったとき</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>env</code></td><td>何もしない</td><td>環境変数を検証する</td></tr>
+      <tr><td class="nowrap"><code>pool</code></td><td>何もしない</td><td>接続プールを作る</td></tr>
+      <tr><td class="nowrap"><code>mailSender</code></td><td>何もしない</td><td>送信の実装を選ぶ</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>設定が足りなければ、触った時点で落ちる。
+  黙って動き出して、後の画面で初めて壊れることはない。</p>
+
+  <p>タイミングが仕様なので、<code>tests/lazy.test.ts</code> で固定してある。</p>
+
+  <h2 id="datetime">日付と時刻の扱い</h2>
+
+  <p>型は二つしか使わない。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>用途</th><th>型</th><th>例</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">課題の<a href="../../glossary.html#period">期間</a></td><td><code>date</code></td><td><code>starts_on</code>, <code>ends_on</code></td></tr>
+      <tr><td class="nowrap">記録の時刻</td><td><code>timestamptz</code></td><td><code>created_at</code>, <code>expires_at</code>, <code>read_at</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><strong>タイムゾーンを持たない <code>timestamp</code> は使わない。</strong>
+  この型は壁掛け時計の読みをそのまま保存し、基準点を持たない。
+  異なる地域から書かれた二つの行を並べても、どちらが先かを比較できない。</p>
+
+  <p>期間を <code>date</code> にしたのは、
+  <a href="../../database/organizations/index.html">組織ごとにタイムゾーンを設定できる</a>ようにしたためである。
+  締切に時刻を持たせると、組織の設定を変えた瞬間に既存の日付が前後する。
+  日付だけなら、その事故が構造的に起きない。</p>
+
+  <h3>セッションの TimeZone に頼らない</h3>
+
+  <p><code>timestamptz</code> はタイムゾーンを保存していない。
+  格納されているのは UTC における時刻の一点だけで、
+  入力と出力の変換にはセッションの <code>TimeZone</code> 設定が使われる。</p>
+
+  <div class="note decide">
+    <span class="note-label">規約</span>
+    <p><strong>データベース側のセッション <code>TimeZone</code> は UTC に固定する。
+    表示のための変換は、アプリケーションが <code>organizations.timezone</code> を引数として渡して行う。</strong></p>
+  </div>
+
+  <p>接続プールがその理由である。
+  ひとつのプールが複数の組織のリクエストを処理するので、
+  リクエストごとに <code>SET TIME ZONE</code> を実行すると、
+  返却された接続に設定が残って次のリクエストへ漏れる。</p>
+
+<pre><code>-- 良い例：組織のタイムゾーンを引数で渡す
+SELECT id, body, created_at AT TIME ZONE $2 AS created_local
+  FROM comments
+ WHERE thread_id = $1;</code></pre>
+
+  <p><code>AT TIME ZONE</code> は付けた側の型によって逆向きに働く。
+  <code>timestamptz</code> に付けると <code>timestamp</code> になり、
+  <code>timestamp</code> に付けると <code>timestamptz</code> になる。
+  読むときに向きを取り違えやすいので、
+  <strong>この演算子は表示のための変換にだけ使い、保存する値には使わない</strong>。</p>
+
+  <h3>インデックスに使える式と使えない式</h3>
+
+  <p><code>timestamptz</code> から日付を取り出す式は、
+  セッションの設定によって結果が変わるため <code>STABLE</code> であり、
+  インデックスや生成列に使えない。</p>
+
+<pre><code>-- 不可。timestamptz::date はセッション設定で結果が変わる
+CREATE INDEX ON comments ((created_at::date));
+
+-- 可。タイムゾーンを定数で固定すれば結果が一意に定まる
+CREATE INDEX ON comments (((created_at AT TIME ZONE 'Asia/Tokyo')::date));</code></pre>
+
+  <div class="note warn">
+    <span class="note-label">実装時に確認すること</span>
+    <p>後者が通るのは <code>timezone(text, timestamptz)</code> が <code>IMMUTABLE</code> として
+    登録されているためだが、<strong>まだ実機で確認していない</strong>。
+    使う前に <code>\df+ timezone</code> で volatility を確かめる。</p>
+  </div>
+
+  <h3>pg ドライバの型変換を上書きする</h3>
+
+  <p><code>pg</code> の既定の型変換には、上の設計を壊す挙動がある。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th class="nowrap">OID</th><th>型</th><th>既定で返るもの</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">1184</td><td><code>timestamptz</code></td><td>JS の <code>Date</code>。<code>Date</code> は UTC の一点なので正しい</td></tr>
+      <tr><td class="nowrap">1114</td><td><code>timestamp</code></td><td>JS の <code>Date</code>。<strong>Node プロセスのローカル時刻として解釈される</strong></td></tr>
+      <tr><td class="nowrap">1082</td><td><code>date</code></td><td>JS の <code>Date</code>。<strong>ローカルの午前0時になる</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>問題は三行目である。
+  <code>starts_on</code> に <code>2026-09-08</code> が入っていても、
+  ドライバはこれを「ローカルの9月8日0時」の <code>Date</code> にする。
+  Node が JST で動いていれば、その瞬間は UTC では9月7日15時である。</p>
+
+<pre><code>const { rows } = await db.query('SELECT starts_on FROM threads WHERE id = $1', [id]);
+rows[0].starts_on.toISOString().slice(0, 10);
+// → "2026-09-07"   日付が1日ずれる</code></pre>
+
+  <div class="note warn">
+    <span class="note-label">選んだ型が、ドライバの既定動作で無効になる</span>
+    <p>タイムゾーンの事故を避けるために期間を <code>date</code> にしたのに、
+    <code>pg</code> がそれを <code>Date</code> へ引き戻す。
+    <strong>接続を作る場所で、必ず型パーサを差し替える。</strong></p>
+  </div>
+
+<pre><code>import pg from 'pg';
+
+// date は Date に変換せず 'YYYY-MM-DD' の文字列のまま扱う
+pg.types.setTypeParser(pg.types.builtins.DATE, (v) =&gt; v);
+
+// timestamp（タイムゾーンなし）は使わない方針なので、
+// 混入したら気づけるようにしておく
+pg.types.setTypeParser(pg.types.builtins.TIMESTAMP, (v) =&gt; {
+  throw new Error(`timestamp 型が使われています。timestamptz か date にしてください: ${v}`);
+});</code></pre>
+
+  <p>二つ目のパーサは、値を返さず例外を投げる。
+  <code>timestamp</code> の列が現れることは設計の誤りなので、
+  黙って動くよりも止まったほうがよい。</p>
+
+  <h2 id="blocks">制御構文のブロックを省略しない</h2>
+
+  <p><code>if</code> や <code>for</code> の本体が一文でも、必ず波括弧で囲む。</p>
+
+<pre><code>// 書かない
+if (!user) redirect('/login');
+
+// 書く
+if (!user) {
+  redirect('/login');
+}</code></pre>
+
+  <p>省略した形は、あとから一行足すときに壊れる。
+  波括弧が無いまま二行目を書くと、二行目は条件の外に出る。
+  しかも見た目のインデントは揃うので、読んでも気づけない。</p>
+
+  <p>Biome の <code>style/useBlockStatements</code> で機械的に止めている。
+  <code>pnpm check</code> が失敗するので、書いた本人が気づく。</p>
+
+  <h2 id="imports">import の書き方</h2>
+
+  <p>解決系が三つある。TypeScript、Next（webpack）、そして Node である。
+  テストは Node が <code>src/</code> のファイルを直接読むため、<strong>三つすべてが解決できる形に揃える</strong>。</p>
+
+  <h3>拡張子を必ず書く</h3>
+
+  <p>Node の ESM は拡張子を補わない。相対でもエイリアスでも省略しない。</p>
+
+<pre><code>import { pool } from '#lib/db.ts';
+import { hashToken } from './token.ts';
+import { LoginForm } from '#features/authentication/LoginForm.tsx';</code></pre>
+
+  <p>TypeScript 側は <code>allowImportingTsExtensions</code> で許可している。
+  出力は Next が作るので、TypeScript が書き換える必要はない。</p>
+
+  <h3>エイリアスは package.json の imports で定義する</h3>
+
+  <p><code>tsconfig.json</code> の <code>paths</code> は使わない。TypeScript しか知らないためである。
+  Node の subpath imports なら三つとも同じ定義を読む。</p>
+
+<pre><code>"imports": {
+  "#lib/*":      "./src/lib/*",
+  "#features/*": "./src/features/*"
+}</code></pre>
+
+  <h3>next/headers を読み込む場所を絞る</h3>
+
+  <div class="note warn">
+    <span class="note-label">Node からは解決できない</span>
+    <p><code>next</code> パッケージには <code>exports</code> の定義が無く、
+    <code>next/headers</code> は Node の ESM では解決できない。
+    これを読み込んだファイルは、リクエストの外から動かせなくなる。</p>
+    <p>つまり <strong><code>next/headers</code> を使うファイルはテストできない</strong>。</p>
+  </div>
+
+  <p>そのため、Cookie やヘッダに触る部分と、データベースに触る部分を分ける。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>ファイル</th><th>役割</th><th>試せるか</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>session.ts</code></td><td>セッションの記録、引き当て、失効</td><td>試せる</td></tr>
+      <tr><td class="nowrap"><code>cookie.ts</code></td><td><code>next/headers</code> との橋渡しだけ</td><td>試せない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>分けた結果、<a href="../../glossary.html#account-lock">アカウントロック</a>の解除や
+  <a href="../../glossary.html#magic-link">マジックリンク</a>の一度きりといった、
+  間違えると締め出しか乗っ取りに直結する振る舞いを、実データベースに対して試せるようになっている。</p>
+
+  <h2>命名</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>対象</th><th>規則</th><th>例</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">テーブル</td><td>複数形、スネークケース</td><td><code>thread_tags</code></td></tr>
+      <tr><td class="nowrap">外部キー</td><td>参照先の単数形 + <code>_id</code></td><td><code>parent_thread_id</code></td></tr>
+      <tr><td class="nowrap">時刻の列</td><td>過去分詞 + <code>_at</code></td><td><code>archived_at</code>, <code>deleted_at</code></td></tr>
+      <tr><td class="nowrap">日付の列</td><td>前置詞 + <code>_on</code></td><td><code>starts_on</code>, <code>ends_on</code></td></tr>
+      <tr><td class="nowrap">真偽値</td><td><code>is_</code> で始める</td><td><code>is_admin</code>, <code>is_image</code></td></tr>
+      <tr><td class="nowrap">制約</td><td>テーブル名 + 内容</td><td><code>threads_progress_range</code></td></tr>
+      <tr><td class="nowrap">TypeScript</td><td>キャメルケース。DBとの変換は境界で一度だけ行う</td><td><code>parentThreadId</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><code>_at</code> と <code>_on</code> を分けているのは、
+  時刻を持つかどうかを名前から判別するためである。
+  <a href="../../glossary.html#period">期間</a>は日付だけを持つので <code>_on</code> になる。</p>
+
+  <h2>ドメインの語彙をコードでも使う</h2>
+
+  <p><a href="../../glossary.html">用語集</a>で定めた語を、そのままコードの識別子に使う。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>用語</th><th>コード上の表現</th></tr></thead>
+    <tbody>
+      <tr><td><a href="../../glossary.html#kadai">課題</a></td><td><code>'kadai'</code></td></tr>
+      <tr><td><a href="../../glossary.html#giron">議論</a></td><td><code>'giron'</code></td></tr>
+      <tr><td><a href="../../glossary.html#shitsumon">質問</a></td><td><code>'shitsumon'</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><code>'issue'</code> や <code>'discussion'</code> という英語を当てない。
+  この製品の「課題」は他所の issue とは意味が違うので、
+  英語に置き換えた瞬間に、読む人が他所の意味で受け取る。</p>
+
+  <h2>この規約を更新するとき</h2>
+
+  <p>レビューで新しい約束ができたら、実装より先にここへ書く。
+  書かないまま実装すると、次のレビューで同じ指摘が出る。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../tech-stack/index.html"><span class="card-no">DEVOPS</span><p class="card-title">技術スタック</p><p class="card-desc">ORM を使わない理由</p></a>
+    <a class="card" href="../../database/index.html"><span class="card-no">DB</span><p class="card-title">データベース全体構成</p><p class="card-desc">三つの原則</p></a>
+    <a class="card" href="../../glossary.html"><span class="card-no">TERM</span><p class="card-title">用語集</p><p class="card-desc">識別子の元になる</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>開発と運用 / コーディング規約</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

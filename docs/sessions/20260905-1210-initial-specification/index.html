@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>仕様の策定とドキュメント整備 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-05 12:10</p>
+  <h1 class="title">仕様の策定とドキュメント整備</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="planning">planning</span></p>
+
+  <p class="lede">
+    更地から始めて、62の問いに答えを付けた。
+    最も大きかったのは「基本単位を課題ではなくスレッドにする」という決定で、
+    そこから他の多くが決まっていった。
+  </p>
+
+  <h2>このセッションで作ったもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>場所</th><th>内容</th><th class="nowrap">件数</th></tr></thead>
+    <tbody>
+      <tr><td><a href="../../glossary.html">用語集</a></td><td>ドメインの語彙。会話例と相互リンク付き</td><td class="nowrap">34語</td></tr>
+      <tr><td><a href="../../features/index.html">機能</a></td><td>画面と振る舞い、決定の理由</td><td class="nowrap">10本</td></tr>
+      <tr><td><a href="../../database/index.html">データベース</a></td><td>DDL、制約の意図、ER</td><td class="nowrap">15テーブル</td></tr>
+      <tr><td><a href="../../ui/principles.html">UI</a></td><td>設計方針、コンポーネント見本、ページモック</td><td class="nowrap">12本</td></tr>
+      <tr><td><a href="../../issues/index.html">先送りした課題</a></td><td>入れなかったものと、その理由</td><td class="nowrap">10件</td></tr>
+      <tr><td><a href="../../devops/index.html">開発と運用</a></td><td>技術選定、規約、移行、デプロイ</td><td class="nowrap">5本</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>構造を決めた三つの判断</h2>
+
+  <h3>基本単位をスレッドにした</h3>
+
+  <p>課題として書けるほど固まっていない相談を、どこに置くか。
+  これがこの製品の出発点になった。</p>
+
+  <p>多くのツールは「課題」を基本単位に置き、議論をその付属物として扱う。
+  ここでは順序を逆にし、<a href="../../glossary.html#thread">スレッド</a>を基本単位として、
+  <a href="../../glossary.html#kadai">課題</a>をその<a href="../../glossary.html#thread-type">種別</a>のひとつにした。</p>
+
+  <p>この決定から、<a href="../../database/threads/index.html">threads</a> テーブルに
+  制約が集中する構造が導かれた。
+  種別によって使える列が変わるため、CHECK 制約でそれを表現している。</p>
+
+  <h3>状態を進捗率ひとつにした</h3>
+
+  <p>ステータスの一覧を持たず、0から100の数値だけで表す。
+  <a href="../../features/gantt/index.html">ガント</a>のバーの塗り分けと直結する筋のよさがある一方、
+  「やらないと決めた」と「まだ手をつけていない」を区別できない。</p>
+
+  <p>終了理由の軸を別に持つ案を検討したが、採らなかった。
+  <a href="../../issues/rejection-representation/index.html">却下の表現</a>に経緯を残した。</p>
+
+  <h3>添付ファイルの検査をやめた</h3>
+
+  <p>途中まで、マジックバイトによるホワイトリストを置く方針だった。
+  検討の結果、次の四つが同時に成り立つとわかった。</p>
+
+  <ul>
+    <li>Office 文書は zip と区別できず、テキスト系は判定そのものができない</li>
+    <li>判定できる形式も、ポリグロットで素通りする</li>
+    <li>zip を許す限り、実行ファイル対策として成立しない</li>
+    <li>Node.js はそもそも置かれたファイルを実行しない</li>
+  </ul>
+
+  <p>拡張子のホワイトリストも同時に外した。
+  <code>.log</code> や <code>.patch</code> のような正当な業務ファイルを弾き、
+  利用者は拡張子を変えるか zip に入れて迂回する。
+  防御は機能せず、データの質だけが下がる。</p>
+
+  <p>代わりに<strong>配信の仕方で守る</strong>方針に切り替えた。
+  常にダウンロードとして返すこと、種別を推測させないこと、
+  そして画面に出す画像はサーバー側で読み直して書き出し直すこと。
+  維持すべきリストがどこにも存在しない形になった。</p>
+
+  <div class="note">
+    <span class="note-label">その後の変更</span>
+    <p>このとき、あわせて「本体とは別のドメインから配信する」と決めていた。
+    次のセッションで<a href="../20260905-1454-project-initialization/index.html">同一オリジンに変更</a>している。
+    実際に守っているのはヘッダであり、分離が足すのは保険だけである一方、
+    別オリジンには認可の仕組みを別に作る費用がかかるためである。</p>
+  </div>
+
+  <h2>途中で見つけて直したこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>見つけたこと</th><th>どうしたか</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>通知チャネルを「メールのみ」としながら既読管理を持つ、という矛盾</td>
+        <td>アプリ内通知も作ることにした。既読の置き場所ができた</td>
+      </tr>
+      <tr>
+        <td>10回失敗で永続ロックだと、第三者が任意のユーザーを締め出せる</td>
+        <td>マジックリンクでのログイン成功で自動解除する。ロック時に本人へメールも送る</td>
+      </tr>
+      <tr>
+        <td>Cloudflare のメール送信が、以前は検証済み宛先にしか送れなかった</td>
+        <td>現在は送信ドメインをオンボードすれば任意の宛先へ送れる。SMTP も使える</td>
+      </tr>
+      <tr>
+        <td>プロジェクトを廃した設計だと、ガントの単位が失われる</td>
+        <td>ルート課題で代用する案を出したが、プロジェクトを復活させる判断になった</td>
+      </tr>
+      <tr>
+        <td><code>pg</code> の既定の型変換が、期間を <code>date</code> にした判断を無効にする。
+            <code>date</code> がローカルの午前0時の <code>Date</code> になり、日付が1日ずれうる</td>
+        <td>型パーサの差し替えを<a href="../../devops/coding-conventions/index.html#datetime">コーディング規約</a>に明記した</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>レビューで確定したこと</h2>
+
+  <p>ドキュメントを書き上げた時点で、判断を仰ぎたい点が4つ残っていた。すべて決着している。</p>
+
+  <div class="note ok">
+    <span class="note-label">確定した4点</span>
+    <ol style="margin-bottom:0">
+      <li><strong>プロダクト名は TASK3、ドメインは <code>tasktasktask.work</code>。</strong>
+          仮称で書いていた全ページを差し替えた。
+          名前の <code>3</code> を三つの<a href="../../glossary.html#thread-type">種別</a>と読み合わせ、ロゴの意匠に使っている</li>
+      <li><strong><code>thread_tags</code> と <code>watches</code> の物理削除を、例外として認める。</strong>
+          「すべてのレコードは論理削除」という方針は、この2つの中間テーブルには適用しない。
+          付け外しが日常的に起きるためで、記録が必要になれば<a href="../../issues/audit-log/index.html">監査ログ</a>で扱う</li>
+      <li><strong><code>docs/theme.css</code> の追加を認める。</strong>
+          ドキュメント構成の指定にはないが、共通スタイルの複製を避けるために置く</li>
+      <li><strong>一覧は平ら、ガントは階層のままとする。</strong>
+          同じデータを二つの画面で違う形に見せるが、探すための画面と計画を読むための画面という目的の違いによる</li>
+    </ol>
+  </div>
+
+  <p>これらに加えて、<a href="../../devops/coding-conventions/index.html#datetime">日付と時刻の扱い</a>を規約に追加した。
+  <code>pg</code> の既定の型変換が、期間を <code>date</code> にした判断を無効にしうるためである。</p>
+
+  <h2>決定の記録</h2>
+
+  <p>62の問いのうち、後から参照されそうなものを残す。
+  すべての判断は各機能ページの本文にも書いてある。</p>
+
+  <h3>提供の形</h3>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th class="nowrap">論点</th><th>決定</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">提供形態</td><td>マルチテナントSaaS。ひとりが複数組織に所属できる</td></tr>
+      <tr><td class="nowrap">想定規模</td><td>100人 / 数万件</td></tr>
+      <tr><td class="nowrap">下敷き</td><td>既存ツールを模倣しない。ただし一般に通じる用語は流用する</td></tr>
+      <tr><td class="nowrap">技術</td><td>pnpm / Node.js v24 / Next.js App Router / TypeScript / PostgreSQL / <code>pg</code>（ORMなし）</td></tr>
+      <tr><td class="nowrap">実行基盤</td><td>VPS + Docker Compose。スキーマ管理は Atlas</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>スレッド</h3>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th class="nowrap">論点</th><th>決定</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">基本単位</td><td>スレッド。種別は課題、議論、質問の3つで固定</td></tr>
+      <tr><td class="nowrap">種別の変換</td><td>できない。手で立て直し、親子でつなぐ</td></tr>
+      <tr><td class="nowrap">親子</td><td>深さ無制限。種別はまたげる。プロジェクトはまたげない</td></tr>
+      <tr><td class="nowrap">ロールアップ</td><td>しない。親の進捗率も期間も人が入れる。はみ出しは警告のみ</td></tr>
+      <tr><td class="nowrap">状態</td><td>進捗率0-100のみ。議論と質問は0か100で「オープン / クローズ」と表示</td></tr>
+      <tr><td class="nowrap">識別子</td><td>プロジェクトキー + 組織内の通し番号（<code>WEB-128</code>）</td></tr>
+      <tr><td class="nowrap">担当者</td><td>ひとりまで。未設定可</td></tr>
+      <tr><td class="nowrap">移動</td><td>プロジェクト間の移動はできない</td></tr>
+      <tr><td class="nowrap">編集</td><td>本文とタイトルは編集可（履歴なし）。コメントは編集も削除も不可</td></tr>
+      <tr><td class="nowrap">削除</td><td>アーカイブを経てから論理削除。組織管理者のみ。復元可</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>権限と通知</h3>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th class="nowrap">論点</th><th>決定</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">組織ロール</td><td>組織管理者 / 組織メンバーの二段。管理者は複数可</td></tr>
+      <tr><td class="nowrap">プロジェクト</td><td>公開 / 非公開を切替可。プロジェクト管理者はメンバーの増減のみ行える</td></tr>
+      <tr><td class="nowrap">プロジェクト作成</td><td>組織管理者のみ</td></tr>
+      <tr><td class="nowrap">認証</td><td>マジックリンクとパスワードを併用。どちらも48時間 / セッション30日、延長なし</td></tr>
+      <tr><td class="nowrap">ロック</td><td>10回連続失敗で永続ロック。マジックリンク成功で自動解除</td></tr>
+      <tr><td class="nowrap">通知</td><td>メンション / 担当者設定 / ウォッチ中のコメント。アプリ内とメールの両方へ</td></tr>
+      <tr><td class="nowrap">ウォッチ</td><td>自動では付かない。押して付け、押して外す</td></tr>
+      <tr><td class="nowrap">メンション候補</td><td>そのプロジェクトを閲覧できる人のみ</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>見せ方</h3>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th class="nowrap">論点</th><th>決定</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">ガント</td><td>1プロジェクト1枚。日単位。階層表示。読み取り専用</td></tr>
+      <tr><td class="nowrap">期間未設定</td><td>図の下に別枠で並べる。隠さない</td></tr>
+      <tr><td class="nowrap">スレッド一覧</td><td>平ら。親子はリンクで辿る。更新の新しい順</td></tr>
+      <tr><td class="nowrap">横断ビュー</td><td>担当スレッドをプロジェクトをまたいで一覧。通知も同じ画面に置く</td></tr>
+      <tr><td class="nowrap">タグ</td><td>組織単位。誰でも作成可。色付き</td></tr>
+      <tr><td class="nowrap">アバター</td><td>表示名から生成するハンコ風。アップロードなし</td></tr>
+      <tr><td class="nowrap">言語 / TZ</td><td>組織ごとに設定を持つが、値は日本語 / JST のみ。期間は日付型で時刻を持たない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>次にやること</h2>
+
+  <ol>
+    <li>プロジェクトの初期化（<code>pnpm</code>、Next.js、Atlas、Docker Compose）</li>
+    <li>スキーマの定義と、最初のマイグレーション</li>
+    <li>認証から実装する。ほかのすべてがこれを前提にするため</li>
+  </ol>
+
+  <div class="note warn">
+    <span class="note-label">実装に入る前に決めるべきこと</span>
+    <p><a href="../../devops/tech-stack/index.html">ORM を使わない</a>選択をしたため、
+    クエリの結果に型を付ける仕組みを早い段階で決める必要がある。
+    ここを曖昧にしたまま進むと、後から全クエリに手を入れることになる。</p>
+  </div>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">SESSIONS</span><p class="card-title">セッション履歴</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../glossary.html"><span class="card-no">TERM</span><p class="card-title">用語集</p><p class="card-desc">このセッションで固めた語彙</p></a>
+    <a class="card" href="../../issues/index.html"><span class="card-no">ISSUES</span><p class="card-title">先送りした課題</p><p class="card-desc">入れなかったもの</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-05 仕様の策定</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

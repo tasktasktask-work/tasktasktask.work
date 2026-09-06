@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プロジェクト | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Feature 03</p>
+  <h1 class="title">プロジェクト</h1>
+  <p class="lede">
+    プロジェクトはスレッドを入れる箱である。
+    ただの箱ではない。ガントが一枚に描く範囲、メンションの候補に出る人の範囲、閲覧できる人の範囲。
+    このシステムのいくつもの境界が、同じ一本の線で引かれている。
+  </p>
+
+  <h2>境界としてのプロジェクト</h2>
+
+  <p><a href="../../glossary.html#project">プロジェクト</a>が引く線を並べると、それが単なる分類でないことがわかる。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>何の境界か</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">閲覧範囲</td><td>非公開に設定すると、メンバーと組織管理者しか見られない</td></tr>
+      <tr><td class="nowrap">ガントの範囲</td><td><a href="../gantt/index.html">ガントチャート</a>はプロジェクト一つぶんを一枚に描く</td></tr>
+      <tr><td class="nowrap">メンションの候補</td><td>そのプロジェクトを閲覧できる人だけが候補に出る</td></tr>
+      <tr><td class="nowrap">親子関係の範囲</td><td>親と子は必ず同じプロジェクトに属する</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>公開と非公開</h2>
+
+  <p>公開プロジェクトは組織のメンバー全員が見られる。
+  <a href="../../glossary.html#private-project">非公開プロジェクト</a>は、メンバーに加えられた人と組織管理者だけが見られる。
+  設定は後から切り替えられる。</p>
+
+  <p>非公開から公開への切り替えには確認をはさむ。
+  戻すことはできても、見られた事実は戻せないからである。</p>
+
+  <h3>プロジェクト管理者</h3>
+
+  <p>非公開プロジェクトのメンバーを追加したり外したりできる人を<a href="../../glossary.html#project-admin">プロジェクト管理者</a>と呼ぶ。
+  できることはこの一点だけで、スレッドの操作について一般メンバーとの差はない。</p>
+
+  <p>プロジェクトを作った組織管理者が自動的に管理者になる。
+  加えて、すべての組織管理者が全プロジェクトの管理者として扱われる。
+  メンバーが退職者しかいないプロジェクトを引き継げなくなる事態を避けるためである。</p>
+
+  <h2>プロジェクトキー</h2>
+
+  <p>半角の英大文字と数字で2文字から10文字。組織の中で重複しない。
+  <a href="../../glossary.html#thread-id">スレッド識別子</a>の前半になる。</p>
+
+  <p>後から変更できない。
+  <code>WEB-128</code> として議事録やコミットメッセージに書かれたものが、ある日から <code>FRONT-128</code> になると、過去の記録との照合ができなくなる。</p>
+
+  <div class="note">
+    <span class="note-label">キーが変わっても壊れない部分</span>
+    <p><a href="../../glossary.html#thread-number">スレッド番号</a>は組織の中で通し番号になっている。
+    つまり <code>128</code> という数字だけでスレッドは一意に定まり、キーは表示のための飾りにすぎない。
+    そのため技術的には変更しても壊れないが、人の記憶と記録が壊れるので許可しない。</p>
+  </div>
+
+  <h2>プロジェクトが持つもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>項目</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">名前</td><td>画面に出る名称。変更できる</td></tr>
+      <tr><td class="nowrap">キー</td><td>2から10文字。作成後は変更できない</td></tr>
+      <tr><td class="nowrap">説明文</td><td>何のためのプロジェクトかを書く。変更できる</td></tr>
+      <tr><td class="nowrap">公開設定</td><td>公開か非公開。切り替えられる</td></tr>
+      <tr><td class="nowrap">アーカイブ状態</td><td>畳んだかどうか</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>期間は持たない。
+  プロジェクトの期間を知りたければ、中の課題の日付を見ればわかる。
+  同じ情報を二か所に持つと、必ず食い違う。</p>
+
+  <h2>アーカイブと削除</h2>
+
+  <p>プロジェクトを<a href="../../glossary.html#archive">アーカイブ</a>すると、配下のスレッドがまとめて読み取り専用になる。
+  個々のスレッドのアーカイブ状態は書き換えず、プロジェクト単位で凍結する。
+  解除すれば元どおり編集できる。</p>
+
+  <p>削除は<a href="../../glossary.html#soft-delete">論理削除</a>で、組織管理者だけが行える。
+  アーカイブを経ていないプロジェクトは削除できない。</p>
+
+  <h2>移動できないことの帰結</h2>
+
+  <p>スレッドを別のプロジェクトへ移すことはできない。
+  置き場所を間違えたら、正しいプロジェクトで立て直し、元のスレッドをアーカイブすることになる。</p>
+
+  <p>この制約があるため、プロジェクトをどう切るかは最初に慎重に決める必要がある。
+  移動を認めるかどうかは<a href="../../issues/thread-mutability/index.html">スレッドの可変性</a>に記録した。</p>
+
+  <h2>関連する画面</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/pages/o/[slug]/index.html"><span class="card-no">/o/{slug}</span><p class="card-title">プロジェクト一覧</p><p class="card-desc">参加しているプロジェクトが並ぶ</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/index.html"><span class="card-no">/p/{key}</span><p class="card-title">スレッド一覧</p><p class="card-desc">プロジェクトの中身</p></a>
+  </div>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../../database/projects/index.html"><span class="card-no">TABLE</span><p class="card-title">projects</p><p class="card-desc">プロジェクト本体</p></a>
+    <a class="card" href="../../database/project_members/index.html"><span class="card-no">TABLE</span><p class="card-title">project_members</p><p class="card-desc">非公開プロジェクトのメンバー</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能 / プロジェクト</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

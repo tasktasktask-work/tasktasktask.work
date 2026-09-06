@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プロジェクトの初期化 | ENISHI 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-05 14:54</p>
+  <h1 class="title">プロジェクトの初期化</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="developing">developing</span></p>
+
+  <p class="lede">
+    仕様が固まったので器を作る。
+    スキーマは設計どおりに書けば決まるので先に片づけ、
+    アプリケーション層の作り方を決めてから骨格を立てた。
+  </p>
+
+  <h2>できたもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>場所</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td><code>schema/*.sql</code></td><td>15テーブル。制約34、索引29。スキーマの正本</td></tr>
+      <tr><td><code>atlas.hcl</code></td><td><code>schema/</code> を宣言し、<code>migrations/</code> に差分を生成する</td></tr>
+      <tr><td><code>compose.yaml</code> / <code>Dockerfile</code> / <code>Caddyfile</code></td><td>caddy / app / postgres の3サービス。<a href="../20260906-0815-deployment/index.html">のちに作り直した</a></td></tr>
+      <tr><td><code>src/lib/db.ts</code></td><td>接続、型パーサの差し替え、組織スコープ、番号の採番</td></tr>
+      <tr><td><code>src/lib/row.ts</code></td><td>クエリ結果の実行時検証</td></tr>
+      <tr><td><code>src/lib/env.ts</code></td><td>環境変数を起動時に一度だけ検証する</td></tr>
+      <tr><td><code>src/lib/mail.ts</code></td><td><code>MailSender</code> の抽象。コンソール出力の実装まで</td></tr>
+      <tr><td><code>src/styles/*.css</code></td><td>意匠の写し。<code>docs/theme.css</code> と同一に保つ</td></tr>
+      <tr><td><code>src/features/thread/queries.ts</code></td><td>データにさわる関数の書き方の見本</td></tr>
+      <tr><td><code>src/app/</code></td><td>レイアウトとログイン画面</td></tr>
+      <tr><td><code>db/functions.sql</code></td><td>関数とトリガ。Atlas の管理下に置かない</td></tr>
+      <tr><td><code>migrations/</code></td><td>最初のマイグレーション（44文）。適用済み</td></tr>
+      <tr><td><code>tests/schema.test.ts</code></td><td>制約が効くことの検査。15件</td></tr>
+      <tr><td><code>scripts/</code></td><td>共有スタイルの同期と照合、関数の適用</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><code>pnpm build</code> が通り、ログイン画面がモックどおりに描画されることを確認した。
+  <code>tsc --noEmit</code> は <code>strict</code> に加えて
+  <code>noUncheckedIndexedAccess</code> と <code>exactOptionalPropertyTypes</code> を有効にして通過する。</p>
+
+  <div class="note ok">
+    <span class="note-label">スキーマを実データベースで検証した</span>
+    <p>devcontainer が <code>localhost-postgresql</code> のネットワークに参加しており、
+    PostgreSQL 18.4 に接続できた。
+    Atlas を入れ、最初のマイグレーションを生成して適用し、
+    15テーブルが作られることと、制約が意図どおり効くことを確かめた。</p>
+    <p>作ったデータベースは <code>tasktasktask_work_local</code>（開発用）と
+    <code>tasktasktask_work_atlas</code>（Atlas の作業用）の二つである。</p>
+  </div>
+
+  <h2>決めたこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th class="nowrap">論点</th><th>決定</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="nowrap">クエリ結果の型</td>
+        <td>行の型を手で書き、境界で zod により実行時検証する</td>
+        <td>生 SQL のまま進められる。型生成は実データベースを CI にも要求するため、この規模では重い</td>
+      </tr>
+      <tr>
+        <td class="nowrap">スタイリング</td>
+        <td>素の CSS。<code>docs/theme.css</code> と共有する</td>
+        <td>設計済みの意匠をそのまま使える。ドキュメントの見本と製品を二重管理にしない</td>
+      </tr>
+      <tr>
+        <td class="nowrap">ディレクトリ</td>
+        <td>機能別（<code>src/features/{name}/</code>）</td>
+        <td><code>docs/features/</code> の10機能と名前を対応させ、仕様から直す場所を辿れるようにする</td>
+      </tr>
+      <tr>
+        <td class="nowrap">テスト</td>
+        <td>権限判定と DB 制約に絞る</td>
+        <td>他社のデータや非公開プロジェクトの漏れが最大のリスクで、そこだけは自動で守る</td>
+      </tr>
+      <tr>
+        <td class="nowrap">Lint / Format</td>
+        <td>Biome</td>
+        <td>設定が1ファイルで済み、速い。Next.js 固有の誤りを拾えなくなる点は承知のうえ</td>
+      </tr>
+      <tr>
+        <td class="nowrap">サーバーへの経路</td>
+        <td>Server Actions + zod</td>
+        <td>フォーム送信のためだけに API を作らずに済む。添付だけは Route Handler を併用</td>
+      </tr>
+      <tr>
+        <td class="nowrap">添付の配信</td>
+        <td><strong>同一オリジン</strong></td>
+        <td>下に記す</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>添付の配信を同一オリジンに変えた</h2>
+
+  <p>前のセッションでは、添付ファイルを本体とは別のドメインから配信すると決めていた。
+  この判断を変えた。</p>
+
+  <p>実際に守っているのはヘッダである。
+  <code>Content-Disposition: attachment</code> と <code>nosniff</code> と
+  <code>Content-Type: application/octet-stream</code> が揃っていれば、
+  HTML をアップロードされてもブラウザは描画せずダウンロードする。</p>
+
+  <p>オリジンの分離が足していたのは、この経路に将来手を入れた誰かが間違えたときに被害を抑える、という保険だけである。
+  そして<strong>その保険には実費がある</strong>。
+  別のドメインにはセッションの Cookie が送られないので、
+  <a href="../../glossary.html#private-project">非公開プロジェクト</a>の添付を誰に見せるかを、
+  署名付きURLのような別の仕組みで決めることになる。</p>
+
+  <p>同一オリジンなら Cookie がそのまま使え、閲覧判定は他の画面と同じ経路で済む。
+  サービスもドメインも一つ減る。</p>
+
+  <p>そのぶん、経路の作り方に三つの条件を付けた。</p>
+
+  <ul>
+    <li>添付を返す経路を1本に限り、その関数が常にヘッダを付ける。切り替えのパラメータを作らない</li>
+    <li>インライン表示するのは、サーバー側で再エンコードした出力だけ。<code>Content-Type</code> は決め打ちの値から選ぶ</li>
+    <li>レスポンスに <code>Content-Security-Policy: default-src 'none'; sandbox</code> を足す</li>
+  </ul>
+
+  <p>三つめは、オリジンを分けなくなったぶんの埋め合わせである。
+  二つめが崩れたときの最後の砦になる。</p>
+
+  <h2>設計から変えた2点</h2>
+
+  <h3>citext をやめ、拡張を一つも使わない構成にした</h3>
+
+  <p>まず <code>organizations.slug</code> を <code>text</code> にした。
+  CHECK 制約の正規表現が小文字と数字しか許さないので、
+  比較を大文字小文字非依存にする意味がないためである。</p>
+
+  <p>そのあと Atlas を流して、<strong>無料の範囲では <code>CREATE EXTENSION</code> を扱えない</strong>と分かった。
+  残っていたメールアドレスの <code>citext</code> も <code>text</code> にし、小文字に揃えて保存する。
+  書き込む側が <code>lower()</code> を忘れたら CHECK 制約で落ちる。</p>
+
+  <p>結果として、このプロジェクトは PostgreSQL の拡張をひとつも使わない。</p>
+
+  <h3>updated_at をトリガで埋めることにした</h3>
+
+  <p>設計には書いていなかった。
+  アプリケーション側で毎回書く方式は書き忘れが起きる。</p>
+
+  <p>そして書き忘れが見つけにくい。
+  <a href="../../glossary.html#thread-list">スレッド一覧</a>の既定の並び順が更新の新しい順なので、
+  更新したのに一覧で下に沈む、という形でしか表面化しない。</p>
+
+  <h2>意匠をドキュメントと共有する仕掛け</h2>
+
+  <p>スタイリングに素の CSS を選んだのは、
+  <code>docs/theme.css</code> に設計済みの意匠があり、
+  それをドキュメントと製品で共用したかったからである。</p>
+
+  <p>ただし写しを置くと、片方だけを直したときに静かにずれる。
+  ずれたことに気づく手段がない。
+  そこで <code>docs/theme.css</code> に <code>@shared</code> の目印を入れ、
+  同期と照合をスクリプトにした。</p>
+
+<pre><code>pnpm styles:sync    docs/theme.css → src/styles/ へ写す
+pnpm styles:check   食い違っていれば失敗する（pnpm check に含む）</code></pre>
+
+  <p>共有しているのは、色と書体の変数、製品コンポーネント（種別バッジ、進捗メーター、
+  ガントバー、ハンコアバターなど）、画面のシェルの三つである。
+  ドキュメントのページモックと製品の画面は、文字どおり同じ CSS で描かれる。</p>
+
+  <h2>制約で守れること、守れないこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>守れること</th><th>手段</th></tr></thead>
+    <tbody>
+      <tr><td>親子がプロジェクトをまたがない</td><td>複合外部キー <code>(parent_thread_id, project_id)</code></td></tr>
+      <tr><td>スレッドの組織とプロジェクトの組織が一致する</td><td>複合外部キー <code>(project_id, organization_id)</code></td></tr>
+      <tr><td>議論と質問が期間を持たない</td><td>CHECK <code>threads_period_only_for_kadai</code></td></tr>
+      <tr><td>議論と質問の進捗率が 0 か 100 だけ</td><td>CHECK <code>threads_progress_binary_for_non_kadai</code></td></tr>
+      <tr><td>アーカイブを経ないと削除できない</td><td>CHECK <code>*_delete_after_archive</code></td></tr>
+      <tr><td>添付がスレッドかコメントの一方だけに付く</td><td>CHECK <code>attachments_exactly_one_owner</code></td></tr>
+      <tr><td>自分の操作で自分に通知が来ない</td><td>CHECK <code>notifications_not_self</code></td></tr>
+      <tr><td>スレッド番号が組織の中で一意</td><td>UNIQUE <code>(organization_id, number)</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">データベースでは守れないもの</span>
+    <p>次の三つはアプリケーション側で担保する。<a href="../../devops/coding-conventions/index.html">規約</a>に書き足す必要がある。</p>
+    <ul style="margin-bottom:0">
+      <li><strong>親子の循環参照。</strong>階層に深さの制限がないため CHECK では表現できない。
+          親を設定するときに再帰CTEで祖先を辿り、自分自身が現れないことを確認する</li>
+      <li><strong>最後の組織管理者を外せない。</strong>行数の下限は CHECK では書けない</li>
+      <li><strong>プロジェクトキーの変更禁止。</strong>形式は CHECK で縛れるが、
+          「作成後は変えられない」は更新時の判断になる</li>
+    </ul>
+  </div>
+
+  <h2>Atlas を流して分かったこと</h2>
+
+  <p>無料の範囲では、Atlas は<strong>拡張と関数とプロシージャを扱えない</strong>。
+  <code>schema/</code> に書くと <code>migrate diff</code> の時点で止まる。</p>
+
+  <p>これが二つの判断を導いた。
+  ひとつは上に書いた「拡張を使わない」。
+  もうひとつは、関数とトリガを <code>db/functions.sql</code> に分け、
+  マイグレーションの適用後に流すことである。</p>
+
+  <p>分けたものを Atlas が消しにいかないかを確かめた。
+  関数とトリガを手で作った状態で <code>migrate diff</code> を流しても、Atlas は何も生成しない。
+  読めないものは差分の対象にもならない。</p>
+
+  <div class="note warn">
+    <span class="note-label">Atlas Pro に移るときは見直す</span>
+    <p>この扱いが成り立つのは、Atlas が関数を読めないからである。
+    <code>atlas login</code> をすると Atlas は関数とトリガも差分の対象にし、
+    <code>schema/</code> に無いそれらを「消すべきもの」と判断しうる。</p>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">atlas migrate lint は使えない</span>
+    <p>v0.38 から Pro 限定になっている。
+    生成された移行に危ない変更が混ざっていないかを見る、という役割は残したいので、
+    <code>scripts/lint-migrations.mjs</code> を自前で書いた。</p>
+    <p>検査するのは<a href="../../devops/database-migration/index.html">スキーマ移行</a>に書いた規約そのものである。
+    破壊的な変更、列の型変更、<code>CONCURRENTLY</code> のない索引作成、
+    <code>NOT VALID</code> のない CHECK 追加、<code>SET NOT NULL</code>。
+    汎用の検査より、この構成で守りたいことを直接かけるほうが効く。</p>
+    <p>その移行で新しく作られたテーブルが対象なら見逃す。走査すべき行が無いためである。
+    承知のうえで通すときは、直前の行に <code>-- lint-ok: 理由</code> を書く。</p>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">スクリプトの不備をひとつ直した</span>
+    <p><code>atlas</code> は別のプロセスなので、<code>.env</code> の中身が自動では渡らない。
+    最初に書いたスクリプトは <code>atlas</code> を直接呼んでいたため、
+    シェルに環境変数を入れていない状態では
+    <code>sql/sqlclient: missing driver</code> で止まった。</p>
+    <p>いまは <code>scripts/atlas.mjs</code> を経由し、<code>.env</code> を読んでから起動する。
+    環境変数が足りないときと <code>atlas</code> が入っていないときは、
+    それぞれ何をすればよいかを案内して止まる。</p>
+  </div>
+
+  <h2>制約が効くことをテストで固定した</h2>
+
+  <p>Q4 で「権限判定と DB 制約に絞ってテストを書く」と決めた分の第一歩として、
+  実データベースに対する検査を <code>tests/schema.test.ts</code> に置いた。
+  Node 内蔵のテストランナーを使うので、依存は増えていない。</p>
+
+<pre><code>$ pnpm test
+  ✔ 議論と質問は期間を持てない
+  ✔ 議論と質問の進捗率は 0 か 100 しか取らない
+  ✔ 親子はプロジェクトをまたげない
+  ✔ アーカイブを経ないと削除できない
+  ✔ スレッド番号は組織の中で通し番号になる
+  ✔ 大文字のメールアドレスを受け付けない
+  ✔ 添付はスレッドかコメントの一方にだけ付く
+  ✔ 自分の操作で自分に通知は作れない
+  ✔ updated_at のトリガが古い値を上書きする
+  ✔ date 列は文字列として返る
+  ...  15 tests / 15 pass</code></pre>
+
+  <p>各テストはトランザクションの中で走り、最後に巻き戻す。
+  後片付けを書かずに済み、テストどうしが干渉しない。</p>
+
+  <div class="note">
+    <span class="note-label">最初に書いたテストは誤っていた</span>
+    <p><code>updated_at</code> のトリガを検査するとき、
+    同じトランザクションの中で <code>pg_sleep</code> を挟んで前後を比べた。
+    <code>now()</code> はトランザクションの開始時刻を返すので、値は動かない。
+    トリガは正しく効いていたのに、テストが失敗と判定していた。</p>
+    <p>いまは「手で入れた古い値が上書きされるか」で見ている。
+    ひとつのトランザクションで起きた変更が同じ時刻を持つのは、
+    <code>updated_at</code> の意味として正しい。</p>
+  </div>
+
+  <h2>次にやること</h2>
+
+  <ol>
+    <li><a href="../../features/authentication/index.html">認証</a>を実装する。ほかのすべてがこれを前提にするため</li>
+    <li>権限判定のテストを足す。<code>VISIBLE_PROJECT_IDS</code> が非公開を漏らさないこと</li>
+    <li>SMTP の送信実装。依存を決めてから</li>
+  </ol>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">SESSIONS</span><p class="card-title">セッション履歴</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../20260905-1210-initial-specification/index.html"><span class="card-no">SESSION</span><p class="card-title">仕様の策定</p><p class="card-desc">前のセッション</p></a>
+    <a class="card" href="../../devops/coding-conventions/index.html"><span class="card-no">DEVOPS</span><p class="card-title">コーディング規約</p><p class="card-desc">書き方の決まり</p></a>
+    <a class="card" href="../../features/attachment/index.html"><span class="card-no">FEATURE</span><p class="card-title">添付ファイル</p><p class="card-desc">同一オリジンの条件</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-05 プロジェクトの初期化</span>
+    <span>最終更新 2026-09-05</span>
+    <span>ENISHI 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

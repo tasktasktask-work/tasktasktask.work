@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>全文検索 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 高</p>
+  <h1 class="title">全文検索</h1>
+
+  <h2>概要</h2>
+  <p>スレッドのタイトル、本文、コメントを対象とした検索がない。
+  探す手段は<a href="../../glossary.html#thread-list">スレッド一覧</a>の絞り込みだけである。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>絞り込める軸</th><th>絞り込めないもの</th></tr></thead>
+    <tbody>
+      <tr><td>種別、担当者、タグ、進捗率、アーカイブ状態</td><td><strong>本文やコメントに書かれた言葉</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>先送りとした理由</h2>
+
+  <p>日本語の全文検索は、英語と比べて手数が多い。
+  分かち書きが必要で、表記のゆれ（全角と半角、カタカナとひらがな、送り仮名）を吸収する処理も要る。
+  <code>pg_bigm</code> や <code>pgroonga</code> といった拡張を入れるか、
+  検索エンジンを別に立てるかという選択も生じる。</p>
+
+  <p>一方、数万件という想定規模では、絞り込みだけでもある程度たどり着ける見込みがある。
+  <strong>本当に必要かどうかを、実データが溜まってから判断する</strong>ほうが、
+  無駄な作り込みを避けられると考えた。</p>
+
+  <div class="note warn">
+    <span class="note-label">この判断の弱点</span>
+    <p>過去の議論を掘り返す場面では、絞り込みが役に立たない。
+    「あのとき正規化についてどう決めたか」を探すには、
+    タグが付いていることを期待するしかない。</p>
+    <p>そして<strong>タグを付けるかどうかは、書いた時点では判断できない</strong>。
+    後で参照されるかどうかがわからないからである。</p>
+  </div>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>1プロジェクトのスレッドが数百件を超えたとき</li>
+    <li>「前に似た話をした気がするが見つからない」という状況が繰り返されたとき</li>
+    <li>タグの数が増えすぎて、分類としての意味を失いはじめたとき</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+
+  <p>PostgreSQL の中で完結させる案を第一候補とする。
+  検索エンジンを別に立てると、<a href="../../devops/deployment/index.html">デプロイ構成</a>にコンテナと運用が増える。</p>
+
+<pre><code>-- pg_bigm による2-gram インデックス（日本語で分かち書きが不要）
+CREATE EXTENSION pg_bigm;
+
+ALTER TABLE threads ADD COLUMN search_text text
+  GENERATED ALWAYS AS (title || ' ' || body) STORED;
+
+CREATE INDEX threads_search
+  ON threads USING gin (search_text gin_bigm_ops);</code></pre>
+
+  <p>コメントも対象にするなら、スレッドとコメントを横断する検索が要る。
+  <a href="../../glossary.html#private-project">非公開プロジェクト</a>があるため、
+  <strong>検索結果に閲覧権限のないものが混ざらないよう、権限の条件を必ず併せる</strong>。
+  検索は権限漏れが起きやすい機能なので、ここは慎重に組む。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/thread/index.html"><span class="card-no">FEATURE</span><p class="card-title">スレッド</p><p class="card-desc">一覧の絞り込み</p></a>
+    <a class="card" href="../../features/tag/index.html"><span class="card-no">FEATURE</span><p class="card-title">タグ</p><p class="card-desc">現状の探索手段</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / 全文検索</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

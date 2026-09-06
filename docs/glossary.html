@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用語集 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+
+  <p class="eyebrow">Glossary</p>
+  <h1 class="title">用語集</h1>
+
+  <p class="lede">
+    このプロダクトは既存の課題管理ツールを下敷きにしていない。
+    そのため「課題」や「状態」といったありふれた言葉であっても、他所での意味をそのまま持ち込むと食い違う。
+    ここに並ぶのは、開発者と現場が同じ絵を思い浮かべるために必要な最小限の語である。
+  </p>
+
+  <div class="note decide">
+    <span class="note-label">運用の決まり</span>
+    <p>会話の中で新しい語が出てきたら、設計や実装よりも先にここへ書く。
+    そして、その語を使っている本文の側からもこのページへリンクを張る。
+    どこからも参照されていない語が残っていたら、それは使われていない語か、リンクの張り忘れである。</p>
+  </div>
+
+  <h2>索引</h2>
+
+  <div class="cards">
+    <a class="card" href="#organization"><span class="card-no">01</span><p class="card-title">組織</p><p class="card-desc">すべてのデータが属する一番外側の器</p></a>
+    <a class="card" href="#project"><span class="card-no">02</span><p class="card-title">プロジェクト</p><p class="card-desc">スレッドを入れる箱。ガントの単位でもある</p></a>
+    <a class="card" href="#thread"><span class="card-no">03</span><p class="card-title">スレッド</p><p class="card-desc">このプロダクトの基本単位</p></a>
+    <a class="card" href="#progress"><span class="card-no">04</span><p class="card-title">進捗率</p><p class="card-desc">状態を数値ひとつで表す仕組み</p></a>
+    <a class="card" href="#comment"><span class="card-no">05</span><p class="card-title">コメント</p><p class="card-desc">書いたら直せない発言の記録</p></a>
+    <a class="card" href="#watch"><span class="card-no">06</span><p class="card-title">ウォッチ</p><p class="card-desc">通知を受け取る意思表示</p></a>
+    <a class="card" href="#archive"><span class="card-no">07</span><p class="card-title">アーカイブ</p><p class="card-desc">畳んで視界から外す操作</p></a>
+    <a class="card" href="#gantt"><span class="card-no">08</span><p class="card-title">ガントチャート</p><p class="card-desc">課題の期間を時間軸に並べた図</p></a>
+  </div>
+
+  <!-- ================================================================= -->
+  <h2>組織とプロジェクト</h2>
+
+  <article class="term" id="organization">
+    <h3>組織<span class="reading">organization</span></h3>
+    <p>ひとつの会社やチームに対応する、データの一番外側の器を<strong>組織</strong>と呼ぶ。
+    ユーザー、プロジェクト、スレッド、タグ。すべてがいずれかの組織に属し、組織をまたいで参照されることはない。</p>
+    <p>ひとりのユーザーが複数の組織に所属できる。
+    業務委託で二社に関わる人や、事業部をまたぐ人が実際にいるためである。
+    そのため画面のURLには常に組織を示す文字列が含まれ、いま自分がどの組織を見ているかが分かるようになっている。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>業務委託の人にも入ってもらいたいんですが、うちの組織に招待すると全部見えちゃいますか。</span></p>
+      <p><span class="who">開発者</span><span>組織に招待すると、公開プロジェクトは全部見えます。見せたくないものは非公開プロジェクトにしてください。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#org-admin">組織管理者</a><a href="#project">プロジェクト</a><a href="#invitation">招待</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/organization/index.html">組織とメンバー</a></div>
+  </article>
+
+  <article class="term" id="org-admin">
+    <h3>組織管理者<span class="reading">organization admin</span></h3>
+    <p>組織の設定変更、メンバーの招待、プロジェクトの作成、そして論理削除を行える役割を<strong>組織管理者</strong>と呼ぶ。
+    それ以外のメンバーは<strong>組織メンバー</strong>と呼び、役割はこの二段しかない。</p>
+    <p>組織管理者は複数人置ける。
+    ひとりに限ると、その人が退職したりアカウントを失ったときに、組織そのものが操作不能になるからである。</p>
+    <p>組織管理者は、自分が参加していない<a href="#private-project">非公開プロジェクト</a>も閲覧でき、そのプロジェクト管理者としても扱われる。
+    退職者しかメンバーがいないプロジェクトを引き継げなくなる事態を避けるためである。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>プロジェクトを作れるのは誰ですか。</span></p>
+      <p><span class="who">開発者</span><span>組織管理者だけです。メンバーが自由に作れるようにはしていません。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#organization">組織</a><a href="#project-admin">プロジェクト管理者</a><a href="#soft-delete">論理削除</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/organization/index.html">組織とメンバー</a></div>
+  </article>
+
+  <article class="term" id="project">
+    <h3>プロジェクト<span class="reading">project</span></h3>
+    <p>スレッドを入れる箱を<strong>プロジェクト</strong>と呼ぶ。
+    すべてのスレッドはいずれかのプロジェクトに属し、後から別のプロジェクトへ移すことはできない。</p>
+    <p>プロジェクトはただの分類ではない。
+    <a href="#gantt">ガントチャート</a>が一枚に描く範囲、<a href="#mention">メンション</a>の候補に出る人の範囲、そして閲覧できる人の範囲。
+    これらすべての境界がプロジェクトである。</p>
+    <p>持っている情報は、名前と<a href="#project-key">プロジェクトキー</a>と説明文、それに<a href="#archive">アーカイブ</a>されているかどうかだけである。
+    期間は持たない。プロジェクトの期間を知りたければ、中の課題を見ればわかる。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>この案件、途中でプロジェクトを分けたくなったらどうすれば。</span></p>
+      <p><span class="who">開発者</span><span>移動はできません。新しいプロジェクトを作って、そちらでスレッドを立て直してもらう形になります。</span></p>
+      <p><span class="who">PM</span><span>けっこう痛いですね。最初の切り方を慎重にします。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#project-key">プロジェクトキー</a><a href="#private-project">非公開プロジェクト</a><a href="#thread">スレッド</a><a href="#gantt">ガントチャート</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/project/index.html">プロジェクト</a></div>
+  </article>
+
+  <article class="term" id="project-key">
+    <h3>プロジェクトキー<span class="reading">project key</span></h3>
+    <p>プロジェクトごとに付ける短い記号を<strong>プロジェクトキー</strong>と呼ぶ。
+    半角の英大文字と数字で2文字から10文字、組織の中で重複しない。</p>
+    <p>キーは<a href="#thread-id">スレッド識別子</a>の前半に現れる。
+    <code>WEB-128</code> の <code>WEB</code> がそれである。
+    後から変更することはできない。すでに配られた識別子の見た目が変わり、口頭や議事録での参照が通じなくなるためである。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>キーを WEB から FRONT に変えたいんですが。</span></p>
+      <p><span class="who">開発者</span><span>変更できない仕様です。番号だけは組織で通しているので取り違えは起きませんが、表示は WEB のままになります。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#project">プロジェクト</a><a href="#thread-id">スレッド識別子</a><a href="#thread-number">スレッド番号</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/project/index.html">プロジェクト</a></div>
+  </article>
+
+  <article class="term" id="private-project">
+    <h3>公開プロジェクトと非公開プロジェクト<span class="reading">public / private project</span></h3>
+    <p>組織のメンバー全員が閲覧できるプロジェクトを<strong>公開プロジェクト</strong>、指定したメンバーだけが閲覧できるものを<strong>非公開プロジェクト</strong>と呼ぶ。
+    この設定は後から切り替えられる。</p>
+    <p>非公開から公開へ切り替えると、それまで限られた人しか見られなかったスレッドが組織全員に見えるようになる。
+    取り消しはできても、見られた事実は取り消せない。
+    そのため切り替えの操作には確認をはさむ。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>人事の検討を進めるプロジェクトを作りたいんですが、他の人には見せたくなくて。</span></p>
+      <p><span class="who">開発者</span><span>非公開にしてください。メンバーに入れた人と組織管理者しか見えません。メンションの候補にも、その人たちしか出ません。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#project">プロジェクト</a><a href="#project-admin">プロジェクト管理者</a><a href="#mention">メンション</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/project/index.html">プロジェクト</a></div>
+  </article>
+
+  <article class="term" id="project-admin">
+    <h3>プロジェクト管理者<span class="reading">project admin</span></h3>
+    <p><a href="#private-project">非公開プロジェクト</a>のメンバーを追加したり外したりできる人を<strong>プロジェクト管理者</strong>と呼ぶ。
+    できることはこの一点だけで、スレッドの操作については一般のメンバーと変わらない。</p>
+    <p>プロジェクトを作った組織管理者が自動的に管理者になる。
+    加えて、すべての組織管理者が全プロジェクトの管理者として扱われる。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#org-admin">組織管理者</a><a href="#private-project">非公開プロジェクト</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/project/index.html">プロジェクト</a></div>
+  </article>
+
+
+  <!-- ================================================================= -->
+  <h2>スレッド</h2>
+
+  <article class="term" id="thread">
+    <h3>スレッド<span class="reading">thread</span></h3>
+    <p>このプロダクトが扱う情報の基本単位を<strong>スレッド</strong>と呼ぶ。
+    タイトルと本文があり、その下に<a href="#comment">コメント</a>が時系列で一本に連なる。</p>
+    <p>他の課題管理ツールとの違いはここにある。
+    普通のツールは「課題」を基本単位に置き、議論はその付属物として扱う。
+    このプロダクトでは逆で、基本単位はスレッドであり、<a href="#kadai">課題</a>はその<a href="#thread-type">種別</a>のひとつでしかない。</p>
+    <p>この設計は、実装のゴールが決まっていない話をどこに書けばいいのか、という問題への答えである。
+    ゴールが定まる前の相談も、答えが返ってくれば済む疑問も、課題と同じ場所に同じ形で置ける。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>まだ課題として書けるほど固まってない相談があるんですが、どこに書けばいいですか。</span></p>
+      <p><span class="who">開発者</span><span>種別を議論にしてスレッドを立ててください。課題と同じ場所に並びます。</span></p>
+      <p><span class="who">PM</span><span>そこで話がまとまったら、そのスレッドが課題になるんですか。</span></p>
+      <p><span class="who">開発者</span><span>いえ、変換はできません。課題のスレッドを別に立てて、議論のスレッドを親にしてください。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread-type">種別</a><a href="#kadai">課題</a><a href="#giron">議論</a><a href="#shitsumon">質問</a><a href="#parent-child">親子関係</a><a href="#comment">コメント</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a></div>
+  </article>
+
+  <article class="term" id="thread-type">
+    <h3>種別<span class="reading">thread type</span></h3>
+    <p>スレッドがどういう性質の話かを示す区分を<strong>種別</strong>と呼ぶ。
+    <a href="#kadai">課題</a>、<a href="#giron">議論</a>、<a href="#shitsumon">質問</a>の三つで固定されており、組織ごとに増やすことはできない。</p>
+    <p>種別によって使える機能が変わる。</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>種別</th><th>進捗率</th><th>期間</th><th>親子</th><th>ガント</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge shu">課題</span></td><td>0から100の任意の値</td><td>持つ</td><td>可</td><td>載る</td></tr>
+          <tr><td><span class="badge ai">議論</span></td><td>0か100のみ</td><td>持たない</td><td>可</td><td>載らない</td></tr>
+          <tr><td><span class="badge midori">質問</span></td><td>0か100のみ</td><td>持たない</td><td>可</td><td>載らない</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>種別は後から変更できない。
+    議論として立てたスレッドを課題に作り変えることはできず、課題のスレッドを新たに立て直すことになる。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread">スレッド</a><a href="#progress">進捗率</a><a href="#open-close">オープンとクローズ</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a></div>
+  </article>
+
+  <article class="term" id="kadai">
+    <h3>課題<span class="reading">issue</span></h3>
+    <p>やるべきことが決まっていて、終わりの形が言える<a href="#thread">スレッド</a>を<strong>課題</strong>と呼ぶ。
+    三つの<a href="#thread-type">種別</a>のうち、これだけが<a href="#period">期間</a>を持ち、<a href="#gantt">ガントチャート</a>に載る。</p>
+    <p><a href="#progress">進捗率</a>は0から100の任意の値を取れる。
+    ここが他の二つの種別との違いで、「半分終わった」という状態を表せるのは課題だけである。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread-type">種別</a><a href="#progress">進捗率</a><a href="#period">期間</a><a href="#assignee">担当者</a><a href="#gantt">ガントチャート</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a>／<a href="features/gantt/index.html">ガントチャート</a></div>
+  </article>
+
+  <article class="term" id="giron">
+    <h3>議論<span class="reading">discussion</span></h3>
+    <p>何をするか決まっていない相談を置く<a href="#thread">スレッド</a>を<strong>議論</strong>と呼ぶ。
+    実装のゴールが存在しないため、期間を持たずガントにも載らない。</p>
+    <p>状態は<a href="#open-close">オープンかクローズ</a>の二つだけである。
+    話がついたらクローズする。そこから生まれた作業は、課題のスレッドを別に立てて、この議論を親にする。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>この議論、結論は出たんですけど、まだやることが決まってなくて。</span></p>
+      <p><span class="who">開発者</span><span>結論が出たならクローズしていいです。やることが決まったら、あとから子に課題をぶら下げてください。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread-type">種別</a><a href="#open-close">オープンとクローズ</a><a href="#parent-child">親子関係</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a></div>
+  </article>
+
+  <article class="term" id="shitsumon">
+    <h3>質問<span class="reading">question</span></h3>
+    <p>答えが返ってくれば済む疑問を置く<a href="#thread">スレッド</a>を<strong>質問</strong>と呼ぶ。
+    <a href="#giron">議論</a>と同じく期間を持たず、状態は<a href="#open-close">オープンかクローズ</a>の二つだけである。</p>
+    <p>議論との違いは、決めることがあるかどうかにある。
+    答えを知っている人がいれば終わるものが質問で、関係者で決めなければ終わらないものが議論である。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread-type">種別</a><a href="#giron">議論</a><a href="#open-close">オープンとクローズ</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a></div>
+  </article>
+
+  <article class="term" id="thread-number">
+    <h3>スレッド番号<span class="reading">thread number</span></h3>
+    <p>スレッドに割り当てられる連番を<strong>スレッド番号</strong>と呼ぶ。
+    組織の中で通し番号になっており、プロジェクトごとには振り直さない。</p>
+    <p>そのため、ひとつのプロジェクトだけを見ると番号が飛ぶ。
+    <code>WEB-3</code> の次が <code>WEB-7</code> になることは正常である。
+    間の番号は同じ組織の別プロジェクトが使っている。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>番号が飛んでるんですが、誰か消しました？</span></p>
+      <p><span class="who">開発者</span><span>番号は組織で通しているので、他のプロジェクトが使っています。消えたわけではありません。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread-id">スレッド識別子</a><a href="#project-key">プロジェクトキー</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a></div>
+  </article>
+
+  <article class="term" id="thread-id">
+    <h3>スレッド識別子<span class="reading">thread identifier</span></h3>
+    <p><a href="#project-key">プロジェクトキー</a>と<a href="#thread-number">スレッド番号</a>をハイフンでつないだ表記を<strong>スレッド識別子</strong>と呼ぶ。
+    <code>WEB-128</code> のような形になる。</p>
+    <p>番号だけでも一意に定まるが、キーを前に置くことでどのプロジェクトの話かがその場でわかる。
+    会議で口に出すときも、議事録に書くときも、この形で参照する。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#project-key">プロジェクトキー</a><a href="#thread-number">スレッド番号</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a></div>
+  </article>
+
+  <article class="term" id="parent-child">
+    <h3>親子関係<span class="reading">parent / child</span></h3>
+    <p>スレッドの下に別のスレッドをぶら下げる関係を<strong>親子関係</strong>と呼ぶ。
+    上を<strong>親スレッド</strong>、下を<strong>子スレッド</strong>と呼ぶ。</p>
+    <p>階層の深さに制限はない。
+    そして<a href="#thread-type">種別</a>をまたいでよい。
+    議論の子に課題を置くことも、課題の子に質問を置くこともできる。
+    ただし<a href="#project">プロジェクト</a>はまたげない。親と子は必ず同じプロジェクトに属する。</p>
+    <p>親子関係には、集計の意味を持たせていない。
+    親の<a href="#progress">進捗率</a>は子から計算されず、親の<a href="#period">期間</a>も子とは独立して入力する。
+    親が持つ期間は、その塊全体としていつまでに終わらせたいかを表す。
+    子がそこからはみ出したときは<a href="#overflow-warning">はみ出し警告</a>で知らせるが、値を書き換えることはしない。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>子課題を全部100%にしたら、親も自動で100%になりますか。</span></p>
+      <p><span class="who">開発者</span><span>なりません。親の進捗率は自分で入れてください。子が終わっていても、親としてやり残しがあることはあるので。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread">スレッド</a><a href="#overflow-warning">はみ出し警告</a><a href="#progress">進捗率</a><a href="#period">期間</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a>／<a href="features/gantt/index.html">ガントチャート</a></div>
+  </article>
+
+  <article class="term" id="assignee">
+    <h3>担当者<span class="reading">assignee</span></h3>
+    <p>そのスレッドを進める責任を持つ人を<strong>担当者</strong>と呼ぶ。
+    ひとつのスレッドにひとりだけ置ける。未設定のまま置くこともできる。</p>
+    <p>複数人を置けるようにはしていない。
+    全員が自分の仕事ではないと思う状態を避けるためである。
+    関わっているだけの人は<a href="#mention">メンション</a>や<a href="#watch">ウォッチ</a>で表す。</p>
+    <p>担当者に設定されると<a href="#notification">通知</a>が飛ぶ。
+    また、<a href="features/dashboard/index.html">担当スレッド一覧</a>にはこの人の名前で集まったスレッドがプロジェクトをまたいで並ぶ。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#watch">ウォッチ</a><a href="#mention">メンション</a><a href="#notification">通知</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a>／<a href="features/dashboard/index.html">担当スレッド一覧</a></div>
+  </article>
+
+  <!-- ================================================================= -->
+  <h2>進捗と期間</h2>
+
+  <article class="term" id="progress">
+    <h3>進捗率<span class="reading">progress</span></h3>
+    <p>スレッドがどこまで進んだかを0から100の整数で表したものを<strong>進捗率</strong>と呼ぶ。
+    このプロダクトには、これとは別の状態欄が存在しない。</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th class="nowrap">値</th><th>課題での意味</th><th>議論と質問での意味</th></tr></thead>
+        <tbody>
+          <tr><td><code>0</code></td><td>未着手</td><td><a href="#open-close">オープン</a></td></tr>
+          <tr><td><code>1</code>から<code>99</code></td><td>進行中</td><td>取らない</td></tr>
+          <tr><td><code>100</code></td><td>完了</td><td><a href="#open-close">クローズ</a></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>値は担当者が自分で入力する。1刻みで自由に入れられるが、入力欄には0、25、50、75、100の候補を出して選びやすくする。</p>
+    <div class="note warn">
+      <span class="note-label">この設計で表せないこと</span>
+      <p>進捗率だけを持つ設計では、「やらないと決めた課題」と「まだ手をつけていない課題」がどちらも0のままになり、区別できない。
+      同じ理由で「レビュー中」のような工程も表せない。
+      どう扱うかは各組織の運用に委ねる方針を取った。<a href="issues/rejection-representation/index.html">却下の表現</a>に経緯を記録している。</p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#open-close">オープンとクローズ</a><a href="#thread-type">種別</a><a href="#archive">アーカイブ</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a></div>
+  </article>
+
+  <article class="term" id="open-close">
+    <h3>オープンとクローズ<span class="reading">open / close</span></h3>
+    <p><a href="#giron">議論</a>と<a href="#shitsumon">質問</a>における<a href="#progress">進捗率</a>の呼び名である。
+    0を<strong>オープン</strong>、100を<strong>クローズ</strong>と呼び、その間の値は取らない。</p>
+    <p>保存されている値は課題と同じ進捗率だが、画面には数値を出さない。
+    質問の詳細画面に「進捗率100%」と表示されても、それが何を意味するのか読み手には伝わらないからである。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#progress">進捗率</a><a href="#giron">議論</a><a href="#shitsumon">質問</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a></div>
+  </article>
+
+  <article class="term" id="period">
+    <h3>期間<span class="reading">period</span></h3>
+    <p><a href="#kadai">課題</a>が持つ開始日と終了日の組を<strong>期間</strong>と呼ぶ。
+    時刻は持たず、日付だけを扱う。</p>
+    <p>時刻を持たせない理由は、<a href="#organization">組織</a>ごとにタイムゾーンを設定できるようにしたためである。
+    時刻を持つと、設定を変えた瞬間に既存の日付が前後する。
+    日付だけなら、その事故が構造的に起きない。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#kadai">課題</a><a href="#no-period">期間未設定</a><a href="#overflow-warning">はみ出し警告</a><a href="#gantt">ガントチャート</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/gantt/index.html">ガントチャート</a>／<a href="devops/coding-conventions/index.html#datetime">日付と時刻の扱い</a></div>
+  </article>
+
+  <article class="term" id="no-period">
+    <h3>期間未設定<span class="reading">undated</span></h3>
+    <p>開始日と終了日が入っていない<a href="#kadai">課題</a>の状態を<strong>期間未設定</strong>と呼ぶ。</p>
+    <p>期間がなければ<a href="#gantt">ガントチャート</a>の時間軸には置けない。
+    しかし単に隠すと、ガントに載っていない課題があること自体に誰も気づけなくなる。
+    そのためガントの下部に別枠のリストとして並べ、日付を入れるべき課題が目に入るようにする。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#period">期間</a><a href="#gantt">ガントチャート</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/gantt/index.html">ガントチャート</a></div>
+  </article>
+
+  <article class="term" id="overflow-warning">
+    <h3>はみ出し警告<span class="reading">overflow warning</span></h3>
+    <p>子スレッドの<a href="#period">期間</a>が親スレッドの期間の外に出ているとき、親に表示する印を<strong>はみ出し警告</strong>と呼ぶ。</p>
+    <p><a href="#parent-child">親子関係</a>には集計の意味を持たせていないため、システムは日付を書き換えない。
+    警告は「計画と実態が合っていない」という事実を伝えるだけで、どう直すかは人が決める。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>親に警告マークが出てます。直さないとまずいですか。</span></p>
+      <p><span class="who">開発者</span><span>システムは何もしません。親の締切を延ばすのか、子を前倒しするのかは、こちらで決める話です。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#parent-child">親子関係</a><a href="#period">期間</a><a href="#gantt">ガントチャート</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/gantt/index.html">ガントチャート</a></div>
+  </article>
+
+
+  <!-- ================================================================= -->
+  <h2>会話</h2>
+
+  <article class="term" id="comment">
+    <h3>コメント<span class="reading">comment</span></h3>
+    <p><a href="#thread">スレッド</a>にぶら下がる発言を<strong>コメント</strong>と呼ぶ。
+    投稿順に一本の列として並び、スレッドの中で枝分かれすることはない。</p>
+    <p>一度投稿したコメントは編集も削除もできない。
+    コメントは「その時点で誰が何と言ったか」の記録であり、後から書き換えられると、それを前提に進んだ議論の意味が失われるためである。</p>
+    <p>この扱いはスレッドの本文とは異なる。
+    本文は現在の課題の定義を表すものなので、調査が進めば書き換わってよい。
+    書き換えたことは「編集済み」の印で示すが、以前の内容は残さない。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>コメントの誤字を直したいんですが。</span></p>
+      <p><span class="who">開発者</span><span>直せません。訂正のコメントを続けて書いてもらう形になります。</span></p>
+      <p><span class="who">PM</span><span>不便ですけど、言った言わないが起きないのは助かりますね。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread">スレッド</a><a href="#mention">メンション</a><a href="#attachment">添付ファイル</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/comment/index.html">コメント</a></div>
+  </article>
+
+  <article class="term" id="mention">
+    <h3>メンション<span class="reading">mention</span></h3>
+    <p>コメントや本文の中で <code>@</code> に続けて人を指名する書き方を<strong>メンション</strong>と呼ぶ。
+    指名された人には<a href="#notification">通知</a>が飛ぶ。</p>
+    <p>候補に出るのは、そのプロジェクトを閲覧できる人だけである。
+    <a href="#private-project">非公開プロジェクト</a>のメンバーでない人を指名できてしまうと、閲覧権限のないスレッドの内容を含む通知が届く。
+    それは非公開という設定の意味を失わせる。</p>
+    <p><a href="#watch">ウォッチ</a>が自動では付かない仕様のため、メンションは相手に気づいてもらうための主要な手段になる。
+    誰かに宛てて書くときは、その人を指名する運用が前提になる。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#comment">コメント</a><a href="#notification">通知</a><a href="#watch">ウォッチ</a><a href="#private-project">非公開プロジェクト</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/comment/index.html">コメント</a>／<a href="features/notification/index.html">通知とウォッチ</a></div>
+  </article>
+
+  <!-- ================================================================= -->
+  <h2>分類と通知</h2>
+
+  <article class="term" id="tag">
+    <h3>タグ<span class="reading">tag</span></h3>
+    <p>スレッドに付ける色つきの目印を<strong>タグ</strong>と呼ぶ。
+    ひとつのスレッドに何個でも付けられる。</p>
+    <p>タグは<a href="#organization">組織</a>の単位で定義し、プロジェクトをまたいで共通に使う。
+    誰でも新しいタグを作れる。</p>
+    <p>タグが必要なのは、<a href="#parent-child">親子関係</a>が階層という一本の軸しか表せないからである。
+    <code>bug</code> や <code>要相談</code> のように階層と直交する分類は、親子では代わりにならない。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread">スレッド</a><a href="#parent-child">親子関係</a><a href="#organization">組織</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/tag/index.html">タグ</a></div>
+  </article>
+
+  <article class="term" id="watch">
+    <h3>ウォッチ<span class="reading">watch</span></h3>
+    <p>そのスレッドに新しいコメントが付いたら知らせてほしい、という意思表示を<strong>ウォッチ</strong>と呼ぶ。
+    自分でボタンを押して付け、押して外す。</p>
+    <p>自動では付かない。
+    スレッドを立てても、担当者になっても、コメントを書いても、ウォッチしたことにはならない。</p>
+    <div class="note warn">
+      <span class="note-label">運用上の前提</span>
+      <p>自動で付かないため、<strong>自分が立てたスレッドに返信が来ても、ウォッチしていなければ気づけない</strong>。
+      返信するときは相手を<a href="#mention">メンション</a>で指名する、という運用がこの設計の前提になっている。
+      自動付与を入れるかどうかは<a href="issues/notification-enhancement/index.html">通知の拡張</a>に記録した。</p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#notification">通知</a><a href="#mention">メンション</a><a href="#assignee">担当者</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/notification/index.html">通知とウォッチ</a></div>
+  </article>
+
+  <article class="term" id="notification">
+    <h3>通知<span class="reading">notification</span></h3>
+    <p>自分に関係する出来事を知らせる仕組みを<strong>通知</strong>と呼ぶ。
+    アプリの中の一覧とメールの両方に、同じ内容が届く。</p>
+    <p>通知が飛ぶのは次の三つの場合である。</p>
+    <ul>
+      <li><a href="#mention">メンション</a>で指名されたとき</li>
+      <li><a href="#assignee">担当者</a>に設定されたとき</li>
+      <li><a href="#watch">ウォッチ</a>しているスレッドに新しいコメントが付いたとき</li>
+    </ul>
+    <p>アプリ内の通知には既読と未読がある。
+    メールは送りっぱなしなので、何を見落としたかを確かめる場所としてアプリ内の一覧が要る。</p>
+    <p>メール通知はユーザーごとにまとめて止められる。
+    止める手段がないと、煩わしく感じた人に迷惑メールとして報告され、送信ドメインの評価が下がる。
+    そうなると<a href="#magic-link">マジックリンク</a>まで届かなくなり、ログインそのものができなくなる。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#watch">ウォッチ</a><a href="#mention">メンション</a><a href="#assignee">担当者</a><a href="#magic-link">マジックリンク</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/notification/index.html">通知とウォッチ</a></div>
+  </article>
+
+  <!-- ================================================================= -->
+  <h2>保管と片付け</h2>
+
+  <article class="term" id="attachment">
+    <h3>添付ファイル<span class="reading">attachment</span></h3>
+    <p>スレッドやコメントに付けるファイルを<strong>添付ファイル</strong>と呼ぶ。
+    サーバー上のローカルボリュームに保存する。</p>
+    <p>拡張子による制限は設けていない。
+    ログでも設定ファイルでも圧縮ファイルでも、そのまま添付できる。
+    制限があるのは大きさだけで、1ファイル10MBまでとする。</p>
+    <p>種別を検査しない代わりに、配信の仕方で守る。
+    すべてのファイルを、必ずダウンロードとして返す。
+    ブラウザが中身を見て勝手に解釈することもなく、
+    レスポンスにはスクリプトの実行を禁じる指示も添える。
+    画面に表示する画像だけは、サーバー側で読み直して書き出し直す。
+    読めなかったものは画像として扱わず、ダウンロードできるだけのファイルになる。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>実行ファイルは弾いてくれるんですよね。</span></p>
+      <p><span class="who">開発者</span><span>弾きません。拡張子を変えたり圧縮したりすれば通ってしまうので、弾いているつもりになるほうが危ないと考えました。中身を検査するならウイルススキャンを入れる必要があります。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#comment">コメント</a><a href="#thread">スレッド</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/attachment/index.html">添付ファイル</a></div>
+  </article>
+
+  <article class="term" id="archive">
+    <h3>アーカイブ<span class="reading">archive</span></h3>
+    <p>終わったものを視界から外す操作を<strong>アーカイブ</strong>と呼ぶ。
+    <a href="#thread">スレッド</a>にも<a href="#project">プロジェクト</a>にも行える。</p>
+    <p>アーカイブしたスレッドは読み取り専用になる。
+    新しいコメントも、子スレッドの追加もできない。
+    一覧やガントには既定で出ないが、絞り込みを切り替えれば表示できる。</p>
+    <p>親をアーカイブしても子は連鎖しない。
+    親が畳まれても、子にはまだ動いているものがありうるからである。
+    そのため、活動中の子を持つアーカイブ済みスレッドは、一覧に読み取り専用として出しておく。
+    子だけが宙に浮いて見えなくなる状態を避けるためである。</p>
+    <p>プロジェクトをアーカイブすると、配下のスレッドがまとめて読み取り専用になる。
+    こちらは個々のスレッドのアーカイブ状態を書き換えず、プロジェクト単位で凍結する。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#soft-delete">論理削除</a><a href="#thread">スレッド</a><a href="#project">プロジェクト</a><a href="#progress">進捗率</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a>／<a href="features/project/index.html">プロジェクト</a></div>
+  </article>
+
+  <article class="term" id="soft-delete">
+    <h3>論理削除<span class="reading">soft delete</span></h3>
+    <p>レコードを残したまま、削除された印だけを立てる方式を<strong>論理削除</strong>と呼ぶ。
+    このプロダクトでは、どのテーブルについても物理削除を行わない。</p>
+    <p>削除に至る道筋は決まっている。
+    まず<a href="#archive">アーカイブ</a>し、そのうえで論理削除する。
+    いきなり削除することはできない。</p>
+    <p>操作できるのは<a href="#org-admin">組織管理者</a>だけで、いつでも復元できる。
+    レコードが残るため<a href="#thread-number">スレッド番号</a>も欠番のまま保たれ、外部に貼られたURLは「削除済み」と分かる形で応答できる。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#archive">アーカイブ</a><a href="#org-admin">組織管理者</a><a href="#thread-number">スレッド番号</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a>／<a href="features/project/index.html">プロジェクト</a></div>
+  </article>
+
+  <!-- ================================================================= -->
+  <h2>入り口</h2>
+
+  <article class="term" id="magic-link">
+    <h3>マジックリンク<span class="reading">magic link</span></h3>
+    <p>メールで届くURLを開くだけでログインできる仕組みを<strong>マジックリンク</strong>と呼ぶ。
+    有効期間は48時間で、一度使うと無効になる。</p>
+    <p>パスワードによるログインも併用する。
+    同じアカウントがどちらの方法でも入れるため、パスワードを忘れた人はマジックリンクで入って設定し直せる。
+    パスワード再設定の仕組みを別に作る必要がない。</p>
+    <p>この併用は<a href="#account-lock">アカウントロック</a>の解除手段にもなっている。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#account-lock">アカウントロック</a><a href="#invitation">招待</a><a href="#notification">通知</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/authentication/index.html">認証</a></div>
+  </article>
+
+  <article class="term" id="invitation">
+    <h3>招待<span class="reading">invitation</span></h3>
+    <p><a href="#organization">組織</a>に人を加える唯一の手段を<strong>招待</strong>と呼ぶ。
+    <a href="#org-admin">組織管理者</a>がメールアドレスを指定して送る。</p>
+    <p>受け取った人は、リンクからパスワードを設定してアカウントを作る。
+    リンクの有効期間はマジックリンクと揃えて48時間とする。</p>
+    <p>メールドメインによる自動参加や、URLを知っていれば誰でも入れる仕組みは用意しない。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#organization">組織</a><a href="#org-admin">組織管理者</a><a href="#magic-link">マジックリンク</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/authentication/index.html">認証</a>／<a href="features/organization/index.html">組織とメンバー</a></div>
+  </article>
+
+  <article class="term" id="account-lock">
+    <h3>アカウントロック<span class="reading">account lock</span></h3>
+    <p>パスワードの入力に連続して失敗したとき、そのアカウントでのパスワードログインを止めることを<strong>アカウントロック</strong>と呼ぶ。
+    10回連続で失敗するとロックがかかり、時間経過では解除されない。</p>
+    <p>解除は<a href="#magic-link">マジックリンク</a>でのログインに成功した時点で自動的に行われる。
+    メールを受け取れることが本人である証拠になっており、管理者の手を借りずに復帰できる。</p>
+    <div class="note warn">
+      <span class="note-label">この仕組みが必要な理由</span>
+      <p>時間で自動解除しない設計は、そのままだと第三者による締め出しの道具になる。
+      他人のメールアドレスに対してでたらめなパスワードを10回送れば、その人をサービスから閉め出せてしまう。
+      マジックリンクによる自力解除と、ロックされた事実を本人へメールで知らせる仕組みが、これへの答えである。</p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#magic-link">マジックリンク</a><a href="#notification">通知</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/authentication/index.html">認証</a></div>
+  </article>
+
+  <!-- ================================================================= -->
+  <h2>見せ方</h2>
+
+  <article class="term" id="gantt">
+    <h3>ガントチャート<span class="reading">gantt chart</span></h3>
+    <p><a href="#kadai">課題</a>の<a href="#period">期間</a>を横方向の時間軸に並べた図を<strong>ガントチャート</strong>と呼ぶ。
+    描く範囲は<a href="#project">プロジェクト</a>ひとつぶんで、横軸の刻みは日である。</p>
+    <p>左側に並ぶ行は<a href="#parent-child">親子関係</a>のとおりに入れ子で表示し、折りたためる。
+    <a href="#thread-list">スレッド一覧</a>が階層を持たないのと対照的だが、これは目的の違いによる。
+    一覧は探すための画面であり、ガントは計画の構造を読むための画面である。
+    親と子の期間の関係は、入れ子で並んでいなければ読み取れない。</p>
+    <p>進捗率が100の課題も薄く表示する。
+    <a href="#archive">アーカイブ</a>済みのものは表示しない。
+    <a href="#no-period">期間未設定</a>の課題は図の下に別枠で並べる。</p>
+    <p>バーをドラッグして期間を変えることはできない。
+    期間の変更はスレッドの詳細画面から行う。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#period">期間</a><a href="#no-period">期間未設定</a><a href="#overflow-warning">はみ出し警告</a><a href="#parent-child">親子関係</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/gantt/index.html">ガントチャート</a></div>
+  </article>
+
+  <article class="term" id="thread-list">
+    <h3>スレッド一覧<span class="reading">thread list</span></h3>
+    <p>プロジェクトの中のスレッドを並べた画面を<strong>スレッド一覧</strong>と呼ぶ。
+    階層を作らず平らに並べ、親と子へはそれぞれの行からリンクで辿る。</p>
+    <p>全文検索を持たないため、この画面の絞り込みが探すための唯一の手段になる。
+    種別、担当者、タグ、進捗率が100のものを除くかどうか、アーカイブ済みを出すかどうかで絞り込む。
+    既定の並び順は更新の新しい順とする。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread">スレッド</a><a href="#tag">タグ</a><a href="#gantt">ガントチャート</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a></div>
+  </article>
+
+  <article class="term" id="hanko">
+    <h3>ハンコアバター<span class="reading">hanko avatar</span></h3>
+    <p>表示名の一文字目を朱色の枠に収めて人を表す図案を<strong>ハンコアバター</strong>と呼ぶ。
+    画像のアップロードは受け付けず、表示名から自動で作る。</p>
+    <p>枠の形と色は表示名から決まるため、同じ人はどの画面でも同じ見た目になる。
+    <a href="#assignee">担当者</a>、<a href="#comment">コメント</a>の書き手、<a href="#mention">メンション</a>の候補。
+    人が現れる場所すべてでこの図案を使う。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#assignee">担当者</a><a href="#comment">コメント</a><a href="#mention">メンション</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="ui/components/hanko-avatar/index.html">ハンコアバター</a></div>
+  </article>
+
+  <div class="sheet-foot">
+    <span>TASK3 / 用語集</span>
+    <span>最終更新 2026-09-05</span>
+    <span>語を足したら本文からのリンクも張ること</span>
+  </div>
+
+</div>
+</main>
+
+<script src="sidebar.js" defer></script>
+</body>
+</html>

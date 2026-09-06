@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ウイルススキャン | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 中</p>
+  <h1 class="title">ウイルススキャン</h1>
+
+  <h2>概要</h2>
+  <p><a href="../../features/attachment/index.html">添付ファイル</a>の形式を制限しない構成にしたため、
+  マルウェアの受け渡しに使える。</p>
+  <p>配信の仕方（常にダウンロード、種別を推測させない、スクリプトを禁じる）でブラウザ上での実行は防いでいるが、
+  利用者が自分でダウンロードして開くことは止められない。</p>
+
+  <h2>先送りとした理由</h2>
+
+  <p>拡張子やマジックバイトによる検査を廃止したのは、それが役に立たないと判断したためである。
+  zip に入れれば通り、拡張子を変えれば通る。
+  <strong>守れないものを守っているように見せる仕組みは、判断を誤らせる分だけ有害である。</strong></p>
+
+  <p>正しい道具はウイルススキャンだが、これは運用のコストを伴う。</p>
+  <ul>
+    <li>ClamAV のコンテナを常駐させる（メモリを1GB前後使う）</li>
+    <li>定義ファイルの更新を定期的に走らせる</li>
+    <li>スキャン中のファイルをどう扱うか決める（保留にするか、先に見せるか）</li>
+    <li>検出時の通知と隔離の手順を作る</li>
+  </ul>
+
+  <p>単一のVPSで動かす構成では、この常駐が資源を圧迫する。
+  そして<strong>社内で使う道具である以上、外部から不特定多数がファイルを送り込む経路がない</strong>。
+  組織のメンバーだけがアップロードできるので、危険の度合いは公開サービスとは違う。</p>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>組織の外部の人（業務委託など）が日常的に添付を送るようになったとき</li>
+    <li>顧客のセキュリティ要件として求められたとき</li>
+    <li>アカウントの乗っ取りが実際に起きたとき</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+  <p>アップロード直後は保留状態にし、スキャンが済むまでダウンロードさせない。</p>
+<pre><code>-- attachments に足す
+scan_status text NOT NULL DEFAULT 'pending'
+  CHECK (scan_status IN ('pending', 'clean', 'infected', 'error')),
+scanned_at  timestamptz</code></pre>
+  <p><code>pending</code> のあいだは画面に「確認中」と出す。
+  <code>infected</code> は削除せず残し、組織管理者にだけ見せる。
+  何が送られたかを後から調べられるようにするためである。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/attachment/index.html"><span class="card-no">FEATURE</span><p class="card-title">添付ファイル</p><p class="card-desc">検査をやめた理由</p></a>
+    <a class="card" href="../../database/attachments/index.html"><span class="card-no">TABLE</span><p class="card-title">attachments</p><p class="card-desc">列を足す先</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / ウイルススキャン</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

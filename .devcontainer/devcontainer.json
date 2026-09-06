@@ -1,0 +1,16 @@
+{
+  "name": "tasktasktask-work-app",
+  "dockerComposeFile": "compose.yaml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        // 整形と Lint。ESLint と Prettier は使わない。
+        "biomejs.biome",
+        // compose.yaml と、YAML の検証
+        "redhat.vscode-yaml"
+      ]
+    }
+  }
+}

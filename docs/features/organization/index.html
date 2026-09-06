@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>組織とメンバー | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Feature 02</p>
+  <h1 class="title">組織とメンバー</h1>
+  <p class="lede">
+    複数の会社が同じシステムを使う。
+    ひとりが二つの会社に関わることもある。
+    そのどちらも当たり前に起きるという前提から、この機能の形は決まった。
+  </p>
+
+  <h2>組織はデータの境界である</h2>
+
+  <p><a href="../../glossary.html#organization">組織</a>は分類のラベルではない。
+  ユーザーもプロジェクトもスレッドもタグも、すべてがいずれかの組織に属し、組織をまたいで参照されることがない。
+  クエリの条件から組織を落とすと、他社のデータが混ざる。
+  そのため、あらゆるテーブルに <code>organization_id</code> を置く。</p>
+
+  <h3>ひとりが複数の組織に所属する</h3>
+
+  <p>業務委託で二社に関わる人や、事業部をまたぐ人は実際にいる。
+  そのためユーザーと組織の関係は多対多にする。</p>
+
+  <p>この決定は画面のURLに影響する。
+  どの組織を見ているかがURLからわからないと、二つのタブを開いている人が必ず取り違える。
+  そこで組織ごとに <code>slug</code> を持たせ、<code>/o/{slug}/...</code> の形で常にURLへ含める。</p>
+
+  <h2>役割は二段だけ</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>役割</th><th>できること</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><span class="badge shu">組織管理者</span></td>
+          <td>組織設定の変更、メンバーの招待と削除、プロジェクトの作成と削除、非公開プロジェクトの閲覧、<a href="../../glossary.html#soft-delete">論理削除</a>と復元、アカウントロックの手動解除</td></tr>
+      <tr><td class="nowrap"><span class="badge mute">組織メンバー</span></td>
+          <td>公開プロジェクトの閲覧と編集、参加している非公開プロジェクトの閲覧と編集、スレッドとコメントの作成</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>組織管理者は複数人置ける。
+  ひとりに限ると、その人が退職したりアカウントを失った時点で、組織そのものが操作不能になる。</p>
+
+  <p>「ゲスト」のような第三の役割は用意しない。
+  外部の人に一部だけ見せたい場合は、<a href="../../glossary.html#private-project">非公開プロジェクト</a>で代替する。</p>
+
+  <h2>参加は招待だけ</h2>
+
+  <p>組織管理者がメールアドレスを指定して<a href="../../glossary.html#invitation">招待</a>を送る。
+  受け取った人はリンクからパスワードを設定して登録する。
+  リンクは48時間で切れる。</p>
+
+  <p>メールドメインによる自動参加は用意しない。
+  <code>@example.com</code> のアドレスを持つ人が全員そのまま入れる仕組みは、
+  退職者のアカウントが生きている間ずっと入り続けられることを意味する。</p>
+
+  <h2>組織が持つ設定</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>項目</th><th>内容</th><th>初期リリース</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">名前</td><td>画面に出る組織名</td><td>あり</td></tr>
+      <tr><td class="nowrap">slug</td><td>URLに含まれる識別子。組織をまたいで一意</td><td>あり</td></tr>
+      <tr><td class="nowrap">言語</td><td>画面表示の言語</td><td>日本語のみ</td></tr>
+      <tr><td class="nowrap">タイムゾーン</td><td>日時の表示に使う</td><td>JSTのみ</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>言語とタイムゾーンは、値としては最初から持つ。
+  選べる値が一つしかなくても、列とインタフェースを後から足すほうが高くつくからである。
+  実際に複数の値を扱えるようにする作業は<a href="../../issues/i18n/index.html">多言語対応</a>に送った。</p>
+
+  <h2>関連する画面</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/pages/o/[slug]/index.html"><span class="card-no">/o/{slug}</span><p class="card-title">プロジェクト一覧</p><p class="card-desc">組織に入って最初に見る画面</p></a>
+    <a class="card" href="../../ui/pages/login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">招待からの登録もここへ着地する</p></a>
+  </div>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../../database/organizations/index.html"><span class="card-no">TABLE</span><p class="card-title">organizations</p><p class="card-desc">組織そのもの</p></a>
+    <a class="card" href="../../database/organization_members/index.html"><span class="card-no">TABLE</span><p class="card-title">organization_members</p><p class="card-desc">所属と役割</p></a>
+    <a class="card" href="../../database/invitations/index.html"><span class="card-no">TABLE</span><p class="card-title">invitations</p><p class="card-desc">招待</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能 / 組織とメンバー</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>projects | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">projects</h1>
+  <p class="lede">
+    スレッドの器。閲覧範囲、ガントの範囲、メンションの候補、親子関係の範囲。
+    このシステムのいくつもの境界が、この一行に紐づいている。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+  <p><a href="../../glossary.html#project">プロジェクト</a>は分類のためではなく、境界を引くために存在する。
+  <a href="../../glossary.html#gantt">ガントチャート</a>が何を一枚に描くのか、
+  <a href="../../glossary.html#mention">メンション</a>の候補に誰が出るのか、
+  <a href="../../glossary.html#parent-child">親子関係</a>がどこまで届くのか。
+  これらすべてがこのテーブルの行を単位にしている。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE projects (
+  id                 uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id    uuid        NOT NULL REFERENCES organizations(id),
+  key                text        NOT NULL,
+  name               text        NOT NULL,
+  description        text        NOT NULL DEFAULT '',
+  visibility         text        NOT NULL DEFAULT 'public',
+  archived_at        timestamptz,
+  deleted_at         timestamptz,
+  created_by_user_id uuid        NOT NULL REFERENCES users(id),
+  created_at         timestamptz NOT NULL DEFAULT now(),
+  updated_at         timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT projects_key_format
+    CHECK (key ~ '^[A-Z0-9]{2,10}$'),
+  CONSTRAINT projects_visibility_valid
+    CHECK (visibility IN ('public', 'private')),
+  CONSTRAINT projects_delete_after_archive
+    CHECK (deleted_at IS NULL OR archived_at IS NOT NULL),
+
+  -- threads からの複合外部キーの相手側
+  CONSTRAINT projects_id_org_uniq UNIQUE (id, organization_id)
+);
+
+CREATE UNIQUE INDEX projects_key_uniq
+  ON projects (organization_id, key) WHERE deleted_at IS NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>key</code></td><td>text</td><td><a href="../../glossary.html#project-key">プロジェクトキー</a>。半角英大文字と数字で2から10文字。<strong>作成後は変更できない</strong></td></tr>
+      <tr><td><code>name</code></td><td>text</td><td>画面に出る名称。変更できる</td></tr>
+      <tr><td><code>description</code></td><td>text</td><td>説明文。空文字を既定とし NULL は使わない</td></tr>
+      <tr><td><code>visibility</code></td><td>text</td><td><code>public</code> なら組織メンバー全員が閲覧可、<code>private</code> なら <code>project_members</code> と組織管理者のみ</td></tr>
+      <tr><td><code>archived_at</code></td><td>timestamptz</td><td><a href="../../glossary.html#archive">アーカイブ</a>の時刻。配下のスレッドが読み取り専用になる</td></tr>
+      <tr><td><code>deleted_at</code></td><td>timestamptz</td><td>論理削除。アーカイブ済みでなければ設定できない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>key の変更を許さない</h3>
+  <p>データベースの上では変更しても壊れない。
+  <a href="../../glossary.html#thread-number">スレッド番号</a>は組織の中で通し番号になっているので、
+  <code>threads.number</code> だけでスレッドは一意に定まり、キーは表示のための飾りにすぎない。</p>
+  <p>それでも許さないのは、人の記憶と記録が壊れるからである。
+  議事録やコミットメッセージに <code>WEB-128</code> と書かれたものが、ある日から <code>FRONT-128</code> になると照合できなくなる。</p>
+
+  <h3>アーカイブを経ないと削除できない</h3>
+  <p><code>projects_delete_after_archive</code> の CHECK でこれを強制する。
+  誤操作でいきなり消えることを防ぐためであり、この順序はアプリケーションの実装に頼らずデータベース側で保証する。</p>
+
+  <h3>id と organization_id の複合一意制約</h3>
+  <p><code>id</code> は主キーなので単体で一意である。
+  それでも <code>(id, organization_id)</code> の一意制約を追加しているのは、
+  <code>threads</code> から複合外部キーで参照するためである。
+  これにより「スレッドの組織とプロジェクトの組織が食い違う」状態をデータベースが拒否する。</p>
+
+  <h2>アーカイブが連鎖しないこと</h2>
+  <p>プロジェクトをアーカイブしても、配下の <code>threads.archived_at</code> は書き換えない。
+  読み取り専用かどうかの判定は、プロジェクトとスレッドの両方を見て行う。</p>
+<pre><code>-- 編集できるか
+SELECT (p.archived_at IS NULL AND t.archived_at IS NULL) AS editable
+  FROM threads t
+  JOIN projects p ON p.id = t.project_id
+ WHERE t.id = $1;</code></pre>
+  <p>この形にしておくと、プロジェクトのアーカイブを解除したときに元の状態がそのまま戻る。
+  スレッド側を書き換えていたら、解除時にどれを元に戻すべきかがわからなくなる。</p>
+
+  <h2>関係</h2>
+<pre class="figure">organizations ──&lt; projects ──┬─&lt; project_members &gt;── users
+                              └─&lt; threads</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../project_members/index.html"><span class="card-no">TABLE</span><p class="card-title">project_members</p><p class="card-desc">非公開のときだけ意味を持つ</p></a>
+    <a class="card" href="../threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">複合外部キーで結ぶ</p></a>
+    <a class="card" href="../organizations/index.html"><span class="card-no">TABLE</span><p class="card-title">organizations</p><p class="card-desc">キーの一意性の範囲</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/project/index.html"><span class="card-no">FEATURE</span><p class="card-title">プロジェクト</p><p class="card-desc">境界としての役割</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / projects</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

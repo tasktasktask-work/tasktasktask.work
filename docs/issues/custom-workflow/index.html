@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>状態のカスタマイズ | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 中</p>
+  <h1 class="title">状態のカスタマイズ</h1>
+
+  <h2>概要</h2>
+  <p>状態は<a href="../../glossary.html#progress">進捗率</a>という数値ひとつで固定されており、
+  組織ごとに状態の集合を定義することはできない。</p>
+  <p>「未着手 / 進行中 / レビュー中 / 検証待ち / 完了」のような工程を持つチームは、
+  それを進捗率の数値に読み替えて運用することになる。
+  80%がレビュー中を意味するかどうかは、人によって解釈が分かれる。</p>
+
+  <h2>先送りとした理由</h2>
+  <p>カスタム状態は、単独では成立しない。
+  状態を定義できるようにすると、次に「どの状態からどの状態へ遷移できるか」を決めたくなる。
+  ワークフローの定義、遷移の権限、遷移時の自動処理。ここまで来ると機能の規模が数倍になる。</p>
+  <p>そして<a href="../../features/gantt/index.html">ガントチャート</a>のバーの塗り分けは、
+  進捗を連続値として扱うことを前提にしている。
+  状態を離散値にすると、塗り分けの根拠が失われる。</p>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>複数の組織から同じ工程名（レビュー中など）の要望が出たとき</li>
+    <li>進捗率の値に組織独自の意味を持たせた運用ルールが、社内文書として作られはじめたとき</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+  <p>進捗率を捨てるのではなく、<strong>状態と進捗率を併存させる</strong>案を第一候補とする。
+  状態は工程を表し、進捗率はガントの塗り分けに使う。
+  役割が違うので、両立できる。</p>
+<pre><code>CREATE TABLE thread_statuses (
+  id              uuid PRIMARY KEY,
+  organization_id uuid NOT NULL REFERENCES organizations(id),
+  name            text NOT NULL,
+  sort_order      smallint NOT NULL,
+  is_terminal     boolean NOT NULL DEFAULT false
+);
+-- threads に status_id を足す</code></pre>
+  <p>遷移の制限は、最初は設けない。
+  どの状態からどの状態へも移れる形にすれば、定義するのは名前と並び順だけで済む。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../rejection-representation/index.html"><span class="card-no">ISSUE</span><p class="card-title">却下の表現</p><p class="card-desc">同じ根から出た課題</p></a>
+    <a class="card" href="../../features/thread/index.html"><span class="card-no">FEATURE</span><p class="card-title">スレッド</p><p class="card-desc">進捗率の設計</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / 状態のカスタマイズ</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

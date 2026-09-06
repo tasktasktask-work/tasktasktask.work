@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UI設計方針 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">UI Principles</p>
+  <h1 class="title">UI設計方針</h1>
+  <p class="lede">
+    既存の課題管理ツールの画面をそのまま真似ない、と決めた。
+    ただし用語は、開発者以外にも通じるものであれば流用する。
+    その線引きの上で、画面をどう作るかをここに定める。
+  </p>
+
+  <h2>この製品が扱う情報の性質</h2>
+
+  <p>三つの<a href="../glossary.html#thread-type">種別</a>が同じ一覧に並ぶ。
+  階層に深さの制限がない。
+  状態は<a href="../glossary.html#progress">進捗率</a>という数値ひとつしかない。</p>
+
+  <p>この三つが、画面設計の制約をほぼ決めている。
+  種別が混在するので、どの行が何なのかを一目で見分けられなければならない。
+  階層が深くなりうるので、入れ子表示だけに頼ると読めなくなる。
+  状態が数値なので、意味づけは表示の側が引き受ける必要がある。</p>
+
+  <h2>基本方針</h2>
+
+  <h3>色だけで意味を伝えない</h3>
+
+  <p>種別、進捗、タグ。
+  どれも色で区別できるが、色は必ず文字か形と組み合わせる。</p>
+
+  <div class="spec">
+    <div class="spec-head"><span>種別バッジは色と形の二重符号</span><span>ThreadTypeBadge</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="p-type" data-type="kadai">課題</span><span class="cap">朱 / 四角</span></div>
+        <div class="spec-item"><span class="p-type" data-type="giron">議論</span><span class="cap">藍 / 丸</span></div>
+        <div class="spec-item"><span class="p-type" data-type="shitsumon">質問</span><span class="cap">緑 / 菱形</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p>バッジの左にある小さな印は、種別ごとに形が違う。
+  色覚の違いで朱と緑の判別がつかない場合でも、四角と菱形で見分けられる。
+  文字も併記しているので、印が見えなくても読める。</p>
+
+  <h3>階層は場所によって見せ方を変える</h3>
+
+  <p><a href="../glossary.html#thread-list">スレッド一覧</a>は平らに並べ、親子はリンクで辿る。
+  <a href="../glossary.html#gantt">ガントチャート</a>は入れ子で並べ、折りたためる。</p>
+
+  <p>同じデータを二つの画面で違う形に見せることになるが、これは目的が違うからである。
+  一覧は探すための画面で、担当者やタグで絞るとき階層は邪魔になる。
+  ガントは計画の構造を読むための画面で、親と子の期間の関係は入れ子でなければ読み取れない。</p>
+
+  <h3>数値の意味づけは表示が引き受ける</h3>
+
+  <p>データベースに入っているのは0から100の整数だけである。
+  それを課題では「進捗率」として数値のまま出し、
+  議論と質問では「<a href="../glossary.html#open-close">オープン</a>」「クローズ」という言葉に置き換える。</p>
+
+  <p>質問の画面に「進捗率100%」と出ても、読み手には何のことかわからない。
+  同じ列を使っていることは、画面の側では見せない。</p>
+
+  <h3>できないことは、できないと見せる</h3>
+
+  <p>アーカイブされたスレッドでは、コメント欄も子スレッド追加のボタンも消す。
+  無効化して灰色で残すのではなく、消す。</p>
+
+  <p>ガントのバーはドラッグできないので、掴めそうな見た目にしない。
+  カーソルも変えない。</p>
+
+  <h2>意匠</h2>
+
+  <h3>色</h3>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>役割</th><th>値</th><th>使いどころ</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><span class="badge shu">朱</span></td><td><code>#c8402c</code></td><td>課題、担当者のハンコ、選択中、進捗のバー</td></tr>
+      <tr><td class="nowrap"><span class="badge ai">藍</span></td><td><code>#2c4a75</code></td><td>議論、リンク、親バー</td></tr>
+      <tr><td class="nowrap"><span class="badge midori">緑</span></td><td><code>#3f6b52</code></td><td>質問、完了</td></tr>
+      <tr><td class="nowrap"><span class="badge ki">黄</span></td><td><code>#8f6410</code></td><td>はみ出し警告、期間未設定、期限が近い</td></tr>
+      <tr><td class="nowrap">墨</td><td><code>#171b22</code></td><td>本文</td></tr>
+      <tr><td class="nowrap">生成り</td><td><code>#f6f3ec</code></td><td>地</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>朱を主役に置く。
+  <a href="../glossary.html#hanko">ハンコアバター</a>の色でもあり、この製品の印象を決める色である。
+  藍と緑と黄は、朱に対する副色として抑えた彩度で使う。</p>
+
+  <h3>書体</h3>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>用途</th><th>書体</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">見出し</td><td>しっぽり明朝 B1</td><td>日本語の見出しに重心がある。ゴシックだけの画面より読む位置が定まる</td></tr>
+      <tr><td class="nowrap">本文</td><td>Zen角ゴシック New</td><td>画面上の可読性が高く、字面が均一</td></tr>
+      <tr><td class="nowrap">識別子と数値</td><td>JetBrains Mono</td><td><code>WEB-128</code> や日付を等幅で揃える</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>識別子、日付、進捗率の数値は必ず等幅で組む。
+  一覧で縦に並んだときに桁が揃い、比較できるようになる。</p>
+
+  <h3>余白と罫</h3>
+
+  <p>影を使わず、1pxの罫で境界を引く。
+  背景には薄い方眼を敷く。
+  設計図の紙面という見立てを、全体で保つ。</p>
+
+  <h2>画面をまたぐ約束</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>要素</th><th>約束</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">識別子</td><td>常に <code>WEB-128</code> の形で出す。番号だけで表示しない</td></tr>
+      <tr><td class="nowrap">人</td><td>必ず<a href="components/hanko-avatar/index.html">ハンコアバター</a>と表示名を並べる。メールアドレスは出さない</td></tr>
+      <tr><td class="nowrap">日付</td><td><code>9/8 – 9/19</code> の形。年は今年でなければ添える</td></tr>
+      <tr><td class="nowrap">日時</td><td><code>2026-09-04 13:02</code> の形。組織のタイムゾーンで表示する</td></tr>
+      <tr><td class="nowrap">アーカイブ済み</td><td>斜線の地紋を敷き、文字を薄くする</td></tr>
+      <tr><td class="nowrap">組織の切り替え</td><td>URL に <code>/o/{slug}/</code> を必ず含める。画面上部にも組織名を出す</td></tr>
+      <tr><td class="nowrap">未認証</td><td><code>/login</code> へ送らず、そのURLのままログイン画面を出す。認証後は同じURLに着地する</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>操作の重さに応じた確認</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>操作</th><th>確認</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">進捗率の変更</td><td>なし</td><td>いつでも戻せる</td></tr>
+      <tr><td class="nowrap">アーカイブ</td><td>あり</td><td>一覧から消えるため。連鎖しないことも伝える</td></tr>
+      <tr><td class="nowrap">非公開から公開へ</td><td>あり</td><td>戻せても、見られた事実は戻せない</td></tr>
+      <tr><td class="nowrap">論理削除</td><td>あり</td><td>復元できるが、組織管理者しか気づけない</td></tr>
+      <tr><td class="nowrap">コメントの投稿</td><td>なし</td><td>ただし<strong>編集も削除もできないことを投稿欄に明示する</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>最後の行が重要である。
+  投稿ボタンを押した後で取り返せないのに、押す前に何も伝えないのは不親切にあたる。</p>
+
+  <h2>新しい画面を作るとき</h2>
+
+  <ol>
+    <li>近い既存ページを複製して雛形にする</li>
+    <li>種別、進捗、人、日付は既存のコンポーネントを使う。新しく作らない</li>
+    <li>色を足したくなったら、まずこの表の四色で表せないかを考える</li>
+    <li>できない操作は消す。無効化して残さない</li>
+    <li><a href="pages/index.html">ページモック</a>に追加し、<a href="../sidebar.js">サイドバー</a>にも登録する</li>
+  </ol>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="components/index.html"><span class="card-no">UI</span><p class="card-title">コンポーネント</p><p class="card-desc">状態ごとの見本</p></a>
+    <a class="card" href="pages/index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">6画面の完成イメージ</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / 設計方針</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../sidebar.js" defer></script>
+</body>
+</html>

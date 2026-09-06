@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コンポーネント | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">UI Components</p>
+  <h1 class="title">コンポーネント</h1>
+  <p class="lede">
+    状態を持つものは、その状態を並べて見比べられるようにしてある。
+    実装するときは、この見た目をそのまま移す。
+  </p>
+
+  <h2>人</h2>
+  <div class="spec">
+    <div class="spec-head"><span>ハンコアバター</span><span>HankoAvatar</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="hanko sm">佐</span><span class="cap">sm / 一覧の行</span></div>
+        <div class="spec-item"><span class="hanko">田</span><span class="cap">md / コメント</span></div>
+        <div class="spec-item"><span class="hanko lg">鈴</span><span class="cap">lg / プロフィール</span></div>
+        <div class="spec-item"><span class="hanko sq">高</span><span class="cap">角印</span></div>
+        <div class="spec-item"><span class="hanko" style="border-color:#2c4a75;color:#2c4a75;background:#eaeff6">A</span><span class="cap">英字の表示名</span></div>
+      </div>
+    </div>
+  </div>
+  <p><a href="hanko-avatar/index.html">詳細</a>。画像のアップロードは受け付けない。表示名の一文字目から作る。</p>
+
+  <h2>スレッドの種別と状態</h2>
+  <div class="spec">
+    <div class="spec-head"><span>種別バッジ</span><span>ThreadTypeBadge</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="p-type" data-type="kadai">課題</span><span class="cap">朱 / 四角</span></div>
+        <div class="spec-item"><span class="p-type" data-type="giron">議論</span><span class="cap">藍 / 丸</span></div>
+        <div class="spec-item"><span class="p-type" data-type="shitsumon">質問</span><span class="cap">緑 / 菱形</span></div>
+      </div>
+    </div>
+  </div>
+  <p><a href="thread-type-badge/index.html">詳細</a>。色と形の二重符号で、色覚の違いによらず見分けられる。</p>
+
+  <div class="spec">
+    <div class="spec-head"><span>進捗表示</span><span>ProgressMeter / OpenCloseBadge</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="p-progress" data-zero="true"><span class="bar"><span class="fill" style="width:0%"></span></span><span class="num">0%</span></span><span class="cap">未着手</span></div>
+        <div class="spec-item"><span class="p-progress"><span class="bar"><span class="fill" style="width:25%"></span></span><span class="num">25%</span></span><span class="cap">進行中</span></div>
+        <div class="spec-item"><span class="p-progress"><span class="bar"><span class="fill" style="width:75%"></span></span><span class="num">75%</span></span><span class="cap">進行中</span></div>
+        <div class="spec-item"><span class="p-progress" data-done="true"><span class="bar"><span class="fill" style="width:100%"></span></span><span class="num">100%</span></span><span class="cap">完了</span></div>
+        <div class="spec-item"><span class="p-oc" data-oc="open">オープン</span><span class="cap">議論と質問 / 0</span></div>
+        <div class="spec-item"><span class="p-oc" data-oc="close">クローズ</span><span class="cap">議論と質問 / 100</span></div>
+      </div>
+    </div>
+  </div>
+  <p><a href="progress-input/index.html">入力側の詳細</a>。</p>
+
+  <h2>分類</h2>
+  <div class="spec">
+    <div class="spec-head"><span>タグ</span><span>TagChip</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="p-tag" style="--tag-color:#c8402c">bug</span><span class="cap">朱</span></div>
+        <div class="spec-item"><span class="p-tag" style="--tag-color:#2c4a75">設計</span><span class="cap">藍</span></div>
+        <div class="spec-item"><span class="p-tag" style="--tag-color:#3f6b52">frontend</span><span class="cap">緑</span></div>
+        <div class="spec-item"><span class="p-tag" style="--tag-color:#8f6410">要相談</span><span class="cap">黄</span></div>
+        <div class="spec-item"><span class="p-tag" style="--tag-color:#7d8792">保留</span><span class="cap">灰</span></div>
+      </div>
+    </div>
+  </div>
+  <p>色は円の点にだけ使い、文字色は変えない。色数が増えても可読性が落ちない。</p>
+
+  <h2>一覧の行</h2>
+  <div class="spec">
+    <div class="spec-head"><span>スレッド行</span><span>ThreadRow</span></div>
+    <div class="spec-body tight">
+      <div class="p-list">
+        <div class="p-row">
+          <span class="p-type" data-type="kadai">課題</span>
+          <a class="ttl" href="#">検索APIの実装</a>
+          <span class="p-progress"><span class="bar"><span class="fill" style="width:40%"></span></span><span class="num">40%</span></span>
+          <span class="hanko sm">田</span>
+          <span class="p-id">WEB-7</span>
+          <span class="meta"><span class="p-tag" style="--tag-color:#c8402c">backend</span><a class="rel-link" href="#">← 親 WEB-3</a><a class="rel-link" href="#">子 1件 →</a><span>9/8 – 9/19</span></span>
+        </div>
+        <div class="p-row">
+          <span class="p-type" data-type="giron">議論</span>
+          <a class="ttl" href="#">検索の要件をどうするか</a>
+          <span class="p-oc" data-oc="open">オープン</span>
+          <span class="hanko sm">佐</span>
+          <span class="p-id">WEB-3</span>
+          <span class="meta"><span class="p-tag" style="--tag-color:#2c4a75">設計</span><a class="rel-link" href="#">子 2件 →</a><span>更新 9/4</span></span>
+        </div>
+        <div class="p-row" data-archived="true">
+          <span class="p-type" data-type="kadai">課題</span>
+          <a class="ttl" href="#">旧検索ロジックの撤去</a>
+          <span class="p-progress"><span class="bar"><span class="fill" style="width:60%"></span></span><span class="num">60%</span></span>
+          <span class="hanko sm">田</span>
+          <span class="p-id">WEB-5</span>
+          <span class="meta"><span class="badge mute">アーカイブ済み</span><span>活動中の子があるため表示</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p>アーカイブ済みの行は斜線の地紋を敷く。3行目がその状態にあたる。</p>
+
+  <h2>会話</h2>
+  <div class="spec">
+    <div class="spec-head"><span>コメント</span><span>CommentItem</span></div>
+    <div class="spec-body">
+      <div class="p-comment">
+        <span class="hanko">田</span>
+        <div class="body">
+          <div class="head"><span class="who">田中 亮</span><span class="when">2026-09-04 13:02</span></div>
+          <div class="text"><p><span class="p-mention">@佐藤 明日香</span> 賛成です。正規化は別の課題に切り出したほうがよさそう。</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>通知</h2>
+  <div class="spec">
+    <div class="spec-head"><span>通知</span><span>NotificationItem</span></div>
+    <div class="spec-body tight">
+      <div class="p-notif" data-unread="true">
+        <span class="dot"></span>
+        <div class="n-body"><div><strong>田中 亮</strong> があなたをメンションしました</div><div><span class="p-id">WEB-3</span> 検索の要件をどうするか</div><div class="n-when">9月4日 13:02</div></div>
+      </div>
+      <div class="p-notif" data-unread="false">
+        <span class="dot"></span>
+        <div class="n-body"><div>ウォッチ中のスレッドに新しいコメントがあります</div><div><span class="p-id">WEB-9</span> 全角の正規化はどこでやっている？</div><div class="n-when">9月2日 09:15</div></div>
+      </div>
+    </div>
+  </div>
+  <p>未読は地を朱に染め、左に点を打つ。既読は点を白抜きにする。</p>
+
+  <h2>ガント</h2>
+  <p><a href="gantt-bar/index.html">ガントバーの詳細</a>に、親、子、完了、はみ出しの各状態を並べてある。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../principles.html"><span class="card-no">UI</span><p class="card-title">設計方針</p><p class="card-desc">色、書体、画面をまたぐ約束</p></a>
+    <a class="card" href="../pages/index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">組み上がった画面</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / コンポーネント</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

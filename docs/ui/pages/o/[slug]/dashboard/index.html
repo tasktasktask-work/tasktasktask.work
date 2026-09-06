@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>担当スレッド画面 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock</p>
+  <h1 class="title">担当スレッド</h1>
+  <p class="lede">
+    プロジェクトをまたいで、自分が担当のものだけを集める。
+    通知の一覧も同じ画面に置く。
+  </p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/dashboard</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-top">
+        <span class="app-logo"><span class="m">3</span>TASK3</span>
+        <span class="app-org">株式会社アクメ <span class="slug">acme</span> &#9662;</span>
+        <span class="sp"></span>
+        <span class="app-bell">&#128276;<span class="n">3</span></span>
+        <span class="hanko sm">佐</span>
+      </div>
+      <div class="app-shell">
+        <nav class="app-side">
+          <h5>プロジェクト</h5>
+          <a href="#" class=""><span class="k">WEB</span>検索基盤の刷新</a>
+          <a href="#" class=""><span class="k">BILL</span>請求まわり</a>
+          <h5>わたし</h5>
+          <a href="#" class="on">担当スレッド</a>
+          <a href="#" class="">通知</a>
+        </nav>
+        <div class="app-main">
+          <div class="app-head">
+            <div><h2>担当スレッド</h2><div class="sub">佐藤 明日香 / 4件</div></div>
+          </div>
+
+          <div class="app-filters">
+            <label><input type="checkbox"> 完了したものも表示</label>
+            <span class="sp"></span>
+            <span style="color:var(--ink-faint);font-family:var(--font-mono);font-size:.7rem">終了日の近い順</span>
+          </div>
+
+          <div class="p-list" style="margin-bottom:1.8rem">
+            <div class="p-row">
+              <span class="p-type" data-type="kadai">課題</span>
+              <a class="ttl" href="#">検索APIの実装</a>
+              <span class="p-progress"><span class="bar"><span class="fill" style="width:40%"></span></span><span class="num">40%</span></span>
+              <span class="badge ki">残り3日</span>
+              <span class="p-id">WEB-7</span>
+              <span class="meta"><span class="p-tag" style="--tag-color:#c8402c">backend</span><span>9/8 – 9/19</span></span>
+            </div>
+            <div class="p-row">
+              <span class="p-type" data-type="kadai">課題</span>
+              <a class="ttl" href="#">請求書PDFの様式変更</a>
+              <span class="p-progress" data-zero="true"><span class="bar"><span class="fill" style="width:0%"></span></span><span class="num">0%</span></span>
+              <span class="badge mute">残り12日</span>
+              <span class="p-id">BILL-31</span>
+              <span class="meta"><span>9/16 – 9/28</span></span>
+            </div>
+            <div class="p-row">
+              <span class="p-type" data-type="kadai">課題</span>
+              <a class="ttl" href="#">検索結果のキャッシュ設計</a>
+              <span class="p-progress" data-zero="true"><span class="bar"><span class="fill" style="width:0%"></span></span><span class="num">0%</span></span>
+              <span class="badge ki">期間未設定</span>
+              <span class="p-id">WEB-12</span>
+              <span class="meta"><span>日付を入れてください</span></span>
+            </div>
+            <div class="p-row">
+              <span class="p-type" data-type="shitsumon">質問</span>
+              <a class="ttl" href="#">全角の正規化はどこでやっている？</a>
+              <span class="p-oc" data-oc="open">オープン</span>
+              <span></span>
+              <span class="p-id">WEB-9</span>
+              <span class="meta"><span>期間なし</span></span>
+            </div>
+          </div>
+
+          <div class="app-head"><div><h2>通知</h2><div class="sub">未読 3件</div></div>
+            <span style="flex:1"></span>
+            <button class="app-btn ghost">すべて既読にする</button>
+          </div>
+
+          <div style="border:1px solid var(--rule)">
+            <div class="p-notif" data-unread="true">
+              <span class="dot"></span>
+              <div class="n-body"><div><strong>田中 亮</strong> があなたをメンションしました</div><div><span class="p-id">WEB-3</span> 検索の要件をどうするか</div><div class="n-when">9月4日 13:02</div></div>
+            </div>
+            <div class="p-notif" data-unread="true">
+              <span class="dot"></span>
+              <div class="n-body"><div><strong>佐藤 明日香</strong> があなたを担当者に設定しました</div><div><span class="p-id">BILL-31</span> 請求書PDFの様式変更</div><div class="n-when">9月4日 10:15</div></div>
+            </div>
+            <div class="p-notif" data-unread="true">
+              <span class="dot"></span>
+              <div class="n-body"><div>ウォッチ中のスレッドに新しいコメントがあります</div><div><span class="p-id">WEB-9</span> 全角の正規化はどこでやっている？</div><div class="n-when">9月2日 09:15</div></div>
+            </div>
+            <div class="p-notif" data-unread="false">
+              <span class="dot"></span>
+              <div class="n-body"><div><strong>鈴木 一郎</strong> があなたをメンションしました</div><div><span class="p-id">WEB-5</span> 旧検索ロジックの撤去</div><div class="n-when">8月30日 16:40</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>読み取れるようにしていること</h2>
+
+  <p>プロジェクトが混在するので、<strong>識別子を必ず出す</strong>。
+  <code>WEB-7</code> と <code>BILL-31</code> が並んでいれば、どちらの話かがその場でわかる。</p>
+
+  <p>期限までの残り日数を出す。
+  <a href="../../../../../glossary.html#period">期間</a>は日付だけを持つので、残りも日数で表せる。
+  3日を切ったものは黄色にする。</p>
+
+  <p><a href="../../../../../glossary.html#no-period">期間未設定</a>の課題は、リストの中でも黄色の印を付ける。
+  <a href="../../../../../features/gantt/index.html">ガント</a>で別枠に出すのと同じ理由で、日付を入れるべき課題を見えるようにしておく。</p>
+
+  <h2>通知を同じ画面に置く理由</h2>
+
+  <p>「今日、自分は何をやるのか」という問いに対する答えは二つある。
+  担当している仕事と、自分に向けて誰かが言ったことである。
+  別の画面に分けると、片方を見落とす。</p>
+
+  <p>未読は地を朱に染める。
+  <a href="../../../../../glossary.html#watch">ウォッチ</a>が自動で付かない仕様のため、
+  ここに出る通知はどれも誰かが意図的に自分へ向けたものになる。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../../../../features/dashboard/index.html"><span class="card-no">FEATURE</span><p class="card-title">担当スレッド一覧</p><p class="card-desc">ガントとの違い</p></a>
+    <a class="card" href="../../../../../features/notification/index.html"><span class="card-no">FEATURE</span><p class="card-title">通知とウォッチ</p><p class="card-desc">三つのきっかけ</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / 担当スレッド</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../../../sidebar.js" defer></script>
+</body>
+</html>

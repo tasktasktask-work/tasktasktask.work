@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>継続的インテグレーション | ENISHI 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">DevOps 05</p>
+  <h1 class="title">継続的インテグレーション</h1>
+  <p class="lede">
+    ワークフローは二つある。押した回数だけ動くもの（Deploy）と、
+    書くたびに動くもの（Test）である。
+    分けてあるのは、片方が失敗しても、もう片方の判断を邪魔しないためである。
+  </p>
+
+  <h2>Test</h2>
+
+  <p><code>push</code> と <code>pull_request</code> で動く。
+  型、Biome、共有スタイルの一致、移行の規約、テスト、ビルドをこの順で通す。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>手順</th><th>拾うもの</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>pnpm schema:apply</code></td><td>移行そのものが流れるか</td></tr>
+      <tr><td class="nowrap"><code>pnpm check</code></td><td>型、整形、共有スタイルのずれ、危ない移行</td></tr>
+      <tr><td class="nowrap"><code>pnpm test</code></td><td>制約と認証の振る舞い（31件）</td></tr>
+      <tr><td class="nowrap"><code>pnpm build</code></td><td>型検査では拾えないビルド時の失敗</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>実データベースを立てる</h3>
+
+  <p>テストは実物に対して行う。
+  CHECK 制約や複合外部キーが本当に効くかは、実物でしか確かめられない。
+  そのため <code>postgres:18</code> をサービスコンテナとして立てる。</p>
+
+  <div class="note">
+    <span class="note-label">作業用データベースは要らない</span>
+    <p>Atlas が中身を作り直す作業用データベースが要るのは、差分を計算するときだけである。
+    <code>migrate apply</code> は接続先ひとつで足りる。</p>
+    <p><code>scripts/atlas.mjs</code> は、<code>diff</code> のときだけ
+    <code>ATLAS_DEV_URL</code> を要求する。
+    CI で余分なデータベースを用意しなくて済む。</p>
+  </div>
+
+  <p>タイムゾーンは <code>UTC</code> に固定する。
+  <code>timestamptz</code> の入出力はセッションの設定で変換されるので、
+  手元と揃っていないとテストの結果が変わる。</p>
+
+  <h3>Atlas は先に用意し、キャッシュする</h3>
+
+  <p>Atlas は Node の依存ではなく単体のバイナリである。
+  <code>pnpm install</code> では入らないので、別に取る。</p>
+
+  <p>取り直しを避けるためキャッシュするが、そのためには版が決まっている必要がある。
+  <code>-latest</code> のままではキャッシュの鍵を作れない。</p>
+
+<pre><code>key: atlas-${{ runner.os }}-${{ runner.arch }}-${{ env.ATLAS_VERSION }}</code></pre>
+
+  <div class="note decide">
+    <span class="note-label">-latest は canary を返す</span>
+    <p>鍵の都合とは別に、<code>-latest</code> には避けたい理由がある。
+    実際に取ってみると <code>v1.3.4-cdeb6c3-canary</code> が入った。
+    安定版は v1.3.0 である。</p>
+    <p><strong>スキーマを移す道具が、日によって別のものになる。</strong>
+    版を <code>.atlas-version</code> に固定し、手元の手順と CI と Dockerfile が
+    同じファイルを読むようにした。</p>
+  </div>
+
+  <p>キャッシュから戻したときも通るよう、実行権限と <code>PATH</code> は毎回そろえる。
+  インストールの手順だけを条件付きにしている。</p>
+
+  <h2>Deploy</h2>
+
+  <p>手で起こす（<code>workflow_dispatch</code>）。
+  イメージを作り、レジストリへ push するところまでを行う。</p>
+
+  <div class="note decide">
+    <span class="note-label">VPS への反映まではやらない</span>
+    <p>マイグレーションを流す順序を、人が見て決める必要があるためである。</p>
+    <p><a href="../database-migration/index.html">段階的な変更の手順</a>は
+    「先にスキーマ、あとからコード」で成り立っている。
+    自動で <code>up -d</code> まで進むと、その順序を守れない。</p>
+  </div>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>secret</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>DOCKER_REGISTRY_HOST</code></td><td>レジストリのホスト</td></tr>
+      <tr><td class="nowrap"><code>DOCKER_REGISTRY_USERNAME</code></td><td>ログインに使う名前</td></tr>
+      <tr><td class="nowrap"><code>DOCKER_REGISTRY_PASSWORD</code></td><td>ログインに使うパスワード</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>権限を絞る</h2>
+
+  <p>どちらのワークフローも <code>permissions: contents: read</code> で動く。</p>
+
+  <p>やることは checkout と、外部のレジストリへの push だけである。
+  GitHub 側への書き込みは要らない。
+  <strong>公開リポジトリでは、ジョブ中に走るコードすべてにトークンが渡る。</strong>
+  必要のない権限を持たせない。</p>
+
+  <p>あわせて checkout に <code>persist-credentials: false</code> を付け、
+  作業ディレクトリに資格情報を残さない。</p>
+
+  <h2>アーキテクチャ</h2>
+
+  <p>runner も VPS も x86_64 である。
+  <strong>この開発環境（devcontainer）は aarch64 なので、手元で作ったイメージは VPS では動かない。</strong>
+  手元のビルドは Dockerfile の確認までにとどめ、送るものは CI が作る。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../deployment/index.html"><span class="card-no">DEVOPS</span><p class="card-title">デプロイ構成</p><p class="card-desc">VPS 側の手順</p></a>
+    <a class="card" href="../database-migration/index.html"><span class="card-no">DEVOPS</span><p class="card-title">スキーマ移行</p><p class="card-desc">適用の順序</p></a>
+    <a class="card" href="../tech-stack/index.html"><span class="card-no">DEVOPS</span><p class="card-title">技術スタック</p><p class="card-desc">Node と TypeScript の版</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>開発と運用 / 継続的インテグレーション</span>
+    <span>最終更新 2026-09-05</span>
+    <span>ENISHI 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

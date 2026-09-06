@@ -1,0 +1,12 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-image:
+    uses: ./.github/workflows/deploy-job-deploy-image.yml
+    secrets: inherit

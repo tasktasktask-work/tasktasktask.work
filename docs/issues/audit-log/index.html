@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>監査ログ | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 低</p>
+  <h1 class="title">監査ログ</h1>
+
+  <h2>概要</h2>
+  <p>誰がいつ何をしたかを追う仕組みがない。
+  各テーブルは <code>created_at</code> と <code>updated_at</code> を持つが、
+  <strong>誰が更新したかは記録していない</strong>。</p>
+
+  <p>特に追えないものを挙げる。</p>
+  <ul>
+    <li>スレッドの本文を誰が書き換えたか（<a href="../thread-mutability/index.html">編集履歴</a>と重なる）</li>
+    <li><a href="../../glossary.html#soft-delete">論理削除</a>を誰が実行したか</li>
+    <li>プロジェクトの公開設定を誰が切り替えたか</li>
+    <li><a href="../../glossary.html#account-lock">アカウントロック</a>がどこからの試行で起きたか</li>
+    <li>非公開プロジェクトのメンバーを誰が追加したか</li>
+  </ul>
+
+  <h2>先送りとした理由</h2>
+  <p>記録する対象を決めるのが難しい。
+  すべての更新を残すと行が膨大になり、
+  絞ると「必要になったときに記録されていない」という事態が起きる。</p>
+  <p>そして記録しただけでは役に立たず、検索と絞り込みの画面が要る。
+  <a href="../full-text-search/index.html">全文検索</a>すら持たない段階では、
+  ログを見る手段のほうが先に問題になる。</p>
+
+  <div class="note warn">
+    <span class="note-label">今すぐ困る場面</span>
+    <p>アカウントロックの原因が調べられない。
+    第三者による意図的な締め出しなのか、本人の入力ミスなのかを区別できない。
+    <strong>ロックが繰り返される利用者がいても、対処の判断材料がない。</strong></p>
+  </div>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>「誰がこれを消したのか」という問い合わせが発生したとき</li>
+    <li>非公開プロジェクトの情報が意図せず広まったとき</li>
+    <li>顧客のセキュリティ要件として求められたとき</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+  <p>汎用のイベントテーブルを一つ置く。</p>
+<pre><code>CREATE TABLE audit_events (
+  id              bigserial PRIMARY KEY,
+  organization_id uuid NOT NULL,
+  actor_user_id   uuid,
+  action          text NOT NULL,        -- 'thread.archive' など
+  target_type     text NOT NULL,
+  target_id       uuid,
+  detail          jsonb NOT NULL DEFAULT '{}',
+  ip              inet,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);</code></pre>
+  <p><code>detail</code> を <code>jsonb</code> にすると、対象ごとに違う情報を同じテーブルに入れられる。
+  ただし<strong>スキーマが緩い分、書き込む側の規律が要る</strong>。
+  どの操作でどのキーを入れるかを、実装前に一覧として決めておく。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../thread-mutability/index.html"><span class="card-no">ISSUE</span><p class="card-title">スレッドの可変性</p><p class="card-desc">編集履歴と一緒に設計する</p></a>
+    <a class="card" href="../../database/users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">ロックの原因が追えない</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / 監査ログ</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

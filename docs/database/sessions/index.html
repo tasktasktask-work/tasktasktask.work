@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>sessions | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">sessions</h1>
+  <p class="lede">
+    ログイン中であることを表す。30日で切れ、アクセスによる延長はしない。
+    Cookie に入る値そのものは保存しない。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+  <p>ログイン状態をサーバー側で持つことで、失効させられるようにするためである。
+  署名付きトークンだけで済ませると、盗まれたセッションを個別に無効化できない。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE sessions (
+  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid        NOT NULL REFERENCES users(id),
+  token_hash  bytea       NOT NULL,
+  expires_at  timestamptz NOT NULL,
+  revoked_at  timestamptz,
+  user_agent  text,
+  created_ip  inet,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX sessions_token_hash_key ON sessions (token_hash);
+CREATE INDEX sessions_by_user ON sessions (user_id) WHERE revoked_at IS NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>token_hash</code></td><td>bytea</td><td>Cookie に入れた値の SHA-256。生の値は保存しない</td></tr>
+      <tr><td><code>expires_at</code></td><td>timestamptz</td><td>作成から30日後。延長しない</td></tr>
+      <tr><td><code>revoked_at</code></td><td>timestamptz</td><td>ログアウトや強制失効の時刻</td></tr>
+      <tr><td><code>user_agent</code></td><td>text</td><td>「他の端末からログアウト」の画面で端末を見分けるため</td></tr>
+      <tr><td><code>created_ip</code></td><td>inet</td><td>同上。<a href="../../issues/origin-encryption/index.html">偽装されうる値である</a></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>生の値を保存しない</h3>
+  <p>データベースの中身が漏れたとき、保存されているのがハッシュであれば、
+  そこからセッションを乗っ取ることはできない。
+  Cookie の値は <code>HttpOnly</code> かつ <code>Secure</code> かつ <code>SameSite=Lax</code> で送る。</p>
+
+  <h3>延長しない</h3>
+  <p>アクセスのたびに有効期限を伸ばす方式を取らない。
+  毎回の書き込みが発生することと、「30日使えば必ず再ログインになる」という予測しやすさを優先した。</p>
+
+  <div class="note">
+    <span class="note-label">deleted_at を持たない</span>
+    <p>このテーブルは<a href="../../glossary.html#soft-delete">論理削除</a>の対象外である。
+    失効は <code>revoked_at</code> で表し、期限切れの行は定期的に物理削除してよい。
+    記録として残す価値がなく、放置すると増え続けるためである。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">users ──&lt; sessions</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">ログインする人</p></a>
+    <a class="card" href="../magic_link_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">magic_link_tokens</p><p class="card-desc">セッションを作るもう一つの経路</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/authentication/index.html"><span class="card-no">FEATURE</span><p class="card-title">認証</p><p class="card-desc">セッションの寿命</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / sessions</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

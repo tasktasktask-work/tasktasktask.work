@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>却下の表現 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 高</p>
+  <h1 class="title">却下の表現</h1>
+
+  <h2>概要</h2>
+  <p>状態を<a href="../../glossary.html#progress">進捗率</a>ひとつで表す設計にしたため、
+  「やらないと決めた課題」を表す手段がない。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>実際の状況</th><th>進捗率</th></tr></thead>
+    <tbody>
+      <tr><td>まだ手をつけていない</td><td><code>0</code></td></tr>
+      <tr><td><strong>やらないと決めた</strong></td><td><code>0</code></td></tr>
+      <tr><td>途中まで進めたが中止した</td><td><code>40</code></td></tr>
+      <tr><td><strong>他チーム待ちで止まっている</strong></td><td><code>40</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>同じ理由で「レビュー中」「検証待ち」のような工程も表せない。
+  進捗率の80%がレビュー中を意味するかどうかは、人によって違う。</p>
+
+  <h2>先送りとした理由</h2>
+
+  <p>終了理由の軸（<code>open</code> と <code>closed</code>、閉じた理由）を別に持つ案を検討したが、採らなかった。
+  代わりに、扱いを各組織の運用に委ねる方針とした。</p>
+
+  <p>取りうる手段は三つある。</p>
+  <ul>
+    <li><a href="../../glossary.html#archive">アーカイブ</a>する。進捗率は途中のままでよく、一覧からも消える</li>
+    <li>進捗率を100にして完了として扱う</li>
+    <li><a href="../../features/tag/index.html">タグ</a>で <code>却下</code> や <code>保留</code> を付ける</li>
+  </ul>
+
+  <div class="note warn">
+    <span class="note-label">この先送りが生む問題</span>
+    <p>却下の表し方が組織ごとにばらつく。
+    ある組織はアーカイブし、別の組織は進捗率100にする。
+    同じ組織の中でも人によって分かれうる。</p>
+    <p>そうなると、<strong>後から集計やレポート機能を作るときに、どのデータを完了として数えるかが決められなくなる</strong>。
+    「完了した課題の数」という単純な問いに答えられない。</p>
+  </div>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>完了した課題を数える機能（実績の集計、消化率のグラフ）を作ることになったとき</li>
+    <li>利用者から「却下と未着手が区別できない」という声が出たとき</li>
+    <li>アーカイブされたスレッドの中身を調べる必要が繰り返し生じたとき</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+  <p><code>threads</code> に二列を足す。</p>
+<pre><code>closed_at     timestamptz,
+closed_reason text CHECK (closed_reason IN ('done', 'rejected', 'duplicate'))</code></pre>
+  <p>既存データの移行が問題になる。
+  進捗率100のものを <code>done</code> とみなすことはできるが、
+  アーカイブで却下を表していた組織のデータは、機械的には判別できない。
+  <strong>移行時に人が仕分ける作業が発生する。</strong>
+  先送りするほどこの作業が重くなる。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/thread/index.html"><span class="card-no">FEATURE</span><p class="card-title">スレッド</p><p class="card-desc">進捗率の設計</p></a>
+    <a class="card" href="../../glossary.html#progress"><span class="card-no">TERM</span><p class="card-title">進捗率</p><p class="card-desc">用語集</p></a>
+    <a class="card" href="../custom-workflow/index.html"><span class="card-no">ISSUE</span><p class="card-title">状態のカスタマイズ</p><p class="card-desc">同じ根から出た課題</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / 却下の表現</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

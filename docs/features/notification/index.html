@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>通知とウォッチ | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Feature 08</p>
+  <h1 class="title">通知とウォッチ</h1>
+  <p class="lede">
+    通知が飛ぶきっかけは三つある。そのうち二つは自動で、ひとつは自分で申し込む必要がある。
+    この「自分で申し込む」という設計が、運用のあり方を決めている。
+  </p>
+
+  <h2>三つのきっかけ</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>きっかけ</th><th>誰に届くか</th><th>自動か</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><a href="../../glossary.html#mention">メンション</a>で指名された</td><td>指名された人</td><td>自動</td></tr>
+      <tr><td class="nowrap"><a href="../../glossary.html#assignee">担当者</a>に設定された</td><td>設定された人</td><td>自動</td></tr>
+      <tr><td class="nowrap">新しいコメントが付いた</td><td>そのスレッドを<a href="../../glossary.html#watch">ウォッチ</a>している人</td><td>申し込みが要る</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>ウォッチは自動では付かない</h2>
+
+  <p>スレッドを立てても、担当者になっても、コメントを書いても、ウォッチしたことにはならない。
+  自分でボタンを押して初めて付く。</p>
+
+  <div class="note warn">
+    <span class="note-label">この設計が前提とする運用</span>
+    <p><strong>自分が立てたスレッドに返信が来ても、ウォッチしていなければ気づけない。</strong>
+    これを補うのはメンションだけである。
+    「返信するときは相手を <code>@</code> で呼ぶ」という運用が、この設計の前提になっている。</p>
+    <p>自動付与を入れるかどうかの検討は<a href="../../issues/notification-enhancement/index.html">通知の拡張</a>に記録した。</p>
+  </div>
+
+  <h2>二つのチャネル</h2>
+
+  <p>アプリの中の通知一覧と、メール。
+  三つのきっかけはどれも両方に等しく届く。きっかけごとの出し分けはしない。</p>
+
+  <h3>アプリ内通知には既読がある</h3>
+
+  <p>メールは送りっぱなしで、読んだかどうかをシステムは知らない。
+  何を見落としたかを確かめる場所として、アプリ内の一覧が要る。
+  既読と未読を持つのはこちらである。</p>
+
+  <div class="spec">
+    <div class="spec-head"><span>通知一覧</span><span>NotificationItem</span></div>
+    <div class="spec-body tight">
+      <div class="p-notif" data-unread="true">
+        <span class="dot"></span>
+        <div class="n-body">
+          <div><strong>田中 亮</strong> があなたをメンションしました</div>
+          <div><span class="p-id">WEB-3</span> 検索の要件をどうするか</div>
+          <div class="n-when">9月4日 13:02</div>
+        </div>
+      </div>
+      <div class="p-notif" data-unread="true">
+        <span class="dot"></span>
+        <div class="n-body">
+          <div><strong>佐藤 明日香</strong> があなたを担当者に設定しました</div>
+          <div><span class="p-id">WEB-7</span> 検索APIの実装</div>
+          <div class="n-when">9月4日 13:41</div>
+        </div>
+      </div>
+      <div class="p-notif" data-unread="false">
+        <span class="dot"></span>
+        <div class="n-body">
+          <div>ウォッチ中のスレッドに新しいコメントがあります</div>
+          <div><span class="p-id">WEB-9</span> 全角の正規化はどこでやっている？</div>
+          <div class="n-when">9月2日 09:15</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>メールは止められる</h3>
+
+  <p>ユーザーごとに、メール通知をまとめてオフにできる。
+  きっかけごとの細かい設定は持たない。スイッチはひとつだけである。</p>
+
+  <div class="note decide">
+    <span class="note-label">この一つのスイッチが保険になっている</span>
+    <p>メールを止める手段がないと、煩わしく感じた人が迷惑メールとして報告する。
+    報告が積み重なると送信ドメインの評価が下がり、メールが届かなくなる。</p>
+    <p>このシステムは<a href="../authentication/index.html">認証</a>をメールに依存している。
+    <a href="../../glossary.html#magic-link">マジックリンク</a>が届かなくなれば、ログインそのものができない。
+    通知の煩わしさが、最終的にサービスへの入り口を塞ぐ。</p>
+  </div>
+
+  <h2>非公開プロジェクトとの関係</h2>
+
+  <p>通知の本文にはスレッドのタイトルが含まれる。
+  そのため<a href="../../glossary.html#private-project">非公開プロジェクト</a>を閲覧できない人へ通知が飛ぶと、そこで情報が漏れる。</p>
+
+  <p>メンションの候補をプロジェクトを閲覧できる人に限っているのは、この経路を塞ぐためである。
+  担当者の設定とウォッチについても、プロジェクトのメンバーでなければそもそも操作できない。</p>
+
+  <h2>送信の仕組み</h2>
+
+  <p>メールは Cloudflare Email Service の SMTP 経由で送る。
+  アプリケーション側は <code>MailSender</code> の抽象を通してのみ呼び、開発中はコンソールへ出力する実装を差し込む。</p>
+
+  <p>無料枠は月3,000通である。
+  100人規模でこの三つのきっかけが動けば、ひとりあたり月30通で上限に達する。
+  実運用では有料枠が前提になる。</p>
+
+  <h2>初期リリースに含めないもの</h2>
+
+  <ul>
+    <li><strong>期限が近い課題の通知。</strong>日次バッチと常駐プロセスの設計が要るため</li>
+    <li><strong>きっかけごとの通知設定。</strong>設定画面が複雑になる割に、使う人が少ないと見込んだため</li>
+    <li><strong>ウォッチの自動付与。</strong>上に書いたとおり、運用で補う前提とした</li>
+  </ul>
+
+  <p>いずれも<a href="../../issues/notification-enhancement/index.html">通知の拡張</a>に記録している。</p>
+
+  <h2>関連する画面</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/pages/o/[slug]/dashboard/index.html"><span class="card-no">/dashboard</span><p class="card-title">担当スレッド</p><p class="card-desc">通知一覧を併せて置く</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html"><span class="card-no">/t/{number}</span><p class="card-title">スレッド詳細</p><p class="card-desc">ウォッチのボタン</p></a>
+  </div>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../../database/notifications/index.html"><span class="card-no">TABLE</span><p class="card-title">notifications</p><p class="card-desc">通知と既読状態</p></a>
+    <a class="card" href="../../database/watches/index.html"><span class="card-no">TABLE</span><p class="card-title">watches</p><p class="card-desc">ウォッチの申し込み</p></a>
+    <a class="card" href="../../database/users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">メール通知のオンオフ</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能 / 通知とウォッチ</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

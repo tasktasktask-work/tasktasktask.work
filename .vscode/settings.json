@@ -1,0 +1,47 @@
+{
+  // 整形と Lint は Biome に一本化している。ESLint と Prettier は入れていない。
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.tabSize": 2,
+  "files.insertFinalNewline": true,
+  "files.trimFinalNewlines": true,
+
+  "editor.defaultFormatter": "biomejs.biome",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports.biome": "explicit"
+  },
+
+  "[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[javascript]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[json]": { "editor.defaultFormatter": "biomejs.biome" },
+  "[jsonc]": { "editor.defaultFormatter": "biomejs.biome" },
+
+  // src/styles/*.css は docs/theme.css の写しであり、整形の権限は docs 側にある。
+  // biome.json でも対象外にしてあるので Biome は手を出さないが、
+  // 別の整形器を割り当てるとずれる。pnpm styles:check が食い違いを検出する。
+  "[css]": { "editor.defaultFormatter": "biomejs.biome" },
+
+  // typescript.tsdk は指定しない。
+  // TypeScript 7 は Go 実装で、lib/tsserver.js を持たない。
+  // 言語サーバは LSP として別に提供される（tsc --lsp --stdio）。
+  // ここを指すと VSCode が読み込みに失敗する。
+
+  "remote.autoForwardPorts": false,
+
+  "yaml.schemas": {
+    "https://raw.githubusercontent.com/compose-spec/compose-go/master/schema/compose-spec.json": [
+      ".devcontainer/compose.yaml",
+      "deploy/compose.yaml"
+    ],
+    "https://json.schemastore.org/github-workflow.json": [
+      ".github/workflows/*.yml"
+    ]
+  },
+  "yaml.format.enable": true,
+  "yaml.validate": true,
+
+  "files.associations": {
+    "atlas.hcl": "hcl"
+  }
+}

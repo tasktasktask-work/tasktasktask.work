@@ -1,0 +1,59 @@
+# VPS のプロジェクトディレクトリに置くのはこのファイルと .env、
+# それに ./data/attachments だけである。ソースコードは置かない。
+#
+#   docker compose pull
+#   docker compose run --rm app migrate    ← アプリを入れ替える前に流す
+#   docker compose up -d
+#
+# イメージは GitHub Actions の Deploy ワークフローが作って push する。
+#
+# nginx-proxy と postgres は既に動いているものへ相乗りする。
+
+name: tasktasktask-work
+
+services:
+  app:
+    # .env に必ず書く。既定値を置かないのは、
+    # 取り違えたイメージを黙って動かさないためである。
+    image: ${APP_IMAGE:?APP_IMAGE を .env に設定してください}
+    container_name: tasktasktask-work-app
+    restart: unless-stopped
+
+    # DATABASE_URL, APP_ORIGIN, SMTP_URL などはここから読む
+    env_file: .env
+
+    environment:
+      # nginx-proxy が振り分けに使う
+      VIRTUAL_HOST: tasktasktask.work
+      VIRTUAL_PORT: "3000"
+
+      # nginx の既定は 1MB。添付は1ファイル10MBまで許すので、
+      # ここを上げておかないと本番でだけ 413 になる。
+      CLIENT_MAX_BODY_SIZE: 12m
+
+      NODE_ENV: production
+      ATTACHMENTS_DIR: /var/lib/task3/attachments
+
+      # timestamptz の入出力はセッションの設定で変換される。
+      # 表示のための変換は organizations.timezone を使ってアプリが行うので、
+      # ここは UTC に固定する。
+      TZ: UTC
+      PGTZ: UTC
+
+    # ホストには晒さない。nginx-proxy だけが到達する。
+    expose:
+      - "3000"
+
+    volumes:
+      # 実体はファイルシステム側にある。データベースだけ戻しても復旧しない。
+      - ./data/attachments:/var/lib/task3/attachments
+
+    networks:
+      - nginxproxy-network
+      - postgres-network
+
+networks:
+  nginxproxy-network:
+    external: true
+  postgres-network:
+    external: true

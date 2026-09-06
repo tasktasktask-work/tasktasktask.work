@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tags | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">tags</h1>
+  <p class="lede">
+    組織の単位で定義する。プロジェクトごとではない。
+    <code>bug</code> や <code>要相談</code> のような分類は、プロジェクトが変わっても同じ意味で使われるためである。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+  <p><a href="../../glossary.html#parent-child">親子関係</a>は階層という一本の軸しか表せない。
+  <code>frontend</code> のように階層と直交する分類は、親子では代わりにならない。
+  <a href="../../glossary.html#tag">タグ</a>はその軸を足す。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE tags (
+  id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid        NOT NULL REFERENCES organizations(id),
+  name            text        NOT NULL,
+  color           text        NOT NULL DEFAULT '#7d8792',
+  deleted_at      timestamptz,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+  updated_at      timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT tags_name_not_blank
+    CHECK (btrim(name) &lt;&gt; '' AND length(name) &lt;= 40),
+  CONSTRAINT tags_color_format
+    CHECK (color ~ '^#[0-9a-f]{6}$')
+);
+
+CREATE UNIQUE INDEX tags_name_uniq
+  ON tags (organization_id, lower(name)) WHERE deleted_at IS NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>name</code></td><td>text</td><td>40文字まで。組織の中で重複しない。大文字小文字を区別せず比較する</td></tr>
+      <tr><td><code>color</code></td><td>text</td><td>小文字の16進6桁。画面では小さな円の色として使う</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>色は文字色に使わない</h3>
+  <p>タグの色は円形の点にだけ使い、文字色は変えない。
+  色数が増えても可読性が落ちないようにするためである。</p>
+  <p>また、色だけで意味を伝えないので、色覚の違いによる読み取りの差も生じない。
+  文字が常に主で、色は補助である。</p>
+
+  <h3>誰でも作れる</h3>
+  <p>作成を管理者に限らない。
+  必要なタグが作れないと、結局使われなくなるためである。</p>
+
+  <div class="note warn">
+    <span class="note-label">増え続けることへの手当てがない</span>
+    <p>組織単位かつ誰でも作成可という組み合わせは、タグが増え続けることを意味する。
+    選択肢に数十個が並ぶ状態は起こりうる。</p>
+    <p>統合、リネーム、未使用タグの一括削除といった整理の仕組みは初期リリースに含めていない。
+    運用してみて実際に問題になるかを見てから判断する。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">organizations ──&lt; tags &gt;── thread_tags ──&lt; threads</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../thread_tags/index.html"><span class="card-no">TABLE</span><p class="card-title">thread_tags</p><p class="card-desc">スレッドとの結び</p></a>
+    <a class="card" href="../organizations/index.html"><span class="card-no">TABLE</span><p class="card-title">organizations</p><p class="card-desc">定義の範囲</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/tag/index.html"><span class="card-no">FEATURE</span><p class="card-title">タグ</p><p class="card-desc">階層と直交する軸</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / tags</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+# 検査するだけなので、GitHub への書き込みは要らない
+permissions:
+  contents: read
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+
+    services:
+      # テストは実データベースに対して行う。
+      # CHECK 制約や複合外部キーが本当に効くかは、実物でしか確かめられない。
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: tasktasktask_work_test
+          TZ: UTC
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    env:
+      # 作業用データベースは要らない。
+      # atlas migrate apply は接続先ひとつで足りる。
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/tasktasktask_work_test?sslmode=disable
+      APP_ORIGIN: http://localhost:3000
+      MAIL_TRANSPORT: console
+      MAIL_FROM: TASK3 <no-reply@tasktasktask.work>
+      ATTACHMENTS_DIR: /tmp/task3/attachments
+      # timestamptz の変換はセッションの設定で決まる。手元と揃える。
+      TZ: UTC
+      PGTZ: UTC
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Atlas は Node の依存ではなく単体のバイナリなので、先に用意する。
+      # 版は .atlas-version にまとめてある。Dockerfile も同じものを読む。
+      - name: Atlas の版を読む
+        run: echo "ATLAS_VERSION=$(cat .atlas-version)" >> "$GITHUB_ENV"
+
+      - name: Atlas のキャッシュ
+        id: atlas-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.atlas/bin
+          key: atlas-${{ runner.os }}-${{ runner.arch }}-${{ env.ATLAS_VERSION }}
+
+      - name: Atlas を入れる
+        if: steps.atlas-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.atlas/bin
+          curl -fsSL -o ~/.atlas/bin/atlas \
+            "https://release.ariga.io/atlas/atlas-linux-amd64-${ATLAS_VERSION}"
+
+      # キャッシュから戻したときも通るよう、PATH と実行権限は毎回そろえる
+      - name: Atlas を使えるようにする
+        run: |
+          chmod +x ~/.atlas/bin/atlas
+          echo "$HOME/.atlas/bin" >> "$GITHUB_PATH"
+
+      - run: atlas version
+
+      # package.json の packageManager から版を読む
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: スキーマを適用する
+        run: pnpm schema:apply
+
+      # 型、Biome、共有スタイルの一致、移行の規約
+      - name: 静的な検査
+        run: pnpm check
+
+      - name: テスト
+        run: pnpm test
+
+      # 型検査だけでは拾えない、ビルド時の失敗を早く見つける
+      - name: ビルド
+        run: pnpm build

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>種別バッジ | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Component</p>
+  <h1 class="title">種別バッジ</h1>
+  <p class="lede">
+    三つの<a href="../../../glossary.html#thread-type">種別</a>が同じ一覧に混在する。
+    どれが何なのかを、色に頼らず見分けられる必要がある。
+  </p>
+
+  <h2>色と形の二重符号</h2>
+
+  <div class="spec">
+    <div class="spec-head"><span>三つの種別</span><span>ThreadTypeBadge</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="p-type" data-type="kadai">課題</span><span class="cap">朱 #c8402c / 四角</span></div>
+        <div class="spec-item"><span class="p-type" data-type="giron">議論</span><span class="cap">藍 #2c4a75 / 丸</span></div>
+        <div class="spec-item"><span class="p-type" data-type="shitsumon">質問</span><span class="cap">緑 #3f6b52 / 菱形</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p>バッジの左にある印は種別ごとに形が違う。
+  朱と緑の判別がつかない場合でも、四角と菱形で見分けられる。
+  文字も併記しているので、印が見えなくても読める。</p>
+
+  <p>三重に符号化しているのは冗長に見えるが、
+  一覧の行は密度が高く、文字が小さい。
+  形の違いは、文字を読む前に視野の端で処理できる。</p>
+
+  <h2>形の割り当て</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>種別</th><th>形</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><a href="../../../glossary.html#kadai">課題</a></td><td>四角</td><td>輪郭が閉じている。終わりの形が決まっているものを表す</td></tr>
+      <tr><td class="nowrap"><a href="../../../glossary.html#giron">議論</a></td><td>丸</td><td>方向を持たない。どこへ向かうか決まっていないものを表す</td></tr>
+      <tr><td class="nowrap"><a href="../../../glossary.html#shitsumon">質問</a></td><td>菱形</td><td>四角を傾けた形。判断の分岐を表す図法から借りた</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>使う場所と大きさ</h2>
+
+  <p>大きさは一種類しか作らない。
+  一覧の行、詳細画面の見出し、ガントの行名。
+  どこでも同じ大きさで出す。</p>
+
+  <div class="spec">
+    <div class="spec-head"><span>並べたとき</span><span>一覧の行での見え方</span></div>
+    <div class="spec-body tight">
+      <div class="p-list">
+        <div class="p-row"><span class="p-type" data-type="giron">議論</span><a class="ttl" href="#">検索の要件をどうするか</a><span class="p-oc" data-oc="open">オープン</span><span class="hanko sm">佐</span><span class="p-id">WEB-3</span></div>
+        <div class="p-row"><span class="p-type" data-type="kadai">課題</span><a class="ttl" href="#">検索APIの実装</a><span class="p-progress"><span class="bar"><span class="fill" style="width:40%"></span></span><span class="num">40%</span></span><span class="hanko sm">田</span><span class="p-id">WEB-7</span></div>
+        <div class="p-row"><span class="p-type" data-type="shitsumon">質問</span><a class="ttl" href="#">全角の正規化はどこでやっている？</a><span class="p-oc" data-oc="close">クローズ</span><span class="hanko sm">鈴</span><span class="p-id">WEB-9</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>種別は変わらない</h2>
+  <p>スレッドの種別は作成後に変更できない。
+  そのためこのバッジは編集の入口にならず、常に表示専用である。
+  押せそうな見た目にしない。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">UI</span><p class="card-title">コンポーネント</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../../features/thread/index.html"><span class="card-no">FEATURE</span><p class="card-title">スレッド</p><p class="card-desc">三つの種別</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / 種別バッジ</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../sidebar.js" defer></script>
+</body>
+</html>

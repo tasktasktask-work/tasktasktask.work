@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>通知の拡張 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 高</p>
+  <h1 class="title">通知の拡張</h1>
+
+  <h2>概要</h2>
+  <p>三つを先送りにした。</p>
+  <ol>
+    <li><strong><a href="../../glossary.html#watch">ウォッチ</a>の自動付与。</strong>作成者、担当者、コメントした人を自動でウォッチ扱いにしない</li>
+    <li><strong>きっかけごとの通知設定。</strong>メール通知はユーザー単位のオンオフひとつだけ</li>
+    <li><strong>期限が近い課題の通知。</strong>終了日が迫ったことを知らせる仕組みがない</li>
+  </ol>
+
+  <h2>先送りとした理由</h2>
+
+  <h3>ウォッチの自動付与</h3>
+  <p>自動で付けると、関わっただけのスレッドの通知が延々と届く。
+  それを嫌ってメール通知を切る人が出ると、必要な通知まで届かなくなる。
+  申し込み制にすれば、届く通知はすべて自分で選んだものになる。</p>
+
+  <div class="note warn">
+    <span class="note-label">この判断が抱える穴</span>
+    <p><strong>自分が立てたスレッドに返信が来ても、ウォッチしていなければ気づけない。</strong>
+    これを補うのは<a href="../../glossary.html#mention">メンション</a>だけである。</p>
+    <p>「返信するときは相手を <code>@</code> で呼ぶ」という運用が前提になっているが、
+    これは<strong>仕組みではなく規律に頼っている</strong>。
+    忘れる人が一定数いれば、質問が放置される。</p>
+  </div>
+
+  <h3>きっかけごとの設定</h3>
+  <p>設定項目が増える割に、細かく設定する人は少ないと見込んだ。
+  ユーザー単位のオンオフひとつがあれば、迷惑メール報告による送信ドメインの劣化は防げる。</p>
+
+  <h3>期限通知</h3>
+  <p>日次で走るバッチが要る。
+  常駐プロセスの配置、失敗時の再実行、多重起動の防止。
+  <a href="../../devops/deployment/index.html">デプロイ構成</a>に新しい要素が加わるため、
+  アプリケーションだけで完結する機能を先に固めることにした。</p>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>「質問したのに誰も答えてくれない」という声が出たとき（1 の穴が顕在化した合図）</li>
+    <li>メール通知をオフにしている人の割合が高いとき（2 が必要な合図）</li>
+    <li>期限切れの課題が放置される事例が繰り返されたとき（3 が必要な合図）</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+  <p>1 は <code>watches</code> に行を作るきっかけを増やすだけで、スキーマの変更は要らない。
+  ただし<strong>既存のスレッドに遡って付けるかどうか</strong>という判断が要る。
+  遡ると、大量の人が突然通知を受け取りはじめる。</p>
+
+  <p>2 は <code>users</code> にフラグを足すか、設定用のテーブルを作る。
+  きっかけが三つしかないので、三つの boolean で足りる。</p>
+
+  <p>3 は日次バッチと、送信済みを記録する仕組みが要る。
+  同じ課題について毎日通知が飛ばないよう、
+  <code>notifications</code> の <code>kind</code> に <code>due_soon</code> を足したうえで重複を避ける。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/notification/index.html"><span class="card-no">FEATURE</span><p class="card-title">通知とウォッチ</p><p class="card-desc">現在の設計</p></a>
+    <a class="card" href="../../database/watches/index.html"><span class="card-no">TABLE</span><p class="card-title">watches</p><p class="card-desc">自動で行を作らない</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / 通知の拡張</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

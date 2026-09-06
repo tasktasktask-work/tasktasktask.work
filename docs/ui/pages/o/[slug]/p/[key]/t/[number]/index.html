@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>スレッド詳細画面 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock</p>
+  <h1 class="title">スレッド詳細</h1>
+  <p class="lede">
+    本文、属性、親子、コメント。
+    この画面でだけ、期間と進捗率と担当者を変更できる。
+  </p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/p/WEB/t/7</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-top">
+        <span class="app-logo"><span class="m">3</span>TASK3</span>
+        <span class="app-org">株式会社アクメ <span class="slug">acme</span> &#9662;</span>
+        <span class="sp"></span>
+        <span class="app-bell">&#128276;<span class="n">3</span></span>
+        <span class="hanko sm">佐</span>
+      </div>
+      <div class="app-shell">
+        <nav class="app-side">
+          <h5>プロジェクト</h5>
+          <a href="#" class="on"><span class="k">WEB</span>検索基盤の刷新</a>
+          <a href="#"><span class="k">BILL</span>請求まわり</a>
+          <h5>わたし</h5>
+          <a href="#">担当スレッド</a>
+          <a href="#">通知</a>
+        </nav>
+        <div class="app-main">
+
+          <div style="font-size:.76rem;color:var(--ink-soft);margin-bottom:.7rem">
+            <a href="#" style="color:var(--ai);text-decoration:none">検索基盤の刷新</a>
+            &#160;/&#160;
+            <a href="#" style="color:var(--ai);text-decoration:none">WEB-3 検索の要件をどうするか</a>
+            &#160;/&#160; WEB-7
+          </div>
+
+          <div class="app-head">
+            <span class="p-type" data-type="kadai">課題</span>
+            <div style="min-width:0">
+              <h2>検索APIの実装</h2>
+              <div class="sub"><span class="p-id">WEB-7</span> &#160;佐藤 明日香 が 9月4日 に作成 &#160;<span class="app-edited">編集済み 9月4日 14:10</span></div>
+            </div>
+            <span style="flex:1"></span>
+            <button class="app-btn ghost">&#9734; ウォッチ</button>
+            <button class="app-btn ghost">&#8943;</button>
+          </div>
+
+          <div class="app-detail">
+            <div>
+              <div class="app-body-md">
+                <p>前方一致の検索APIを作る。日本語の正規化は範囲が広いので、この課題には含めない。</p>
+                <ul>
+                  <li>エンドポイントは <code>GET /api/search</code></li>
+                  <li>対象はスレッドのタイトルのみ</li>
+                  <li>ページングはカーソル方式</li>
+                </ul>
+                <p>正規化については <a href="#" style="color:var(--ai)">WEB-9</a> で確認中。</p>
+              </div>
+
+              <h4 style="margin-top:0">子スレッド &#160;<span style="color:var(--ink-faint);font-weight:400">1件</span></h4>
+              <div class="p-list" style="margin-bottom:1.6rem">
+                <div class="p-row">
+                  <span class="p-type" data-type="shitsumon">質問</span>
+                  <a class="ttl" href="#">全角の正規化はどこでやっている？</a>
+                  <span class="p-oc" data-oc="open">オープン</span>
+                  <span class="hanko sm">佐</span>
+                  <span class="p-id">WEB-9</span>
+                </div>
+              </div>
+
+              <h4>コメント &#160;<span style="color:var(--ink-faint);font-weight:400">3件</span></h4>
+              <div style="border-top:1px solid var(--rule)">
+                <div class="p-comment">
+                  <span class="hanko">佐</span>
+                  <div class="body">
+                    <div class="head"><span class="who">佐藤 明日香</span><span class="when">2026-09-04 11:20</span></div>
+                    <div class="text"><p>WEB-3 の議論を受けて立てました。まず前方一致だけで出します。</p></div>
+                  </div>
+                </div>
+                <div class="p-comment">
+                  <span class="hanko" style="border-color:#2c4a75;color:#2c4a75;background:#eaeff6">田</span>
+                  <div class="body">
+                    <div class="head"><span class="who">田中 亮</span><span class="when">2026-09-04 13:02</span></div>
+                    <div class="text"><p><span class="p-mention">@佐藤 明日香</span> ページングはカーソルでいいと思います。件数が増えたときにオフセットだとずれるので。</p></div>
+                  </div>
+                </div>
+                <div class="p-comment">
+                  <span class="hanko">佐</span>
+                  <div class="body">
+                    <div class="head"><span class="who">佐藤 明日香</span><span class="when">2026-09-04 14:10</span></div>
+                    <div class="text">
+                      <p>本文に反映しました。設計メモも貼っておきます。</p>
+                      <p style="font-size:.8rem"><a href="#" style="color:var(--ai)">&#128206; search-api-design.pdf</a> <span style="color:var(--ink-faint)">240 KB</span></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="app-compose">
+                <textarea placeholder="コメントを書く（Markdown が使えます。@ で人を指名できます）"></textarea>
+                <div class="foot">
+                  <button class="app-btn">投稿する</button>
+                  <button class="app-btn ghost">&#128206; ファイルを添付</button>
+                  <span class="sp" style="flex:1"></span>
+                  <span class="warn-inline">&#9888; 投稿したコメントは編集も削除もできません</span>
+                </div>
+              </div>
+            </div>
+
+            <aside class="app-props">
+              <div class="row"><span class="k">進捗率</span><span class="v">
+                <span class="p-progress"><span class="bar"><span class="fill" style="width:40%"></span></span><span class="num">40%</span></span>
+              </span></div>
+              <div class="row"><span class="k">担当者</span><span class="v">
+                <span class="hanko sm">佐</span><span style="font-size:.82rem">佐藤 明日香</span>
+              </span></div>
+              <div class="row"><span class="k">期間</span><span class="v">
+                <span style="font-family:var(--font-mono);font-size:.78rem">2026-09-08 – 09-19</span>
+              </span></div>
+              <div class="row"><span class="k">タグ</span><span class="v">
+                <span class="p-tag" style="--tag-color:#c8402c">backend</span>
+                <span class="p-tag" style="--tag-color:#8f6410">要相談</span>
+              </span></div>
+              <div class="row"><span class="k">親</span><span class="v">
+                <a href="#" style="font-size:.8rem;color:var(--ai);text-decoration:none">WEB-3 検索の要件を…</a>
+              </span></div>
+              <div class="row"><span class="k">ウォッチ</span><span class="v">
+                <span class="hanko sm">佐</span>
+                <span class="hanko sm" style="border-color:#2c4a75;color:#2c4a75;background:#eaeff6">田</span>
+                <span style="font-size:.76rem;color:var(--ink-soft)">2人</span>
+              </span></div>
+            </aside>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>投稿欄に警告を出す理由</h2>
+
+  <p><a href="../../../../../../../../glossary.html#comment">コメント</a>は投稿すると編集も削除もできない。
+  押した後で取り返せないのに、押す前に何も伝えないのは不親切にあたる。</p>
+
+  <p>そこで投稿ボタンの並びに一文を置く。
+  確認ダイアログにはしない。毎回出れば読まれなくなり、投稿そのものが億劫になる。</p>
+
+  <h2>本文とコメントの扱いの違い</h2>
+
+  <p>タイトルの下に「編集済み」の印がある。
+  本文は編集できるが、コメントはできない。</p>
+
+  <p>本文は「現在の課題の定義」であり、調査が進めば書き換わってよい。
+  コメントは「その時点の発言」なので不変にする。</p>
+
+  <p>ただし本文が黙って書き換わると、それを前提に書かれたコメントが宙に浮く。
+  上の例では、田中のコメントが「ページングはカーソルで」と言い、
+  そのあと佐藤が本文に反映している。
+  編集済みの印は、この順序を追うための手がかりになる。</p>
+
+  <h2>右の属性欄</h2>
+
+  <p>この画面でだけ、進捗率と期間と担当者を変更できる。
+  <a href="../../gantt/index.html">ガント</a>のバーはドラッグできないので、期間を変えるならここへ来る。</p>
+
+  <p>ウォッチしている人を出しているのは、
+  自動では付かない仕様のため「誰が見ているか」が自明でないからである。
+  ここに自分がいなければ、コメントが付いても通知は来ない。</p>
+
+  <h2>アーカイブされている場合</h2>
+
+  <p>投稿欄と、子スレッドを追加するボタンを消す。
+  無効化して灰色で残すのではなく、消す。
+  読めるが書けない状態であることを、画面の構造で示す。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../../../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../index.html"><span class="card-no">PAGE</span><p class="card-title">スレッド一覧</p><p class="card-desc">この画面へ来る導線</p></a>
+    <a class="card" href="../../../../../../../../features/comment/index.html"><span class="card-no">FEATURE</span><p class="card-title">コメント</p><p class="card-desc">不変であることの理由</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / スレッド詳細</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../../../../../../sidebar.js" defer></script>
+</body>
+</html>

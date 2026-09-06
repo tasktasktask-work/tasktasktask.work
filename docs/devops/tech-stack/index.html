@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>技術スタック | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">DevOps 01</p>
+  <h1 class="title">技術スタック</h1>
+  <p class="lede">
+    選んだものと、選ばなかったもの。
+    後者を書き残しておかないと、半年後に同じ検討をやり直すことになる。
+  </p>
+
+  <h2>構成</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>層</th><th>採用</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">パッケージ管理</td><td>pnpm</td><td></td></tr>
+      <tr><td class="nowrap">実行環境</td><td>Node.js 24</td><td>型注釈を剥がして <code>.ts</code> を直接実行できる。テストで使う</td></tr>
+      <tr><td class="nowrap">フレームワーク</td><td>Next.js 16（App Router）</td><td>16.2.11 以降が TypeScript 7 に対応する</td></tr>
+      <tr><td class="nowrap">言語</td><td>TypeScript 7</td><td>Go 実装。従来の JS コンパイラ API を持たない</td></tr>
+      <tr><td class="nowrap">データベース</td><td>PostgreSQL 18</td><td></td></tr>
+      <tr><td class="nowrap">DBアクセス</td><td><code>pg</code>（SQLを直接書く）</td><td><strong>ORM を使わない</strong></td></tr>
+      <tr><td class="nowrap">スキーマ管理</td><td>Atlas</td><td>宣言的に定義する</td></tr>
+      <tr><td class="nowrap">実行基盤</td><td>VPS + Docker Compose</td><td>稼働中の nginx-proxy と postgres に相乗りする</td></tr>
+      <tr><td class="nowrap">メール送信</td><td>Cloudflare Email Service</td><td>SMTP 経由。抽象を挟む</td></tr>
+      <tr><td class="nowrap">画像処理</td><td>browser-image-compression / sharp</td><td>送信前の圧縮と、サーバー側の再エンコード</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2 id="typescript7">TypeScript 7 と Next.js 16 は組で決まっている</h2>
+
+  <p>TypeScript 7 は Go で書き直された実装である。
+  型検査は速くなったが、<strong>従来の JavaScript コンパイラ API を持たない</strong>。
+  <code>require('typescript')</code> は版番号を返すだけになり、
+  新しい API は <code>typescript/unstable/*</code> に分かれた。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>測ったもの</th><th>TypeScript 5.9.3</th><th>TypeScript 7.0.2</th></tr></thead>
+    <tbody>
+      <tr><td><code>tsc --noEmit</code>（3回平均）</td><td>1020 ms</td><td>335 ms</td></tr>
+      <tr><td><code>next build</code> の型検査</td><td>—</td><td>181 ms</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>ファイル数が少ないので起動の時間が支配的である。規模が増えれば差は開く。</p>
+
+  <div class="note warn">
+    <span class="note-label">API が無いことの影響</span>
+    <p>Next.js は設定ファイルの読み込みとビルド時の型検査で、この API を使っていた。
+    そのため <strong>16.2.11 より前の Next では TypeScript 7 が動かない</strong>。
+    Next 自身が版を見て拒否する。</p>
+<pre><code>TypeScript 7.0.2 is not supported by this version of Next.js.
+The TypeScript 7 native compiler does not provide the JavaScript compiler API
+that Next.js requires. Install TypeScript 6 ... or upgrade to a Next.js
+v16.2.11 or later to get support for TypeScript 7.</code></pre>
+    <p>つまり<strong>この二つは片方だけ上げられない</strong>。
+    どちらかを戻すなら、もう一方も戻すことになる。</p>
+  </div>
+
+  <p>あわせて二つの調整が要った。</p>
+
+  <ul>
+    <li><strong>CSS の副作用 import に型宣言が要る。</strong>
+        <code>types/assets.d.ts</code> に <code>declare module '*.css';</code> を置いた</li>
+    <li><strong>エディタは <code>typescript.tsdk</code> を指定しない。</strong>
+        TypeScript 7 は <code>lib/tsserver.js</code> を持たず、言語サーバは LSP として提供される。
+        指すと VSCode が読み込みに失敗する</li>
+  </ul>
+
+  <p>整形と Lint に <a href="https://biomejs.dev">Biome</a> を使っていることも、
+  この移行を軽くしている。
+  <code>typescript-eslint</code> は TypeScript の API に依存するため、
+  ESLint を使っていたら移行できなかった。</p>
+
+  <h2>ORM を使わない</h2>
+
+  <p>SQLを直接書く。
+  <a href="../../database/threads/index.html">threads</a> のように制約が集中したテーブルでは、
+  スキーマそのものが設計書として読める状態を保ちたいためである。</p>
+
+  <p>複合外部キーによる「親子は同じプロジェクトに閉じる」という保証は、
+  多くの ORM では自然に表現できない。
+  スキーマ定義がSQLのままであれば、この種の制約を素直に書ける。</p>
+
+  <div class="note warn">
+    <span class="note-label">この選択が背負うもの</span>
+    <p>型の安全は自分で作ることになる。
+    クエリの結果に型を付ける仕組みを、実装の早い段階で決める必要がある。</p>
+    <p>また、N+1 の検出も自動では行われない。
+    <a href="../coding-conventions/index.html">コーディング規約</a>でクエリの置き場所を定め、
+    一覧の取得は必ず一回のクエリで済ませる方針を守る。</p>
+  </div>
+
+  <h2>メール送信を抽象で包む</h2>
+
+  <p>Cloudflare Email Service を使うが、アプリケーションからは <code>MailSender</code> 越しにしか呼ばない。</p>
+
+<pre><code>interface MailSender {
+  send(mail: { to: string; subject: string; text: string }): Promise&lt;void&gt;;
+}
+
+// 開発中
+class ConsoleMailSender implements MailSender { /* 標準出力に書く */ }
+// 本番
+class SmtpMailSender implements MailSender { /* smtp.mx.cloudflare.net:465 */ }</code></pre>
+
+  <p>SMTP で送るため、Cloudflare 固有の実装に縛られない。
+  別のサービスへ移すときも接続設定の差し替えで済む。</p>
+
+  <div class="note">
+    <span class="note-label">無料枠の上限を見込んでおく</span>
+    <p>Cloudflare Email Service の無料枠は月3,000通である。
+    100人規模で<a href="../../features/notification/index.html">通知</a>が動けば、
+    ひとりあたり月30通で上限に達する。実運用では有料枠が前提になる。</p>
+    <p>任意の宛先へ送るには Workers Paid プランと送信ドメインのオンボーディングが要る。
+    それを済ませるまでは、検証済みの宛先にしか届かない。</p>
+  </div>
+
+  <h2>選ばなかったもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>候補</th><th>選ばなかった理由</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">Prisma / Drizzle</td><td>複合外部キーによる制約を素直に書けない。スキーマをSQLのまま保ちたい</td></tr>
+      <tr><td class="nowrap">Vercel</td><td>添付ファイルをローカルボリュームに置く構成と合わない</td></tr>
+      <tr><td class="nowrap">Caddy を自前で立てる</td><td>VPS で nginx-proxy が既に動いている。振り分けを二重に持つ理由がない</td></tr>
+      <tr><td class="nowrap">MinIO</td><td>単一VPSでは冗長性の利点がなく、コンテナが一つ増えるだけになる</td></tr>
+      <tr><td class="nowrap">自前 Postfix</td><td>SPF/DKIM/DMARC、IPの評価、バウンス処理をすべて背負う。認証メールが届かなくなる危険が大きい</td></tr>
+      <tr><td class="nowrap">検索エンジン（別プロセス）</td><td><a href="../../issues/full-text-search/index.html">全文検索</a>自体を先送りにした</td></tr>
+      <tr><td class="nowrap">Auth.js などの認証ライブラリ</td><td>マジックリンクとパスワードの併用、およびロックの独自要件が乗せにくい</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../database-migration/index.html"><span class="card-no">DEVOPS</span><p class="card-title">スキーマ移行</p><p class="card-desc">Atlas の使い方</p></a>
+    <a class="card" href="../deployment/index.html"><span class="card-no">DEVOPS</span><p class="card-title">デプロイ構成</p><p class="card-desc">Compose の中身</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>開発と運用 / 技術スタック</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

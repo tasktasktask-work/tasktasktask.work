@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>課金とプラン | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 低</p>
+  <h1 class="title">課金とプラン</h1>
+
+  <h2>概要</h2>
+  <p>複数の組織が使うマルチテナントの構成だが、料金を受け取る仕組みがない。
+  プラン、上限、支払い、請求。どれも存在しない。</p>
+
+  <h2>先送りとした理由</h2>
+  <p>課金は、利用者がついてから作るもので、その逆ではない。
+  何をどう課金するかは、実際の使われ方を見なければ決められない。
+  人数あたりか、プロジェクト数か、保存容量か。</p>
+
+  <p>そして課金を入れると、機能の側にも制限の仕組みが必要になる。
+  「無料プランではプロジェクトは3つまで」といった判定が、
+  プロジェクト作成、メンバー招待、ファイルアップロードなど各所に入り込む。</p>
+
+  <h2>先に決めておくべきこと</h2>
+
+  <p>実装は先送りでよいが、<strong>何を課金の単位にしうるかは早めに見ておく</strong>。
+  後から数えられないものを課金単位にはできないためである。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>候補</th><th>今のスキーマで数えられるか</th></tr></thead>
+    <tbody>
+      <tr><td>組織のメンバー数</td><td>数えられる（<code>organization_members</code>）</td></tr>
+      <tr><td>プロジェクト数</td><td>数えられる（<code>projects</code>）</td></tr>
+      <tr><td>スレッド数</td><td>数えられる（<code>threads</code>）</td></tr>
+      <tr><td>添付ファイルの総容量</td><td>数えられる（<code>attachments.byte_size</code> の合計）</td></tr>
+      <tr><td><strong>月間の活動量</strong></td><td><strong>数えられない</strong>（操作の記録がない）</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>最後の行が問題になりうる。
+  活動量に応じた課金を将来選ぶなら、<a href="../audit-log/index.html">監査ログ</a>が先に要る。</p>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>社外の組織に提供することが決まったとき</li>
+    <li>インフラの費用が無視できない額になったとき</li>
+  </ul>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">課金の単位になりうる</p></a>
+    <a class="card" href="../audit-log/index.html"><span class="card-no">ISSUE</span><p class="card-title">監査ログ</p><p class="card-desc">活動量を数える前提</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / 課金とプラン</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

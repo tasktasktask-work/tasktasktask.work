@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>thread_tags | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">thread_tags</h1>
+  <p class="lede">
+    スレッドとタグを結ぶ中間テーブル。
+    このテーブルは、全レコード論理削除という方針から意図的に外してある。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+  <p>ひとつのスレッドに何個でも<a href="../../glossary.html#tag">タグ</a>を付けられるため、多対多の関係になる。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE thread_tags (
+  thread_id  uuid        NOT NULL REFERENCES threads(id),
+  tag_id     uuid        NOT NULL REFERENCES tags(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+
+  PRIMARY KEY (thread_id, tag_id)
+);
+
+CREATE INDEX thread_tags_by_tag ON thread_tags (tag_id);</code></pre>
+
+  <h2>論理削除しない理由</h2>
+
+  <p>他のテーブルはすべて <code>deleted_at</code> を持ち、行を消さない。
+  このテーブルと <a href="../watches/index.html">watches</a> だけが例外である。</p>
+
+  <p>理由は、付け外しが日常的に起きることにある。
+  <code>deleted_at</code> を置くと、タグを外して付け直すたびに行が積み上がる。
+  主キーも <code>(thread_id, tag_id)</code> のままでは使えず、
+  条件付きの一意インデックスに置き換えることになる。</p>
+
+  <p>そして、得られるものが少ない。
+  「いつタグを外したか」は、記録として参照する場面が想定しにくい。</p>
+
+  <div class="note ok">
+    <span class="note-label">例外として承認済み</span>
+    <p>「基本的にすべてのレコードは論理削除」という方針からの逸脱にあたるが、
+    <strong>中間テーブルに限った例外として承認されている</strong>（2026-09-05 のレビュー）。
+    同じ扱いを <a href="../watches/index.html">watches</a> にも適用する。</p>
+    <p>タグの付け外しを記録として残す必要が生じた場合は、
+    <code>deleted_at</code> を足すのではなく操作ログを別に持つ形（<a href="../../issues/audit-log/index.html">監査ログ</a>）で扱う。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">threads ──&lt; thread_tags &gt;── tags</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../tags/index.html"><span class="card-no">TABLE</span><p class="card-title">tags</p><p class="card-desc">タグの定義</p></a>
+    <a class="card" href="../threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">タグを付ける対象</p></a>
+    <a class="card" href="../watches/index.html"><span class="card-no">TABLE</span><p class="card-title">watches</p><p class="card-desc">同じ例外を適用したテーブル</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/tag/index.html"><span class="card-no">FEATURE</span><p class="card-title">タグ</p><p class="card-desc">絞り込みでの役割</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / thread_tags</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

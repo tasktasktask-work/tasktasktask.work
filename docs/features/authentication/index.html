@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>認証 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Feature 01</p>
+  <h1 class="title">認証</h1>
+  <p class="lede">
+    ログインの手段を二つ用意した。
+    メールで届くリンクを開く方法と、パスワードを入力する方法である。
+    ひとつのアカウントがどちらでも入れる。この重なりが、後で効いてくる。
+  </p>
+
+  <h2>二つの手段を併用する理由</h2>
+
+  <p>手段が二つあると実装が増える。それでも併用にしたのは、片方がもう片方の弱点を埋めるからである。</p>
+
+  <p>パスワード方式には、忘れた人を復帰させる仕組みが要る。
+  普通は「パスワード再設定」という機能を別に作る。
+  ところが<a href="../../glossary.html#magic-link">マジックリンク</a>があるなら、忘れた人はそちらで入って設定し直せばよい。
+  再設定の画面もトークンも要らなくなる。</p>
+
+  <p>同じ理屈が<a href="../../glossary.html#account-lock">アカウントロック</a>の解除にも使える。
+  詳しくは後述する。</p>
+
+  <h2>ログイン</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>手段</th><th>入力</th><th>有効期間</th><th>備考</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">マジックリンク</td><td>メールアドレス</td><td>48時間</td><td>一度使うと無効になる</td></tr>
+      <tr><td class="nowrap">パスワード</td><td>メールアドレスとパスワード</td><td>なし</td><td>8文字以上。文字種は強制しない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>パスワードに記号や数字を必須にしない。
+  文字種を強制すると、利用者は <code>Password1!</code> のような、規則を満たすだけの推測しやすい文字列に流れる。
+  長さだけを条件にするほうが結果として強い。</p>
+
+  <h3>セッション</h3>
+  <p>ログインすると30日間有効なセッションを作る。
+  アクセスによる延長はしないので、30日経てば必ず再ログインになる。
+  セッションIDは <code>HttpOnly</code> かつ <code>Secure</code> の Cookie に置き、値そのものはハッシュしてデータベースに保存する。</p>
+
+  <h2>アカウントロック</h2>
+
+  <p>同じメールアドレスに対してパスワードの入力が10回連続で失敗すると、そのアカウントのパスワードログインを止める。
+  時間経過では解除されない。</p>
+
+  <div class="note warn">
+    <span class="note-label">時間で解除しない設計が抱える穴</span>
+    <p>この仕様のままだと、第三者が任意のユーザーを締め出せる。
+    他人のメールアドレスにでたらめなパスワードを10回送るだけで、その人はログインできなくなる。
+    正規の利用者を守るはずの仕組みが、そのまま攻撃の道具になる。</p>
+  </div>
+
+  <p>そこで解除の経路を二つ置く。</p>
+
+  <ul>
+    <li><strong>マジックリンクでのログイン成功</strong>で自動的に解除する。メールを受け取れることが本人の証拠になっている</li>
+    <li><a href="../../glossary.html#org-admin">組織管理者</a>による手動解除。メールが届かない障害時の逃げ道として残す</li>
+  </ul>
+
+  <p>あわせて、ロックがかかった時点で本人にメールを送る。
+  通知がなければ、締め出された人は理由も解除方法もわからないまま止まってしまう。</p>
+
+  <h2>アカウントの作成</h2>
+
+  <p>アカウントは二つの経路でしか生まれない。</p>
+
+  <ol>
+    <li><strong>新しい組織を作る</strong>。サインアップした人が組織を作り、その人が最初の<a href="../../glossary.html#org-admin">組織管理者</a>になる</li>
+    <li><strong>招待を受ける</strong>。組織管理者が送ったリンクからパスワードを設定して登録する</li>
+  </ol>
+
+  <p><a href="../../glossary.html#invitation">招待</a>リンクの有効期間はマジックリンクと揃えて48時間とする。
+  メールドメインによる自動参加や、URLを知っていれば誰でも入れる仕組みは持たない。</p>
+
+  <h2>メールの送信</h2>
+
+  <p>マジックリンク、招待、そして<a href="../notification/index.html">通知</a>。
+  三つの機能がメール送信に依存している。</p>
+
+  <p>送信は Cloudflare Email Service の SMTP 経由で行う。
+  ただしアプリケーション側は <code>MailSender</code> という抽象を通してしか呼ばない。
+  開発中はコンソールへ出力する実装を差し込み、本番では SMTP の実装に切り替える。
+  送信先を別のサービスへ移すときも、接続設定の差し替えで済む。</p>
+
+  <div class="note">
+    <span class="note-label">見込んでおくこと</span>
+    <p>Cloudflare Email Service の無料枠は月3,000通である。
+    100人規模で通知が動けば、ひとりあたり月30通で上限に達する。
+    実運用では有料枠への移行が前提になる。</p>
+  </div>
+
+  <h2>未認証のときの見せ方</h2>
+
+  <p>ログインしていない人を <code>/login</code> へ送らない。
+  <strong>いま開いているURLのまま、ログイン画面を出す。</strong></p>
+
+<pre class="figure">未認証で /o/acme/p/WEB/t/128 を開く
+        │
+        ├── 送らない: /login?next=/o/acme/p/WEB/t/128
+        │
+        └── 出す:     /o/acme/p/WEB/t/128 のままログイン画面
+                      認証が済んだら、そのURLに着地する</pre>
+
+  <p>行き先を問い合わせに載せて持ち回る必要がなくなる。
+  ブラウザの履歴も汚れない。</p>
+
+  <p>戻り先はフォームの hidden 項目で運ぶ。
+  つまり利用者が書き換えられるので、<strong>自分のサイトの中を指していることを毎回確かめる</strong>。
+  素通しすると、細工したリンクを踏んだ人をログイン直後によそのサイトへ送り込める。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>渡された戻り先</th><th>実際の行き先</th></tr></thead>
+    <tbody>
+      <tr><td><code>/o/acme/p/WEB?tag=bug</code></td><td>そのまま</td></tr>
+      <tr><td><code>https://evil.example.com</code></td><td><code>/</code></td></tr>
+      <tr><td><code>//evil.example.com</code></td><td><code>/</code>（プロトコル相対）</td></tr>
+      <tr><td><code>/\evil.example.com</code></td><td><code>/</code>（一部のブラウザが同じに扱う）</td></tr>
+      <tr><td>途中に改行を含むもの</td><td><code>/</code>（ヘッダを分割される）</td></tr>
+      <tr><td><code>/auth/magic?token=...</code></td><td><code>/</code>（戻っても意味がない）</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">マジックリンクは元のURLへ戻れない</span>
+    <p>リンクはメールの中にある。
+    どのURLで受け取ったかを覚えておくには、<code>magic_link_tokens</code> に列を足して持ち回る必要がある。
+    いまは <code>/</code> に着地する。</p>
+  </div>
+
+  <p><code>/login</code> というURLは残してある。
+  ロックの通知メールがこのURLを指しているためで、
+  そこが特別な場所というわけではない。</p>
+
+  <h2>実装の状況</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>できること</th><th>状態</th></tr></thead>
+    <tbody>
+      <tr><td>パスワードでのログイン</td><td>実装済み</td></tr>
+      <tr><td><a href="../../glossary.html#magic-link">マジックリンク</a>の発行と使用</td><td>実装済み</td></tr>
+      <tr><td>10回連続の失敗による<a href="../../glossary.html#account-lock">ロック</a></td><td>実装済み</td></tr>
+      <tr><td>マジックリンクによるロックの自動解除</td><td>実装済み</td></tr>
+      <tr><td>ロックしたことのメール通知</td><td>実装済み</td></tr>
+      <tr><td>ログアウト</td><td>実装済み</td></tr>
+      <tr><td><a href="../../glossary.html#invitation">招待</a>からの登録</td><td><strong>未実装</strong></td></tr>
+      <tr><td>組織管理者による手動のロック解除</td><td><strong>未実装</strong></td></tr>
+      <tr><td>SMTP でのメール送信</td><td><strong>未実装</strong>（開発中のコンソール出力のみ）</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>ログインの経路は通しで確かめてある。
+  10回失敗させてロックがかかること、
+  そのときメールが飛ぶこと、
+  リンクを開くとロックが解けてパスワードでも入れるようになること。</p>
+
+  <h3>失敗の理由を出し分けない</h3>
+
+  <p>パスワードが違うのか、そのアドレスが登録されていないのか。
+  どちらも同じ文言を返す。</p>
+
+  <p>アカウントが見つからない場合も、見つかった場合と同じだけ時間をかける。
+  照合を省くと応答が明らかに速くなり、
+  <strong>誰が登録しているかを応答時間から測れてしまう</strong>。</p>
+
+  <p>マジックリンクの要求も同じで、登録の有無にかかわらず
+  「送りました」と返す。</p>
+
+  <h2>関連する画面</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/pages/login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">二つの手段を一枚に収めた入り口</p></a>
+  </div>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../../database/users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">パスワードハッシュ、失敗回数、ロック状態</p></a>
+    <a class="card" href="../../database/sessions/index.html"><span class="card-no">TABLE</span><p class="card-title">sessions</p><p class="card-desc">ログインセッション</p></a>
+    <a class="card" href="../../database/magic_link_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">magic_link_tokens</p><p class="card-desc">使い捨てのログイン用トークン</p></a>
+    <a class="card" href="../../database/invitations/index.html"><span class="card-no">TABLE</span><p class="card-title">invitations</p><p class="card-desc">組織への招待</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能 / 認証</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

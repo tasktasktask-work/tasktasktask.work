@@ -1,0 +1,37 @@
+/* 自動的には生成されない。docs/theme.css の @shared ブロックと同一に保つこと。
+   pnpm styles:check が差分を検出する。 */
+
+:root {
+  color-scheme: light;
+
+  /* 紙と墨 */
+  --paper:        #f6f3ec;
+  --paper-deep:   #efeade;
+  --card:         #fffefb;
+  --ink:          #171b22;
+  --ink-mid:      #4a525e;
+  --ink-soft:     #7d8792;
+  --ink-faint:    #a8b0b9;
+  --rule:         #e2dbcd;
+  --rule-strong:  #cbc2af;
+
+  /* 朱・藍・緑・黄 */
+  --shu:          #c8402c;
+  --shu-deep:     #9c2f1f;
+  --shu-wash:     #fbeeea;
+  --ai:           #2c4a75;
+  --ai-wash:      #eaeff6;
+  --midori:       #3f6b52;
+  --midori-wash:  #e9f1ec;
+  --ki:           #8f6410;
+  --ki-wash:      #f8f0dd;
+
+  /* 書体 */
+  --font-display: "Shippori Mincho B1", "Hiragino Mincho ProN", serif;
+  --font-body:    "Zen Kaku Gothic New", "Hiragino Sans", "Noto Sans JP", sans-serif;
+  --font-mono:    "JetBrains Mono", "SFMono-Regular", Consolas, monospace;
+
+  /* 寸法 */
+  --sidebar-w:    16.5rem;
+  --measure:      44rem;
+}

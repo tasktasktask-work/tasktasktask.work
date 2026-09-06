@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+docker exec -itw /workspace tasktasktask-work-app /usr/bin/claude

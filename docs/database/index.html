@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>データベース全体構成 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Database</p>
+  <h1 class="title">データベース全体構成</h1>
+  <p class="lede">
+    15 のテーブルがある。
+    ORM を使わず SQL を直接書く構成なので、スキーマがそのまま設計書として読める状態を保つ。
+    ここではテーブル間の関係だけを扱う。個々のカラムは各テーブルのページにある。
+  </p>
+
+  <h2>三つの原則</h2>
+
+  <h3>すべてのデータは組織に属する</h3>
+
+  <p>マルチテナントであるため、クエリの条件から組織が落ちると他社のデータが混ざる。
+  これは最も起きてはならない事故である。</p>
+
+  <p>そこで、親を辿れば組織にたどり着けるテーブルにも <code>organization_id</code> を直接持たせる。
+  <code>comments</code> から組織を知るのに <code>threads</code> と <code>projects</code> を経由させない。
+  正規化としては冗長だが、権限判定を単純な等値条件で書けることを優先した。</p>
+
+  <h3>物理削除をしない</h3>
+
+  <p>どのテーブルにも <code>deleted_at</code> を置き、行を消さない。
+  <a href="../glossary.html#thread-number">スレッド番号</a>を欠番のまま保ち、外部に貼られたURLへ「削除済み」と応答できるようにするためである。</p>
+
+  <div class="note warn">
+    <span class="note-label">この原則から外した二つのテーブル</span>
+    <p><code>thread_tags</code> と <code>watches</code> は中間テーブルであり、付けたり外したりが日常的に起きる。
+    ここに <code>deleted_at</code> を置くと、外して付け直すたびに行が積み上がり、一意制約も条件付きにせざるを得なくなる。
+    この二つだけ物理削除とした。<strong>方針からの意図的な逸脱であり、レビューで例外として承認されている。</strong>
+    付け外しの記録が必要になった場合は、<code>deleted_at</code> ではなく<a href="../issues/audit-log/index.html">監査ログ</a>で扱う。</p>
+  </div>
+
+  <h3>日付と時刻を使い分ける</h3>
+
+  <p>課題の<a href="../glossary.html#period">期間</a>は <code>date</code> 型で持つ。時刻を持たない。
+  <a href="../glossary.html#organization">組織</a>ごとにタイムゾーンを設定できるため、時刻を持つと設定変更で既存の日付が前後する。</p>
+
+  <p>一方、コメントの投稿時刻のような記録は <code>timestamptz</code> で持つ。
+  この型はタイムゾーンを保存せず、UTC における時刻の一点だけを持つ。
+  表示のための変換は、セッションの設定に頼らず組織のタイムゾーンを引数で渡して行う。
+  <a href="../devops/coding-conventions/index.html#datetime">扱いの詳細</a>を規約に定めた。</p>
+
+  <h3>updated_at はトリガで埋める</h3>
+
+  <p><code>updated_at</code> を持つテーブルには、共通のトリガを仕掛ける。
+  アプリケーション側で毎回 <code>updated_at = now()</code> を書く方式は、書き忘れが起きる。</p>
+
+<pre><code>CREATE OR REPLACE FUNCTION set_updated_at() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at := now();
+  RETURN NEW;
+END;
+$$;</code></pre>
+
+  <p>書き忘れが見つけにくいのは、<a href="../glossary.html#thread-list">スレッド一覧</a>の既定の並び順が
+  更新の新しい順だからである。
+  更新したのに一覧で下に沈む、という形でしか表面化しない。</p>
+
+  <p>なお <a href="comments/index.html">comments</a> は <code>updated_at</code> を持たないため、
+  トリガも仕掛けない。投稿後に更新される経路が存在しない。</p>
+
+  <div class="note warn">
+    <span class="note-label">この関数は Atlas の管理下にない</span>
+    <p>Atlas は無料の範囲では関数とプロシージャを扱えない。
+    <code>schema/</code> に置くと <code>migrate diff</code> がエラーになる。</p>
+    <p>そのため関数とトリガは <code>db/functions.sql</code> に分け、
+    マイグレーションの適用後に流している。
+    詳しくは<a href="../devops/database-migration/index.html">スキーマ移行</a>に書いた。</p>
+  </div>
+
+  <h2>中核となる関係</h2>
+
+  <div class="model" style="overflow-x:auto;margin-bottom:2rem">
+    <svg viewBox="0 0 740 340" role="img" aria-label="organizations から threads、comments までの関係図" style="min-width:44rem;display:block">
+      <defs>
+        <marker id="one" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8" fill="none" stroke="#7d8792" stroke-width="1.2"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono, monospace" font-size="10.5">
+        <!-- organizations -->
+        <rect x="20" y="18" width="150" height="58" fill="#fbeeea" stroke="#c8402c" stroke-width="1.5"/>
+        <text x="32" y="38" fill="#c8402c" font-weight="700">organizations</text>
+        <text x="32" y="54" fill="#7d8792" font-size="9">slug / language</text>
+        <text x="32" y="66" fill="#7d8792" font-size="9">next_thread_number</text>
+
+        <!-- users -->
+        <rect x="20" y="140" width="150" height="52" fill="#eaeff6" stroke="#2c4a75" stroke-width="1.5"/>
+        <text x="32" y="160" fill="#2c4a75" font-weight="700">users</text>
+        <text x="32" y="176" fill="#7d8792" font-size="9">email / display_name</text>
+
+        <!-- organization_members -->
+        <rect x="20" y="248" width="150" height="52" fill="#fffefb" stroke="#cbc2af"/>
+        <text x="32" y="268" font-weight="700" fill="#171b22">organization_members</text>
+        <text x="32" y="284" fill="#7d8792" font-size="9">role: admin | member</text>
+
+        <!-- projects -->
+        <rect x="240" y="18" width="150" height="58" fill="#fffefb" stroke="#cbc2af"/>
+        <text x="252" y="38" font-weight="700" fill="#171b22">projects</text>
+        <text x="252" y="54" fill="#7d8792" font-size="9">key / visibility</text>
+        <text x="252" y="66" fill="#7d8792" font-size="9">archived_at</text>
+
+        <!-- project_members -->
+        <rect x="240" y="140" width="150" height="52" fill="#fffefb" stroke="#cbc2af"/>
+        <text x="252" y="160" font-weight="700" fill="#171b22">project_members</text>
+        <text x="252" y="176" fill="#7d8792" font-size="9">is_admin</text>
+
+        <!-- threads -->
+        <rect x="460" y="18" width="180" height="112" fill="#fbeeea" stroke="#c8402c" stroke-width="1.5"/>
+        <text x="472" y="38" fill="#c8402c" font-weight="700">threads</text>
+        <text x="472" y="54" fill="#7d8792" font-size="9">number（組織内で一意）</text>
+        <text x="472" y="66" fill="#7d8792" font-size="9">type / progress</text>
+        <text x="472" y="78" fill="#7d8792" font-size="9">starts_on / ends_on</text>
+        <text x="472" y="90" fill="#7d8792" font-size="9">assignee_user_id</text>
+        <text x="472" y="102" fill="#7d8792" font-size="9">parent_thread_id ↺</text>
+        <text x="472" y="120" fill="#c8402c" font-size="9">自己参照で無制限の階層</text>
+
+        <!-- comments -->
+        <rect x="460" y="168" width="180" height="52" fill="#fffefb" stroke="#cbc2af"/>
+        <text x="472" y="188" font-weight="700" fill="#171b22">comments</text>
+        <text x="472" y="204" fill="#7d8792" font-size="9">投稿後は不変</text>
+
+        <!-- attachments -->
+        <rect x="460" y="248" width="180" height="52" fill="#fffefb" stroke="#cbc2af"/>
+        <text x="472" y="268" font-weight="700" fill="#171b22">attachments</text>
+        <text x="472" y="284" fill="#7d8792" font-size="9">thread か comment のどちらか</text>
+
+        <!-- lines -->
+        <path d="M170,47 L238,47" stroke="#7d8792" stroke-width="1.2" marker-end="url(#one)"/>
+        <path d="M390,47 L458,47" stroke="#7d8792" stroke-width="1.2" marker-end="url(#one)"/>
+        <path d="M95,76 L95,138" stroke="#7d8792" stroke-width="1.2" marker-end="url(#one)"/>
+        <path d="M95,192 L95,246" stroke="#7d8792" stroke-width="1.2" marker-end="url(#one)"/>
+        <path d="M170,166 L238,166" stroke="#7d8792" stroke-width="1.2" marker-end="url(#one)"/>
+        <path d="M315,76 L315,138" stroke="#7d8792" stroke-width="1.2" marker-end="url(#one)"/>
+        <path d="M550,130 L550,166" stroke="#7d8792" stroke-width="1.2" marker-end="url(#one)"/>
+        <path d="M550,220 L550,246" stroke="#7d8792" stroke-width="1.2" marker-end="url(#one)"/>
+        <path d="M640,74 C700,74 700,120 660,120 L642,120" fill="none" stroke="#c8402c" stroke-width="1.2" stroke-dasharray="3 3" marker-end="url(#one)"/>
+      </g>
+    </svg>
+  </div>
+
+  <h2>認証</h2>
+  <p>ユーザーは組織に属さない。組織との結びつきは <code>organization_members</code> が持つ。
+  ひとりが複数の組織に所属するためである。</p>
+  <div class="cards">
+    <a class="card" href="users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">アカウント。パスワード、ロック状態、通知設定</p></a>
+    <a class="card" href="sessions/index.html"><span class="card-no">TABLE</span><p class="card-title">sessions</p><p class="card-desc">30日で切れるログインセッション</p></a>
+    <a class="card" href="magic_link_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">magic_link_tokens</p><p class="card-desc">48時間、一度きりのログイン用トークン</p></a>
+    <a class="card" href="invitations/index.html"><span class="card-no">TABLE</span><p class="card-title">invitations</p><p class="card-desc">組織への招待。受諾でメンバーになる</p></a>
+  </div>
+
+  <h2>組織とプロジェクト</h2>
+  <p>権限はここで決まる。公開プロジェクトなら組織メンバー全員、非公開なら <code>project_members</code> にいる人と組織管理者。</p>
+  <div class="cards">
+    <a class="card" href="organizations/index.html"><span class="card-no">TABLE</span><p class="card-title">organizations</p><p class="card-desc">テナントの境界。スレッド番号の採番元でもある</p></a>
+    <a class="card" href="organization_members/index.html"><span class="card-no">TABLE</span><p class="card-title">organization_members</p><p class="card-desc">所属と二段の役割</p></a>
+    <a class="card" href="projects/index.html"><span class="card-no">TABLE</span><p class="card-title">projects</p><p class="card-desc">スレッドの器。キーと公開設定</p></a>
+    <a class="card" href="project_members/index.html"><span class="card-no">TABLE</span><p class="card-title">project_members</p><p class="card-desc">非公開プロジェクトのメンバー</p></a>
+  </div>
+
+  <h2>スレッドと会話</h2>
+  <p><code>threads</code> は自己参照で階層を作る。
+  親と子が同じプロジェクトに属することは、複合外部キーでデータベース側が保証する。</p>
+  <div class="cards">
+    <a class="card" href="threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">課題も議論も質問もこの一つに入る</p></a>
+    <a class="card" href="comments/index.html"><span class="card-no">TABLE</span><p class="card-title">comments</p><p class="card-desc">時系列で一本。更新列を持たない</p></a>
+    <a class="card" href="attachments/index.html"><span class="card-no">TABLE</span><p class="card-title">attachments</p><p class="card-desc">スレッドかコメントのどちらかに付く</p></a>
+  </div>
+
+  <h2>分類</h2>
+  <div class="cards">
+    <a class="card" href="tags/index.html"><span class="card-no">TABLE</span><p class="card-title">tags</p><p class="card-desc">組織単位で定義する色つきの目印</p></a>
+    <a class="card" href="thread_tags/index.html"><span class="card-no">TABLE</span><p class="card-title">thread_tags</p><p class="card-desc">中間テーブル。物理削除する</p></a>
+  </div>
+
+  <h2>通知</h2>
+  <div class="cards">
+    <a class="card" href="watches/index.html"><span class="card-no">TABLE</span><p class="card-title">watches</p><p class="card-desc">申し込み制。自動では作られない</p></a>
+    <a class="card" href="notifications/index.html"><span class="card-no">TABLE</span><p class="card-title">notifications</p><p class="card-desc">三つのきっかけと既読状態</p></a>
+  </div>
+
+  <h2>採番のしくみ</h2>
+
+  <p><a href="../glossary.html#thread-number">スレッド番号</a>は組織の中で通し番号になる。
+  プロジェクトごとに1から振らないため、シーケンスを組織ごとに用意することになるが、
+  Postgres のシーケンスは動的に作りにくい。</p>
+
+  <p>そこで <code>organizations.next_thread_number</code> を持ち、スレッド作成時に行ロックを取って加算する。</p>
+
+<pre><code>BEGIN;
+  UPDATE organizations
+     SET next_thread_number = next_thread_number + 1
+   WHERE id = $1
+  RETURNING next_thread_number - 1 AS number;
+  INSERT INTO threads (organization_id, project_id, number, ...)
+  VALUES ($1, $2, $number, ...);
+COMMIT;</code></pre>
+
+  <p>同じ組織で同時にスレッドを作ると、片方が待つ。
+  100人規模ならこの待ちは問題にならない。
+  番号が飛ばないことよりも、重複しないことを優先した設計である。</p>
+
+  <div class="note">
+    <span class="note-label">ロールバックすると番号が飛ぶ</span>
+    <p>トランザクションが失敗すると加算も巻き戻るので、この方式では番号は飛ばない。
+    ただし、そのぶん同時実行性は下がる。
+    シーケンスを使えば速いが、失敗のたびに欠番が出る。
+    番号が飛ぶ理由が「別プロジェクトが使った」だけであるほうが説明しやすいため、この方式を選んだ。</p>
+  </div>
+
+  <h2>スキーマの管理</h2>
+
+  <p>Atlas を使い、宣言的にスキーマを定義する。
+  詳しくは<a href="../devops/database-migration/index.html">スキーマ移行</a>に書いた。</p>
+
+  <div class="sheet-foot">
+    <span>データベース</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../sidebar.js" defer></script>
+</body>
+</html>

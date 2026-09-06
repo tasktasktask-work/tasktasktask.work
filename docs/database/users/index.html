@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>users | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">users</h1>
+  <p class="lede">
+    アカウント。組織には属さない。
+    ひとりが複数の組織に所属するため、所属関係は別のテーブルが持つ。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+  <p>ログインする主体を表す。
+  メールアドレスはシステム全体で一意にする。
+  同じ人が二つの組織に招待されたとき、二つのアカウントができてしまうと、
+  片方でしかログインできない状態が生まれるためである。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE users (
+  id                          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  email                       text        NOT NULL,
+  display_name                text        NOT NULL,
+  password_hash               text,
+  failed_login_count          smallint    NOT NULL DEFAULT 0,
+  locked_at                   timestamptz,
+  email_notifications_enabled boolean     NOT NULL DEFAULT true,
+  deleted_at                  timestamptz,
+  created_at                  timestamptz NOT NULL DEFAULT now(),
+  updated_at                  timestamptz NOT NULL DEFAULT now(),
+
+  -- 大文字小文字を区別しない比較は、値を小文字に揃えることで不要にする
+  CONSTRAINT users_email_lowercase
+    CHECK (email = lower(email)),
+  CONSTRAINT users_email_shape
+    CHECK (email ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$'),
+  CONSTRAINT users_display_name_not_blank
+    CHECK (btrim(display_name) &lt;&gt; ''),
+  CONSTRAINT users_failed_login_count_range
+    CHECK (failed_login_count BETWEEN 0 AND 10)
+);
+
+CREATE UNIQUE INDEX users_email_key
+  ON users (email) WHERE deleted_at IS NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>email</code></td><td>text</td><td>ログインに使う。<strong>小文字で正規化して保存する</strong></td></tr>
+      <tr><td><code>display_name</code></td><td>text</td><td>画面に出る名前。必須。一文字目が<a href="../../glossary.html#hanko">ハンコアバター</a>になる</td></tr>
+      <tr><td><code>password_hash</code></td><td>text</td><td>Argon2id のハッシュ。<strong>NULL を許す</strong></td></tr>
+      <tr><td><code>failed_login_count</code></td><td>smallint</td><td>パスワード入力の連続失敗回数。成功で0に戻る</td></tr>
+      <tr><td><code>locked_at</code></td><td>timestamptz</td><td><a href="../../glossary.html#account-lock">アカウントロック</a>の時刻。NULL ならロックされていない</td></tr>
+      <tr><td><code>email_notifications_enabled</code></td><td>boolean</td><td>メール通知を受け取るか。ユーザーが切り替える</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>citext ではなく text にした理由</h3>
+  <p>大文字小文字を区別しない比較のために <code>citext</code> 拡張を使う案もあった。
+  採らなかったのは、Atlas がスキーマの正本を読むとき、
+  <strong>無料の範囲では <code>CREATE EXTENSION</code> を扱えない</strong>ためである。</p>
+  <p>拡張をひとつ増やす代わりに、値を小文字に揃えて保存する。
+  書き込む側が <code>lower()</code> を忘れたら <code>users_email_lowercase</code> で落ちるので、
+  揃っていない値が入り込むことはない。
+  <a href="../../devops/database-migration/index.html">スキーマ移行</a>に経緯を書いた。</p>
+
+  <h3>password_hash が NULL を許す理由</h3>
+  <p><a href="../../glossary.html#magic-link">マジックリンク</a>だけを使う人が存在しうるためである。
+  招待からの登録ではパスワードを設定するが、将来パスワードを廃止する人が出ても列を残したまま扱える。</p>
+
+  <h3>アカウントロックの表現</h3>
+  <p>ロックは <code>locked_at</code> が NULL でないことで表す。時間経過では解除しない。</p>
+  <p>解除の経路は二つある。</p>
+  <ul>
+    <li>マジックリンクでのログイン成功時に <code>locked_at</code> と <code>failed_login_count</code> をリセットする</li>
+    <li><a href="../../glossary.html#org-admin">組織管理者</a>による手動解除</li>
+  </ul>
+  <p>ロックがかかった時点で本人へメールを送る。
+  この通知がないと、第三者に締め出された人は理由も解除方法もわからないまま止まる。</p>
+
+  <div class="note warn">
+    <span class="note-label">ここに置かない情報</span>
+    <p>失敗した試行の履歴（いつ、どのIPから）は持たない。
+    <a href="../../issues/audit-log/index.html">監査ログ</a>を導入するときにまとめて扱う。
+    そのため現状では、ロックの原因を後から調べる手段がない。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">users ──┬─&lt; organization_members &gt;── organizations
+        ├─&lt; project_members &gt;── projects
+        ├─&lt; sessions
+        ├─&lt; magic_link_tokens
+        ├─&lt; threads          （created_by_user_id / assignee_user_id）
+        ├─&lt; comments         （author_user_id）
+        ├─&lt; watches
+        └─&lt; notifications    （user_id / actor_user_id）</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../sessions/index.html"><span class="card-no">TABLE</span><p class="card-title">sessions</p><p class="card-desc">ログイン中の状態</p></a>
+    <a class="card" href="../magic_link_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">magic_link_tokens</p><p class="card-desc">ロック解除の経路でもある</p></a>
+    <a class="card" href="../organization_members/index.html"><span class="card-no">TABLE</span><p class="card-title">organization_members</p><p class="card-desc">どの組織に属するか</p></a>
+  </div>
+
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/authentication/index.html"><span class="card-no">FEATURE</span><p class="card-title">認証</p><p class="card-desc">二つのログイン手段とロック</p></a>
+    <a class="card" href="../../features/notification/index.html"><span class="card-no">FEATURE</span><p class="card-title">通知とウォッチ</p><p class="card-desc">メール通知のオンオフ</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / users</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

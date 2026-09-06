@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>スレッド | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Feature 04</p>
+  <h1 class="title">スレッド</h1>
+  <p class="lede">
+    課題管理ツールの多くは「課題」を基本単位に置く。
+    そして議論はその付属物として、コメント欄の中に押し込まれる。
+    ここでは順序を逆にした。基本単位はスレッドであり、課題はその種別のひとつでしかない。
+  </p>
+
+  <h2>なぜ課題を基本単位にしなかったか</h2>
+
+  <p>開発の現場で交わされる話は、最初から課題の形をしていない。
+  「検索の要件、どうしますか」という相談には、まだ実装のゴールがない。
+  「全角の正規化はどこでやってますか」という疑問には、そもそも作業が伴わない。</p>
+
+  <p>これらを課題として登録すると、いつまでも閉じない課題が一覧に溜まる。
+  かといってチャットへ流すと、決まったことが記録に残らない。</p>
+
+  <p>そこで、置き場所そのものを用意した。
+  <a href="../../glossary.html#thread">スレッド</a>という共通の器があり、その<a href="../../glossary.html#thread-type">種別</a>として課題と議論と質問が並ぶ。
+  三つとも同じ形なので、同じ一覧に出て、同じように親子でつながる。</p>
+
+  <h2>三つの種別</h2>
+
+  <div class="spec">
+    <div class="spec-head"><span>種別バッジ</span><span>ThreadTypeBadge</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="p-type" data-type="kadai">課題</span><span class="cap">type = kadai</span></div>
+        <div class="spec-item"><span class="p-type" data-type="giron">議論</span><span class="cap">type = giron</span></div>
+        <div class="spec-item"><span class="p-type" data-type="shitsumon">質問</span><span class="cap">type = shitsumon</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>種別</th><th>意味</th><th>進捗率</th><th>期間</th><th>ガント</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="nowrap"><a href="../../glossary.html#kadai">課題</a></td>
+        <td>やることが決まっていて、終わりの形が言える</td>
+        <td class="nowrap">0から100</td><td>持つ</td><td>載る</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><a href="../../glossary.html#giron">議論</a></td>
+        <td>関係者で決めなければ終わらない相談</td>
+        <td class="nowrap">0か100</td><td>持たない</td><td>載らない</td>
+      </tr>
+      <tr>
+        <td class="nowrap"><a href="../../glossary.html#shitsumon">質問</a></td>
+        <td>知っている人がいれば終わる疑問</td>
+        <td class="nowrap">0か100</td><td>持たない</td><td>載らない</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>種別は後から変更できない。
+  議論として立てたスレッドを課題に作り変えることはできず、課題のスレッドを別に立てることになる。
+  そのとき二つをつなぐ手段は<a href="../../glossary.html#parent-child">親子関係</a>だけである。
+  議論を親、課題を子にすれば、「この課題はどの議論から出てきたのか」を辿れる。</p>
+
+  <div class="note warn">
+    <span class="note-label">この経路しかない</span>
+    <p>議論と、そこから生まれた課題を結びつける方法は親子関係だけである。
+    親子をつけ忘れると、両者の関係は失われる。
+    議論をクローズするときに子の課題が一つもなければ注意を出す、といった補助は初期リリースに含めていない。</p>
+  </div>
+
+  <h2>進捗率</h2>
+
+  <p>状態を表す欄は<a href="../../glossary.html#progress">進捗率</a>ひとつしかない。
+  0が未着手、100が完了、その間が進行中である。
+  議論と質問では0と100しか取らず、画面では<a href="../../glossary.html#open-close">オープンとクローズ</a>と呼ぶ。</p>
+
+  <div class="spec">
+    <div class="spec-head"><span>進捗表示</span><span>ProgressMeter / OpenCloseBadge</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item">
+          <span class="p-progress" data-zero="true"><span class="bar"><span class="fill" style="width:0%"></span></span><span class="num">0%</span></span>
+          <span class="cap">課題 / 未着手</span>
+        </div>
+        <div class="spec-item">
+          <span class="p-progress"><span class="bar"><span class="fill" style="width:40%"></span></span><span class="num">40%</span></span>
+          <span class="cap">課題 / 進行中</span>
+        </div>
+        <div class="spec-item">
+          <span class="p-progress" data-done="true"><span class="bar"><span class="fill" style="width:100%"></span></span><span class="num">100%</span></span>
+          <span class="cap">課題 / 完了</span>
+        </div>
+        <div class="spec-item"><span class="p-oc" data-oc="open">オープン</span><span class="cap">議論と質問 / 0</span></div>
+        <div class="spec-item"><span class="p-oc" data-oc="close">クローズ</span><span class="cap">議論と質問 / 100</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p>値は担当者が自分で入力する。1刻みで自由に入れられるが、入力欄には <code>&lt;datalist&gt;</code> で0、25、50、75、100の候補を出す。
+  自由入力を残しつつ、よく使う値を一手で選べるようにするためである。</p>
+
+  <div class="note warn">
+    <span class="note-label">進捗率だけで表せないもの</span>
+    <p>「やらないと決めた課題」と「まだ手をつけていない課題」は、どちらも0のまま並ぶ。
+    「レビュー中」のような工程も数値では表せない。
+    どう扱うかは各組織の運用に委ねる方針を取った。
+    アーカイブするか、100にするか、<a href="../tag/index.html">タグ</a>で示すか。
+    この判断が組織ごとにばらつくことは承知のうえで、経緯を<a href="../../issues/rejection-representation/index.html">却下の表現</a>に記録している。</p>
+  </div>
+
+  <h2>親子関係</h2>
+
+  <p>スレッドの下にスレッドをぶら下げられる。深さの制限はない。</p>
+
+  <ul>
+    <li><strong>種別はまたげる。</strong>議論の子に課題、課題の子に質問を置ける</li>
+    <li><strong>プロジェクトはまたげない。</strong>親と子は必ず同じプロジェクトに属する</li>
+    <li><strong>集計はしない。</strong>親の進捗率も期間も、子とは独立して人が入力する</li>
+  </ul>
+
+  <p>親の期間を子から自動計算しない理由は、親が固有の締切を持てなくなるからである。
+  「この塊は7月末まで」という計画は、子の日付の最大値とは別の情報である。
+  子がそこからはみ出したときは<a href="../../glossary.html#overflow-warning">はみ出し警告</a>を出すが、値の書き換えはしない。
+  どう直すかは人が決める。</p>
+
+  <h2>識別子</h2>
+
+  <p><a href="../../glossary.html#thread-number">スレッド番号</a>は組織の中で通し番号になっている。
+  表示は<a href="../../glossary.html#project-key">プロジェクトキー</a>を前に付けて <code>WEB-128</code> の形になる。</p>
+
+  <p>プロジェクトごとに1から振らないため、一つのプロジェクトだけを見ると番号が飛ぶ。
+  <code>WEB-3</code> の次が <code>WEB-7</code> になるのは正常な状態である。
+  番号が同じスレッドが別プロジェクトに存在しない、という性質を優先した。</p>
+
+  <h2>担当者</h2>
+
+  <p>ひとつのスレッドに<a href="../../glossary.html#assignee">担当者</a>はひとりだけ置ける。未設定でもよい。
+  複数人を割り当てられるようにはしていない。全員が自分の仕事ではないと思う状態を避けるためである。</p>
+
+  <p>担当者に設定されると<a href="../notification/index.html">通知</a>が飛ぶ。
+  また<a href="../dashboard/index.html">担当スレッド一覧</a>では、この人の名前でプロジェクトをまたいでスレッドが集まる。</p>
+
+  <h2>一覧の見え方</h2>
+
+  <p><a href="../../glossary.html#thread-list">スレッド一覧</a>は階層を作らず平らに並べる。
+  親と子へは、それぞれの行に置いたリンクから辿る。</p>
+
+  <div class="spec">
+    <div class="spec-head"><span>スレッド行</span><span>ThreadRow</span></div>
+    <div class="spec-body tight">
+      <div class="p-list">
+        <div class="p-row">
+          <span class="p-type" data-type="giron">議論</span>
+          <a class="ttl" href="#">検索の要件をどうするか</a>
+          <span class="p-oc" data-oc="open">オープン</span>
+          <span class="hanko sm">佐</span>
+          <span class="p-id">WEB-3</span>
+          <span class="meta">
+            <span class="p-tag" style="--tag-color:#2c4a75">設計</span>
+            <a class="rel-link" href="#">子 2件 →</a>
+            <span>更新 9/4</span>
+          </span>
+        </div>
+        <div class="p-row">
+          <span class="p-type" data-type="kadai">課題</span>
+          <a class="ttl" href="#">検索APIの実装</a>
+          <span class="p-progress"><span class="bar"><span class="fill" style="width:40%"></span></span><span class="num">40%</span></span>
+          <span class="hanko sm">田</span>
+          <span class="p-id">WEB-7</span>
+          <span class="meta">
+            <span class="p-tag" style="--tag-color:#c8402c">backend</span>
+            <a class="rel-link" href="#">← 親 WEB-3</a>
+            <span>9/8 – 9/19</span>
+          </span>
+        </div>
+        <div class="p-row">
+          <span class="p-type" data-type="shitsumon">質問</span>
+          <a class="ttl" href="#">全角の正規化はどこでやっている？</a>
+          <span class="p-oc" data-oc="close">クローズ</span>
+          <span class="hanko sm">鈴</span>
+          <span class="p-id">WEB-9</span>
+          <span class="meta">
+            <a class="rel-link" href="#">← 親 WEB-7</a>
+            <span>更新 9/2</span>
+          </span>
+        </div>
+        <div class="p-row" data-archived="true">
+          <span class="p-type" data-type="kadai">課題</span>
+          <a class="ttl" href="#">旧検索ロジックの撤去</a>
+          <span class="p-progress"><span class="bar"><span class="fill" style="width:60%"></span></span><span class="num">60%</span></span>
+          <span class="hanko sm">田</span>
+          <span class="p-id">WEB-5</span>
+          <span class="meta">
+            <span class="badge mute">アーカイブ済み</span>
+            <a class="rel-link" href="#">子 1件 →</a>
+            <span>活動中の子があるため表示</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>絞り込みの軸は種別、担当者、タグ、進捗率が100のものを除くかどうか、アーカイブ済みを出すかどうかである。
+  全文検索を持たないため、この絞り込みが探すための唯一の手段になる。
+  既定の並び順は更新の新しい順とする。</p>
+
+  <h2>アーカイブと削除</h2>
+
+  <p><a href="../../glossary.html#archive">アーカイブ</a>したスレッドは読み取り専用になる。
+  新しいコメントも、子スレッドの追加もできない。</p>
+
+  <p>親をアーカイブしても子は連鎖しない。
+  親が畳まれても、子にはまだ動いているものがありうるからである。
+  ただし、そのままだと活動中の子が親ごと視界から消える。
+  そこで、活動中の子を持つアーカイブ済みスレッドは一覧に読み取り専用として出す。
+  上の見本の4行目がその状態にあたる。</p>
+
+  <p>削除は<a href="../../glossary.html#soft-delete">論理削除</a>で、<a href="../../glossary.html#org-admin">組織管理者</a>だけが行える。
+  アーカイブを経ていないスレッドは削除できない。レコードは残るので番号は欠番のまま保たれる。</p>
+
+  <h2>本文の編集</h2>
+
+  <p>タイトルと本文は編集できる。履歴は残さず、「編集済み」の印と最終更新日時だけを出す。</p>
+
+  <p>これは<a href="../comment/index.html">コメント</a>とは逆の扱いである。
+  コメントは「その時点の発言」なので不変にした。
+  本文は「現在の課題の定義」なので、調査が進めば書き換わってよい。</p>
+
+  <p>ただし本文が黙って書き換わると、それを前提に書かれたコメントが宙に浮く。
+  編集済みの印は、その食い違いに気づくための最低限の手がかりとして置いている。</p>
+
+  <h2>関連する画面</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/index.html"><span class="card-no">/p/{key}</span><p class="card-title">スレッド一覧</p><p class="card-desc">平らに並べて絞り込む</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html"><span class="card-no">/t/{number}</span><p class="card-title">スレッド詳細</p><p class="card-desc">本文、属性、親子、コメント</p></a>
+  </div>
+
+  <h2>関連するコンポーネント</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/components/thread-type-badge/index.html"><span class="card-no">UI</span><p class="card-title">種別バッジ</p><p class="card-desc">色と形の二重符号で種別を示す</p></a>
+    <a class="card" href="../../ui/components/progress-input/index.html"><span class="card-no">UI</span><p class="card-title">進捗率入力</p><p class="card-desc">自由入力と候補の両立</p></a>
+    <a class="card" href="../../ui/components/hanko-avatar/index.html"><span class="card-no">UI</span><p class="card-title">ハンコアバター</p><p class="card-desc">担当者の表示</p></a>
+  </div>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../../database/threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">スレッド本体。種別、進捗率、期間、親</p></a>
+    <a class="card" href="../../database/thread_tags/index.html"><span class="card-no">TABLE</span><p class="card-title">thread_tags</p><p class="card-desc">スレッドとタグの結び</p></a>
+    <a class="card" href="../../database/organizations/index.html"><span class="card-no">TABLE</span><p class="card-title">organizations</p><p class="card-desc">スレッド番号の採番元を持つ</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能 / スレッド</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

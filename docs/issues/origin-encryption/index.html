@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>オリジンまでの経路 | ENISHI 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 高</p>
+  <h1 class="title">オリジンまでの経路</h1>
+
+  <h2>概要</h2>
+  <p>SSL は Cloudflare が終端する。そこから VPS へは平文で届く。</p>
+
+<pre class="figure">クライアント ═══SSL═══&gt; Cloudflare ───平文───&gt; VPS:80</pre>
+
+  <p>VPS の IP へ直接届く経路があれば、そこを流れる内容は読める。</p>
+
+  <ul>
+    <li>セッションの Cookie（そのままログインした状態を再現できる）</li>
+    <li><a href="../../glossary.html#magic-link">マジックリンク</a>のURL（48時間、一度きり有効）</li>
+    <li>スレッドの本文とコメント（<a href="../../glossary.html#private-project">非公開プロジェクト</a>のものを含む）</li>
+  </ul>
+
+  <p>加えて <code>X-Forwarded-For</code> を偽装できる。
+  <code>sessions.created_ip</code> の値は本物とは限らなくなる。</p>
+
+  <div class="note warn">
+    <span class="note-label">この記述は公開されている</span>
+    <p>リポジトリを公開しているため、このページも誰でも読める。
+    弱点を隠しても安全にはならないので記述は残すが、
+    <strong>塞ぐまでのあいだ、住所つきで公開されている状態</strong>である。
+    これが優先度を高くしている理由でもある。</p>
+  </div>
+
+  <h2>なぜまだ塞いでいないか</h2>
+
+  <p>VPS では他のサービスも動いている。
+  80番と443番への到達を制限すると、<strong>そのすべてが影響を受ける</strong>。</p>
+
+  <p>特に次の二つが壊れうる。</p>
+
+  <ul>
+    <li><strong>Cloudflare を通していないホスト名。</strong>
+        DNS の設定が「DNS only」（灰色の雲）のものは VPS の IP へ直接解決される。
+        制限をかけると、そのホスト名は届かなくなる</li>
+    <li><strong>IP で直接叩いている経路。</strong>
+        監視、バックアップ、社内からの疎通確認など</li>
+  </ul>
+
+  <p>作業そのものは数分で終わるが、<strong>何が壊れるかを先に洗い出す必要がある</strong>。
+  その調査を伴うため、機能の実装とは別の枠として切り出した。</p>
+
+  <h2>手順</h2>
+
+  <h3>1. 壊れるものを洗い出す</h3>
+
+  <p>Cloudflare の DNS 設定で、このゾーンのレコードを見る。
+  <strong>プロキシされていない（灰色の雲）A / AAAA レコードが、そのまま影響を受ける</strong>。</p>
+
+<pre><code># VPS で、いま 80 / 443 に来ている接続元を見る
+ss -tn state established '( sport = :80 or sport = :443 )' | awk '{print $5}' | cut -d: -f1 | sort | uniq -c | sort -rn
+
+# nginx のアクセスログから、Cloudflare 以外の接続元を数える
+# （X-Forwarded-For ではなく、接続元そのものを見ること）
+awk '{print $1}' /var/log/nginx/access.log | sort | uniq -c | sort -rn | head -20</code></pre>
+
+  <p>ここに出た接続元のうち、Cloudflare の範囲に入らないものが、制限で切れる相手である。</p>
+
+  <h3>2. Cloudflare の IP 範囲を取る</h3>
+
+  <p>公開されている。IPv4 が15件、IPv6 が7件（2026年9月時点）。</p>
+
+<pre><code>curl -s https://www.cloudflare.com/ips-v4 -o /etc/cloudflare/ips-v4
+curl -s https://www.cloudflare.com/ips-v6 -o /etc/cloudflare/ips-v6</code></pre>
+
+  <p>変更を検知したい場合は <code>https://api.cloudflare.com/client/v4/ips</code> が
+  <code>etag</code> を返すので、前回の値と比べる。</p>
+
+  <h3>3. 戻す手立てを先に用意する</h3>
+
+  <div class="note decide">
+    <span class="note-label">締め出されないように</span>
+    <p>ファイアウォールの作業で最も多い事故は、自分が入れなくなることである。
+    <strong>規則を入れる前に、時間で元に戻す仕掛けを置く。</strong></p>
+  </div>
+
+<pre><code># いまの設定を控える
+nft list ruleset &gt; /root/nftables.before
+
+# 20分後に必ず元へ戻す。うまくいったら at のジョブを消す
+echo "nft -f /root/nftables.before" | at now + 20 minutes
+atq   # 登録されたことを確認する</code></pre>
+
+  <p>SSH（22番）は制限の対象に入れない。
+  作業中に別の端末からもう一本 SSH を繋いでおくと、なお安全である。</p>
+
+  <h3>4. 規則を入れる</h3>
+
+<pre><code># nftables の例。80 と 443 を Cloudflare の範囲だけに限る
+nft add set inet filter cf4 '{ type ipv4_addr; flags interval; }'
+nft add element inet filter cf4 "{ $(paste -sd, /etc/cloudflare/ips-v4) }"
+
+nft add set inet filter cf6 '{ type ipv6_addr; flags interval; }'
+nft add element inet filter cf6 "{ $(paste -sd, /etc/cloudflare/ips-v6) }"
+
+nft add rule inet filter input tcp dport { 80, 443 } ip  saddr @cf4 accept
+nft add rule inet filter input tcp dport { 80, 443 } ip6 saddr @cf6 accept
+nft add rule inet filter input tcp dport { 80, 443 } drop</code></pre>
+
+  <p>ufw を使っているなら、同じことを次のように書く。</p>
+
+<pre><code>for ip in $(cat /etc/cloudflare/ips-v4 /etc/cloudflare/ips-v6); do
+  ufw allow proto tcp from "$ip" to any port 80,443 comment 'cloudflare'
+done
+ufw deny 80/tcp
+ufw deny 443/tcp</code></pre>
+
+  <h3>5. 確かめる</h3>
+
+<pre><code># 外から。IP で直接叩いて、届かなくなっていること
+curl -sI --connect-timeout 5 http://&lt;VPS の IP&gt;/ | head -1   # 応答が無ければ成功
+
+# ホスト名では、これまでどおり届くこと
+curl -sI https://tasktasktask.work/ | head -1
+
+# 1 で洗い出した、Cloudflare を通していない経路も忘れずに確認する</code></pre>
+
+  <p>問題がなければ <code>atrm</code> で戻しの予約を消し、規則を永続化する。</p>
+
+  <h3>6. 範囲の更新を仕込む</h3>
+
+  <p>Cloudflare の IP 範囲は変わる。
+  更新が反映されないと、ある日から一部の利用者だけ届かなくなる。</p>
+
+<pre><code># 週次で取り直し、変わっていれば集合を入れ替える
+# 変更があった日を記録しておくと、障害の切り分けが早い</code></pre>
+
+  <h2>これで直ること、直らないこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>項目</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td>平文を読まれる経路</td><td>Cloudflare と VPS のあいだだけになる</td></tr>
+      <tr><td><code>X-Forwarded-For</code> の偽装</td><td>できなくなる</td></tr>
+      <tr><td>Cloudflare と VPS のあいだの暗号化</td><td><strong>直らない</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>三行目まで求めるなら、Cloudflare の設定を Full (strict) にし、
+  nginx-proxy に証明書を置く。
+  <strong>Cloudflare Origin CA の証明書は無料で15年有効</strong>なので、
+  acme-companion を足さずに済む。
+  ただしこれも nginx-proxy を共有する他のサービスに影響するため、同じ調査が要る。</p>
+
+  <h3>もうひとつの道</h3>
+
+  <p>Cloudflare Tunnel を使うと、VPS に入ってくるポートそのものを開けずに済む。
+  ただし他のサービスの経路も付け替えることになるので、この構成では変更の幅が大きい。</p>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>手順 1 の調査が終わり、壊れるものが無いと分かったとき（そのまま 3 へ進める）</li>
+    <li>VPS の IP が外から直接叩ける状態だと確認できたとき</li>
+    <li>アクセス元のIPを記録として使う機能を作るとき（いまは <code>sessions</code> に持つだけで使っていない）</li>
+  </ul>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../devops/deployment/index.html"><span class="card-no">DEVOPS</span><p class="card-title">デプロイ構成</p><p class="card-desc">現在の経路</p></a>
+    <a class="card" href="../../database/sessions/index.html"><span class="card-no">TABLE</span><p class="card-title">sessions</p><p class="card-desc">created_ip の信頼度</p></a>
+    <a class="card" href="../audit-log/index.html"><span class="card-no">ISSUE</span><p class="card-title">監査ログ</p><p class="card-desc">IPを記録として使うなら前提になる</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / オリジンまでの経路</span>
+    <span>最終更新 2026-09-05</span>
+    <span>ENISHI 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>magic_link_tokens | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">magic_link_tokens</h1>
+  <p class="lede">
+    メールで送るログイン用のURLに埋め込むトークン。48時間で切れ、一度使うと無効になる。
+    このテーブルは<a href="../../glossary.html#account-lock">アカウントロック</a>の解除経路も兼ねている。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+  <p><a href="../../glossary.html#magic-link">マジックリンク</a>は、メールを受け取れることを本人性の証明として使う。
+  そのために、発行した値と発行先を突き合わせる記録が要る。</p>
+  <p>このテーブルがあることで、パスワード再設定の仕組みを別に作らずに済む。
+  忘れた人はマジックリンクで入って設定し直せばよい。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE magic_link_tokens (
+  id          uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id     uuid        NOT NULL REFERENCES users(id),
+  token_hash  bytea       NOT NULL,
+  expires_at  timestamptz NOT NULL,
+  used_at     timestamptz,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE UNIQUE INDEX magic_link_tokens_hash_key ON magic_link_tokens (token_hash);
+CREATE INDEX magic_link_tokens_by_user
+  ON magic_link_tokens (user_id) WHERE used_at IS NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>token_hash</code></td><td>bytea</td><td>URLに含めた値の SHA-256。生の値は保存しない</td></tr>
+      <tr><td><code>expires_at</code></td><td>timestamptz</td><td>発行から48時間後</td></tr>
+      <tr><td><code>used_at</code></td><td>timestamptz</td><td>使用した時刻。埋まっていれば再利用できない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>使用時に行うこと</h3>
+  <p>トークンの検証に成功したとき、同じトランザクションで次を行う。</p>
+  <ol>
+    <li><code>used_at</code> を埋める</li>
+    <li><code>sessions</code> に行を作る</li>
+    <li><code>users.locked_at</code> と <code>users.failed_login_count</code> をリセットする</li>
+  </ol>
+  <p>3 がロックの自動解除にあたる。
+  パスワードを何度間違えていても、メールを受け取れる本人であれば自力で復帰できる。</p>
+
+  <div class="note warn">
+    <span class="note-label">有効期間48時間の位置づけ</span>
+    <p>ログイン用のリンクとしては長い部類に入る。
+    <a href="../invitations/index.html">招待</a>と期間を揃えたいという判断による。
+    メールボックスが漏れている状況では、48時間のあいだ第三者がログインできる。
+    短縮する場合は、招待側と一緒に見直すことになる。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">users ──&lt; magic_link_tokens
+                 │
+                 └─→ 検証成功で sessions を作る</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">ロック解除の対象</p></a>
+    <a class="card" href="../sessions/index.html"><span class="card-no">TABLE</span><p class="card-title">sessions</p><p class="card-desc">検証後に作られる</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/authentication/index.html"><span class="card-no">FEATURE</span><p class="card-title">認証</p><p class="card-desc">二つの手段の併用</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / magic_link_tokens</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

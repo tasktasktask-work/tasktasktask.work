@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コメント | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Feature 05</p>
+  <h1 class="title">コメント</h1>
+  <p class="lede">
+    スレッドの下に、投稿順で一本に連なる。枝分かれはしない。
+    そして一度書いたら、直すことも消すこともできない。
+    この不便さは、意図して残したものである。
+  </p>
+
+  <h2>編集も削除もできない</h2>
+
+  <p><a href="../../glossary.html#comment">コメント</a>は「その時点で誰が何と言ったか」の記録である。
+  後から書き換えられると、それを前提に進んだ議論の意味が失われる。</p>
+
+  <p>誤字を直したいという要求は当然出る。
+  それでも不変にしたのは、記録としての価値のほうが上回ると判断したからである。
+  訂正は、続けてコメントを書いて行う。</p>
+
+  <div class="dialogue">
+    <p><span class="who">PM</span><span>コメントの誤字を直したいんですが。</span></p>
+    <p><span class="who">開発者</span><span>直せません。訂正のコメントを続けて書いてもらう形になります。</span></p>
+    <p><span class="who">PM</span><span>不便ですけど、言った言わないが起きないのは助かりますね。</span></p>
+  </div>
+
+  <p>スレッドの本文は逆に編集できる。
+  本文は「現在の課題の定義」であり、調査が進めば書き換わってよいものだからである。
+  性質が違うので、扱いを分けた。</p>
+
+  <h2>書き方</h2>
+
+  <p>GitHub Flavored Markdown 相当の記法を使う。
+  見出し、強調、リスト、リンク、コードブロック、引用、表、チェックボックスまで。
+  生のHTMLは受け付けない。</p>
+
+  <p>チェックボックスを入れたのは、課題の中の小さな作業を表す手段が要るからである。
+  これがないと、子課題を立てるほどでもない項目のために子課題が乱立する。</p>
+
+  <p>生HTMLを禁じたのは、サニタイズの実装と検証にかかるコストが、得られる表現力に見合わないためである。</p>
+
+  <h2>メンション</h2>
+
+  <p><code>@</code> に続けて人を指名すると、その人に<a href="../notification/index.html">通知</a>が飛ぶ。</p>
+
+  <div class="note decide">
+    <span class="note-label">候補に出るのはプロジェクトを見られる人だけ</span>
+    <p><a href="../../glossary.html#private-project">非公開プロジェクト</a>のメンバーでない人を指名できると、
+    閲覧権限のないスレッドの本文を含む通知メールがその人に届く。
+    非公開という設定が、そこで無効になる。
+    加えて、開いても中身を見られない通知を受け取るのは体験としても壊れている。</p>
+  </div>
+
+  <p><a href="../../glossary.html#watch">ウォッチ</a>が自動で付かない仕様のため、メンションは相手に気づいてもらう主要な手段になる。
+  誰かに宛てて書くときは指名する、という運用がこの設計の前提である。</p>
+
+  <h2>見え方</h2>
+
+  <div class="spec">
+    <div class="spec-head"><span>コメント</span><span>CommentItem</span></div>
+    <div class="spec-body">
+      <div class="p-comment">
+        <span class="hanko">佐</span>
+        <div class="body">
+          <div class="head"><span class="who">佐藤 明日香</span><span class="when">2026-09-04 11:20</span></div>
+          <div class="text"><p>検索の要件を整理しました。日本語の正規化まで含めると範囲が広いので、いったん前方一致だけで出しませんか。</p></div>
+        </div>
+      </div>
+      <div class="p-comment">
+        <span class="hanko">田</span>
+        <div class="body">
+          <div class="head"><span class="who">田中 亮</span><span class="when">2026-09-04 13:02</span></div>
+          <div class="text"><p><span class="p-mention">@佐藤 明日香</span> 賛成です。正規化は別の課題に切り出したほうがよさそう。</p></div>
+        </div>
+      </div>
+      <div class="p-comment">
+        <span class="hanko">佐</span>
+        <div class="body">
+          <div class="head"><span class="who">佐藤 明日香</span><span class="when">2026-09-04 13:40</span></div>
+          <div class="text"><p>WEB-7 を立てました。この議論を親にしてあります。</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>添付</h2>
+
+  <p>コメントには<a href="../attachment/index.html">添付ファイル</a>を付けられる。
+  画像はコメント本文の中に表示され、それ以外はダウンロードのリンクとして並ぶ。</p>
+
+  <h2>アーカイブされたスレッドでは書けない</h2>
+
+  <p><a href="../../glossary.html#archive">アーカイブ</a>されたスレッド、およびアーカイブされたプロジェクトの配下では、新しいコメントを投稿できない。
+  既存のコメントは読める。</p>
+
+  <h2>関連する画面</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html"><span class="card-no">/t/{number}</span><p class="card-title">スレッド詳細</p><p class="card-desc">コメント欄と投稿フォーム</p></a>
+  </div>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../../database/comments/index.html"><span class="card-no">TABLE</span><p class="card-title">comments</p><p class="card-desc">コメント本体</p></a>
+    <a class="card" href="../../database/attachments/index.html"><span class="card-no">TABLE</span><p class="card-title">attachments</p><p class="card-desc">添付ファイル</p></a>
+    <a class="card" href="../../database/notifications/index.html"><span class="card-no">TABLE</span><p class="card-title">notifications</p><p class="card-desc">メンションによる通知</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能 / コメント</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

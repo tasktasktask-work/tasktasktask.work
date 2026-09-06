@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ガントチャート | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Feature 09</p>
+  <h1 class="title">ガントチャート</h1>
+  <p class="lede">
+    プロジェクト一つぶんを一枚に描く。横軸の刻みは日。バーはドラッグできない。
+    そして、期間が入っていない課題こそ、この画面がいちばん見せるべきものである。
+  </p>
+
+  <h2>描く範囲</h2>
+
+  <p>一枚に描くのは<a href="../../glossary.html#project">プロジェクト</a>ひとつぶんである。
+  組織の全課題を並べても、数万件では読めるものにならない。</p>
+
+  <p>載るのは<a href="../../glossary.html#kadai">課題</a>だけである。
+  <a href="../../glossary.html#giron">議論</a>と<a href="../../glossary.html#shitsumon">質問</a>は<a href="../../glossary.html#period">期間</a>を持たないので、時間軸には置けない。
+  親子のツリー上には現れるが、期間の計算からは外れる。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>対象</th><th>扱い</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">進捗率が 1 から 99 の課題</td><td>通常のバー。進捗ぶんを塗り分ける</td></tr>
+      <tr><td class="nowrap">進捗率が 100 の課題</td><td>薄く表示する</td></tr>
+      <tr><td class="nowrap"><a href="../../glossary.html#archive">アーカイブ</a>済みの課題</td><td>表示しない</td></tr>
+      <tr><td class="nowrap"><a href="../../glossary.html#no-period">期間未設定</a>の課題</td><td>図の下に別枠で並べる</td></tr>
+      <tr><td class="nowrap">議論と質問</td><td>行としては出さない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>行は階層で並べる</h2>
+
+  <p><a href="../../glossary.html#thread-list">スレッド一覧</a>は平らに並べるのに、ガントは入れ子にする。
+  同じデータを二つの画面で違う形に見せることになるが、これは目的の違いによる。</p>
+
+  <p>一覧は探すための画面である。担当者で絞るとき、階層は邪魔になる。
+  ガントは計画の構造を読むための画面である。
+  親の期間と子の期間の関係は、入れ子で並んでいなければ読み取れない。</p>
+
+  <p>親の行は折りたためる。</p>
+
+  <h2>見え方</h2>
+
+  <div class="spec">
+    <div class="spec-head"><span>ガント</span><span>GanttChart</span></div>
+    <div class="spec-body tight">
+      <div class="p-gantt"><div class="p-gantt-inner">
+        <div class="p-gantt-head">
+          <div class="lbl">課題</div>
+          <div class="p-gantt-days">
+            <span>1</span><span>2</span><span class="wk">3</span><span class="wk">4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span class="wk">10</span><span class="wk">11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span class="wk">17</span><span class="wk">18</span><span>19</span><span>20</span>
+          </div>
+        </div>
+        <div class="p-gantt-row">
+          <div class="name" data-depth="0">
+            <span class="p-type" data-type="kadai">課題</span>
+            <span class="txt">検索機能の刷新</span>
+            <span class="p-gantt-warn" title="子が親の期間からはみ出しています">&#9888;</span>
+          </div>
+          <div class="p-gantt-track">
+            <span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span>
+            <span class="p-gantt-bar" data-parent="true" style="left:5%;width:70%"></span>
+          </div>
+        </div>
+        <div class="p-gantt-row">
+          <div class="name" data-depth="1">
+            <span class="p-type" data-type="kadai">課題</span>
+            <span class="txt">検索APIの実装</span>
+          </div>
+          <div class="p-gantt-track">
+            <span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span>
+            <span class="p-gantt-bar" style="left:35%;width:30%"><span class="done" style="width:40%"></span></span>
+          </div>
+        </div>
+        <div class="p-gantt-row">
+          <div class="name" data-depth="1">
+            <span class="p-type" data-type="kadai">課題</span>
+            <span class="txt">検索UIの実装</span>
+          </div>
+          <div class="p-gantt-track">
+            <span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span>
+            <span class="p-gantt-bar" style="left:60%;width:35%"></span>
+          </div>
+        </div>
+        <div class="p-gantt-row">
+          <div class="name" data-depth="1">
+            <span class="p-type" data-type="kadai">課題</span>
+            <span class="txt">旧ロジックの撤去</span>
+          </div>
+          <div class="p-gantt-track">
+            <span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span>
+            <span class="p-gantt-bar" data-complete="true" style="left:5%;width:20%"><span class="done" style="width:100%"></span></span>
+          </div>
+        </div>
+      </div></div>
+      <div class="p-undated">
+        <h4>&#9888; 期間未設定 &#160;2件</h4>
+        <ul>
+          <li><span class="p-id">WEB-12</span> 検索結果のキャッシュ設計</li>
+          <li><span class="p-id">WEB-14</span> インデックスの再構築手順</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <p>上の図で、いちばん上の行が親である。
+  子の「検索UIの実装」が親のバーの右端を越えているため、親に警告の印が出ている。</p>
+
+  <h2>期間未設定を隠さない</h2>
+
+  <p>開始日と終了日が入っていない課題は、時間軸に置けない。
+  だからといって表示から外すと、ガントに載っていない課題があること自体に誰も気づけなくなる。</p>
+
+  <p>そこで図の下に別枠のリストとして並べる。
+  この一覧が空になっていれば、プロジェクトの全課題が計画に載っているという意味になる。</p>
+
+  <h2>はみ出し警告</h2>
+
+  <p>子の期間が親の期間の外に出ているとき、親の行に印を出す。
+  該当する子のバーも色を変える。</p>
+
+  <p>システムは日付を書き換えない。
+  <a href="../../glossary.html#parent-child">親子関係</a>に集計の意味を持たせていないためである。
+  親の締切を延ばすのか、子を前倒しするのかは人が決める。</p>
+
+  <h2>読み取り専用にした理由</h2>
+
+  <p>バーをドラッグして期間を変えることはできない。
+  期間の変更は<a href="../thread/index.html">スレッド</a>の詳細画面から行う。</p>
+
+  <p>ドラッグ編集は、見た目の割に実装が広い。
+  楽観的な画面更新、他の人の変更との衝突、スナップの単位、タッチ操作。
+  これらが一度に必要になる。</p>
+
+  <p>まず「見る」機能を完成させ、実際に使われてから編集を検討する。
+  検討の記録は<a href="../../issues/gantt-enhancement/index.html">ガントの拡張</a>に置いた。</p>
+
+  <h2>関連する画面</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/gantt/index.html"><span class="card-no">/gantt</span><p class="card-title">ガントチャート</p><p class="card-desc">プロジェクト一枚ぶん</p></a>
+  </div>
+
+  <h2>関連するコンポーネント</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/components/gantt-bar/index.html"><span class="card-no">UI</span><p class="card-title">ガントバー</p><p class="card-desc">親、子、完了、はみ出しの各状態</p></a>
+  </div>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../../database/threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">期間と親子と進捗率</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能 / ガントチャート</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

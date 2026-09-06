@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ハンコアバター | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Component</p>
+  <h1 class="title">ハンコアバター</h1>
+  <p class="lede">
+    表示名の一文字目を朱色の枠に収める。
+    画像のアップロードは受け付けない。
+  </p>
+
+  <h2>なぜ画像を受け付けないか</h2>
+  <p>アップロードを許すと、トリミングのUI、複数解像度の生成、差し替えの導線が必要になる。
+  <a href="../../../features/attachment/index.html">添付ファイル</a>とは別の画像処理を作ることになる。</p>
+  <p>一方、この製品で人が現れる場所は、担当者、コメントの書き手、メンションの候補の三つに限られる。
+  どれも「誰か」が識別できれば足りる。
+  表示名から生成すれば、同じ人はどの画面でも同じ見た目になり、実装も一つで済む。</p>
+
+  <h2>状態</h2>
+
+  <div class="spec">
+    <div class="spec-head"><span>大きさ</span><span>size</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="hanko sm">佐</span><span class="cap">sm / 24px / 一覧の行</span></div>
+        <div class="spec-item"><span class="hanko">佐</span><span class="cap">md / 32px / コメント</span></div>
+        <div class="spec-item"><span class="hanko lg">佐</span><span class="cap">lg / 44px / プロフィール</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="spec-head"><span>枠の形</span><span>shape</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="hanko">佐</span><span class="cap">丸印（既定）</span></div>
+        <div class="spec-item"><span class="hanko sq">佐</span><span class="cap">角印</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p>形は表示名から決める。同じ人は常に同じ形になる。
+  丸と角の二種類しかないのは、識別の手がかりを増やしつつ、印象を散らかさないためである。</p>
+
+  <div class="spec">
+    <div class="spec-head"><span>色</span><span>color</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="hanko">佐</span><span class="cap">朱</span></div>
+        <div class="spec-item"><span class="hanko" style="border-color:#2c4a75;color:#2c4a75;background:#eaeff6">田</span><span class="cap">藍</span></div>
+        <div class="spec-item"><span class="hanko" style="border-color:#3f6b52;color:#3f6b52;background:#e9f1ec">鈴</span><span class="cap">緑</span></div>
+        <div class="spec-item"><span class="hanko" style="border-color:#8f6410;color:#8f6410;background:#f8f0dd">高</span><span class="cap">黄土</span></div>
+        <div class="spec-item"><span class="hanko" style="border-color:#4a525e;color:#4a525e;background:#efeade">山</span><span class="cap">墨</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="spec">
+    <div class="spec-head"><span>文字</span><span>initial</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="hanko">佐</span><span class="cap">漢字</span></div>
+        <div class="spec-item"><span class="hanko" style="border-color:#2c4a75;color:#2c4a75;background:#eaeff6">あ</span><span class="cap">かな</span></div>
+        <div class="spec-item"><span class="hanko" style="border-color:#3f6b52;color:#3f6b52;background:#e9f1ec">A</span><span class="cap">英字（大文字化）</span></div>
+        <div class="spec-item"><span class="hanko" style="border-color:#8f6410;color:#8f6410;background:#f8f0dd">7</span><span class="cap">数字</span></div>
+        <div class="spec-item"><span class="hanko" style="border-color:#4a525e;color:#4a525e;background:#efeade">?</span><span class="cap">表示名が記号のみ</span></div>
+      </div>
+    </div>
+  </div>
+
+  <h2>生成の規則</h2>
+
+<pre><code>function hanko(displayName: string) {
+  const trimmed = displayName.trim();
+  // 書記素単位で先頭一文字を取る（絵文字や結合文字を割らない）
+  const first = [...new Intl.Segmenter('ja', { granularity: 'grapheme' })
+                  .segment(trimmed)][0]?.segment ?? '?';
+
+  const initial = /^[a-z]$/i.test(first) ? first.toUpperCase() : first;
+  const hash    = fnv1a(trimmed);          // 表示名全体から取る
+
+  return {
+    initial,
+    color: PALETTE[hash % PALETTE.length],  // 朱、藍、緑、黄土、墨
+    shape: (hash >> 8) % 2 === 0 ? 'circle' : 'square',
+  };
+}</code></pre>
+
+  <p>ハッシュは表示名全体から取る。
+  一文字目だけから取ると、姓が同じ人が全員同じ色と形になる。</p>
+
+  <p>書記素単位で切り出すのは、絵文字や結合文字を含む表示名で文字が割れないようにするためである。
+  <code>displayName[0]</code> ではサロゲートペアの片割れを取ってしまう。</p>
+
+  <div class="note warn">
+    <span class="note-label">同じ見た目の人が出る</span>
+    <p>色5種と形2種で10通りしかないので、同じ姓の人が多い組織では見た目が重なる。
+    アバターは補助であり、識別は表示名で行うという前提を崩さない。
+    一覧の行では常にアバターと表示名を並べる。</p>
+  </div>
+
+  <h2>読み上げへの配慮</h2>
+  <p>アバターは装飾なので <code>aria-hidden="true"</code> を付ける。
+  隣に表示名があるため、読み上げで「佐 佐藤明日香」と二重になるのを避ける。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">UI</span><p class="card-title">コンポーネント</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../../glossary.html#hanko"><span class="card-no">TERM</span><p class="card-title">ハンコアバター</p><p class="card-desc">用語集</p></a>
+    <a class="card" href="../../../database/users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">display_name が元になる</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / ハンコアバター</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../sidebar.js" defer></script>
+</body>
+</html>

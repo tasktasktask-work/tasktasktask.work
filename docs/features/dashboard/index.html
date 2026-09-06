@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>担当スレッド一覧 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Feature 10</p>
+  <h1 class="title">担当スレッド一覧</h1>
+  <p class="lede">
+    複数のプロジェクトに関わるのが前提の構造では、
+    「今日、自分は何をやるのか」をプロジェクトごとに見て回ることになる。
+    その手間をなくすための画面である。
+  </p>
+
+  <h2>この画面が必要な理由</h2>
+
+  <p>ひとりのユーザーは複数の<a href="../../glossary.html#organization">組織</a>に所属でき、
+  ひとつの組織の中でも複数の<a href="../../glossary.html#project">プロジェクト</a>に関わる。</p>
+
+  <p>一方、<a href="../gantt/index.html">ガントチャート</a>も<a href="../../glossary.html#thread-list">スレッド一覧</a>もプロジェクト単位である。
+  自分が担当している課題が5つのプロジェクトに散っていれば、5枚の画面を開くことになる。</p>
+
+  <p>この画面は、組織の中で自分が<a href="../../glossary.html#assignee">担当者</a>になっているスレッドを、プロジェクトをまたいで一箇所に集める。</p>
+
+  <h2>ガントとの違い</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th></th><th>担当スレッド一覧</th><th>ガントチャート</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">範囲</td><td>組織全体（自分の担当のみ）</td><td>プロジェクト一つ</td></tr>
+      <tr><td class="nowrap">形式</td><td>リスト</td><td>時間軸</td></tr>
+      <tr><td class="nowrap">種別</td><td>課題、議論、質問すべて</td><td>課題のみ</td></tr>
+      <tr><td class="nowrap">階層</td><td>平ら</td><td>入れ子</td></tr>
+      <tr><td class="nowrap">問い</td><td>自分は何をやるのか</td><td>この計画は成り立つのか</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>並べるもの</h2>
+
+  <p>自分が担当者に設定されているスレッドのうち、次を除いたものを並べる。</p>
+
+  <ul>
+    <li>進捗率が100のもの（絞り込みで表示に切り替えられる）</li>
+    <li><a href="../../glossary.html#archive">アーカイブ</a>されているもの</li>
+    <li>アーカイブされたプロジェクトに属するもの</li>
+  </ul>
+
+  <p>並び順は、期間の終了日が近い順とする。
+  期間を持たない議論と質問、および<a href="../../glossary.html#no-period">期間未設定</a>の課題は、日付を持つものの後に置く。</p>
+
+  <p>行にはプロジェクトを示す<a href="../../glossary.html#project-key">プロジェクトキー</a>を必ず出す。
+  複数のプロジェクトが混ざるため、どこの話かがわからないと判断できない。</p>
+
+  <h2>見え方</h2>
+
+  <div class="spec">
+    <div class="spec-head"><span>担当スレッド</span><span>AssignedThreadList</span></div>
+    <div class="spec-body tight">
+      <div class="p-list">
+        <div class="p-row">
+          <span class="p-type" data-type="kadai">課題</span>
+          <a class="ttl" href="#">検索APIの実装</a>
+          <span class="p-progress"><span class="bar"><span class="fill" style="width:40%"></span></span><span class="num">40%</span></span>
+          <span class="badge ki">残り3日</span>
+          <span class="p-id">WEB-7</span>
+          <span class="meta"><span class="p-tag" style="--tag-color:#c8402c">backend</span><span>9/8 – 9/19</span></span>
+        </div>
+        <div class="p-row">
+          <span class="p-type" data-type="kadai">課題</span>
+          <a class="ttl" href="#">請求書PDFの様式変更</a>
+          <span class="p-progress" data-zero="true"><span class="bar"><span class="fill" style="width:0%"></span></span><span class="num">0%</span></span>
+          <span class="badge mute">残り12日</span>
+          <span class="p-id">BILL-31</span>
+          <span class="meta"><span>9/16 – 9/28</span></span>
+        </div>
+        <div class="p-row">
+          <span class="p-type" data-type="shitsumon">質問</span>
+          <a class="ttl" href="#">全角の正規化はどこでやっている？</a>
+          <span class="p-oc" data-oc="open">オープン</span>
+          <span></span>
+          <span class="p-id">WEB-9</span>
+          <span class="meta"><span>期間なし</span></span>
+        </div>
+        <div class="p-row">
+          <span class="p-type" data-type="kadai">課題</span>
+          <a class="ttl" href="#">検索結果のキャッシュ設計</a>
+          <span class="p-progress" data-zero="true"><span class="bar"><span class="fill" style="width:0%"></span></span><span class="num">0%</span></span>
+          <span class="badge ki">期間未設定</span>
+          <span class="p-id">WEB-12</span>
+          <span class="meta"><span>日付を入れてください</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>非公開プロジェクトとの関係</h2>
+
+  <p>自分が担当者になっているスレッドしか出ないため、
+  <a href="../../glossary.html#private-project">非公開プロジェクト</a>のものが混ざっても問題は起きない。
+  担当者に設定されているということは、そのプロジェクトのメンバーだということである。</p>
+
+  <h2>関連する画面</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/pages/o/[slug]/dashboard/index.html"><span class="card-no">/dashboard</span><p class="card-title">担当スレッド</p><p class="card-desc">通知一覧も併せて置く</p></a>
+  </div>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../../database/threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">assignee_id で絞る</p></a>
+    <a class="card" href="../../database/project_members/index.html"><span class="card-no">TABLE</span><p class="card-title">project_members</p><p class="card-desc">閲覧できる範囲の判定</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能 / 担当スレッド一覧</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

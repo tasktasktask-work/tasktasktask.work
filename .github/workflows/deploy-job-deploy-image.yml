@@ -1,0 +1,26 @@
+name: Deploy Image
+
+on:
+  workflow_call:
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - run: |
+          echo "${{ secrets.DOCKER_REGISTRY_PASSWORD }}" \
+           | docker login \
+              --username ${{ secrets.DOCKER_REGISTRY_USERNAME }} \
+              --password-stdin \
+              ${{ secrets.DOCKER_REGISTRY_HOST }}
+
+      - run: |
+          docker build \
+              --tag ${{ secrets.DOCKER_REGISTRY_HOST }}/tasktasktask.work:latest \
+              .
+
+      - run: docker push ${{ secrets.DOCKER_REGISTRY_HOST }}/tasktasktask.work:latest

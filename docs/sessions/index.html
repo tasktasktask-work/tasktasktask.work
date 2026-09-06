@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>セッション履歴 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Sessions</p>
+  <h1 class="title">セッション履歴</h1>
+  <p class="lede">
+    いつ、何を決めたか。
+    仕様は選択の結果であり、選ばなかった側とあわせて記録しておかないと、後から辿れない。
+  </p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th class="nowrap">日時</th><th>見出し</th><th>概要</th><th class="nowrap">状態</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="nowrap">2026-09-06</td>
+        <td><a href="20260906-1428-toolchain/index.html">道具立ての整理</a></td>
+        <td>TypeScript 7 と Next 16、検査の CI、Atlas の版固定。開発機でだけ通っていた依存を二つ直した。</td>
+        <td class="nowrap"><span class="state" data-state="done">done</span></td>
+      </tr>
+      <tr>
+        <td class="nowrap">2026-09-06</td>
+        <td><a href="20260906-0815-deployment/index.html">デプロイ構成の作り直し</a></td>
+        <td>VPS の既存サービスへ相乗りする形へ。イメージだけを送り、マイグレーションも同梱する。</td>
+        <td class="nowrap"><span class="state" data-state="developing">developing</span></td>
+      </tr>
+      <tr>
+        <td class="nowrap">2026-09-05</td>
+        <td><a href="20260905-1709-authentication/index.html">認証の実装</a></td>
+        <td>パスワードとマジックリンクの併用、ロックと自動解除。通しで確認。テスト26件。</td>
+        <td class="nowrap"><span class="state" data-state="developing">developing</span></td>
+      </tr>
+      <tr>
+        <td class="nowrap">2026-09-05</td>
+        <td><a href="20260905-1454-project-initialization/index.html">プロジェクトの初期化</a></td>
+        <td>スキーマ15テーブルを実データベースへ適用。型付けと意匠の共有方式を決め、添付の配信を同一オリジンに変更した。</td>
+        <td class="nowrap"><span class="state" data-state="developing">developing</span></td>
+      </tr>
+      <tr>
+        <td class="nowrap">2026-09-05</td>
+        <td><a href="20260905-1210-initial-specification/index.html">仕様の策定とドキュメント整備</a></td>
+        <td>ゼロから仕様を決め、用語集、機能、DB、UI、課題を書き出した。スレッドを基本単位に置く構造を採用し、名称を TASK3 に決定。</td>
+        <td class="nowrap"><span class="state" data-state="planning">planning</span></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>全 5 件。</p>
+
+  <div class="sheet-foot">
+    <span>セッション履歴</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../sidebar.js" defer></script>
+</body>
+</html>

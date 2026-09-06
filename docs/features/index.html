@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>機能の一覧 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Features</p>
+  <h1 class="title">機能の一覧</h1>
+  <p class="lede">
+    10 の機能に分けて書いてある。
+    どれも「何ができるか」だけでなく「なぜそう決めたか」を残した。
+    仕様は選択の結果であり、選ばなかった側を書き残さないと、半年後に同じ議論をやり直すことになる。
+  </p>
+
+  <h2>入り口をつくる</h2>
+  <p>人がサービスに入り、組織に属し、見える範囲が決まるまで。</p>
+  <div class="cards">
+    <a class="card" href="authentication/index.html"><span class="card-no">01</span><p class="card-title">認証</p><p class="card-desc">マジックリンクとパスワードの併用。ロックとその解除</p></a>
+    <a class="card" href="organization/index.html"><span class="card-no">02</span><p class="card-title">組織とメンバー</p><p class="card-desc">複数所属、招待、二段の役割、言語とタイムゾーン</p></a>
+    <a class="card" href="project/index.html"><span class="card-no">03</span><p class="card-title">プロジェクト</p><p class="card-desc">スレッドの器。公開と非公開、キー、アーカイブ</p></a>
+  </div>
+
+  <h2>話を置く</h2>
+  <p>このプロダクトの中心。課題も議論も質問も、同じ形の器に入る。</p>
+  <div class="cards">
+    <a class="card" href="thread/index.html"><span class="card-no">04</span><p class="card-title">スレッド</p><p class="card-desc">三つの種別、無制限の親子、進捗率、担当者</p></a>
+    <a class="card" href="comment/index.html"><span class="card-no">05</span><p class="card-title">コメント</p><p class="card-desc">時系列で一本。編集も削除もできない</p></a>
+    <a class="card" href="attachment/index.html"><span class="card-no">06</span><p class="card-title">添付ファイル</p><p class="card-desc">検査ではなく配信の仕方で守る</p></a>
+    <a class="card" href="tag/index.html"><span class="card-no">07</span><p class="card-title">タグ</p><p class="card-desc">階層と直交する分類の軸</p></a>
+  </div>
+
+  <h2>見つける、気づく</h2>
+  <p>全文検索を持たない構成で、必要なものにたどり着くための仕組み。</p>
+  <div class="cards">
+    <a class="card" href="notification/index.html"><span class="card-no">08</span><p class="card-title">通知とウォッチ</p><p class="card-desc">三つのきっかけ。アプリ内とメールの両方へ</p></a>
+    <a class="card" href="gantt/index.html"><span class="card-no">09</span><p class="card-title">ガントチャート</p><p class="card-desc">プロジェクト一枚ぶん。階層表示、読み取り専用</p></a>
+    <a class="card" href="dashboard/index.html"><span class="card-no">10</span><p class="card-title">担当スレッド一覧</p><p class="card-desc">プロジェクトをまたいで自分の分だけを集める</p></a>
+  </div>
+
+  <h2>機能をまたぐ決まりごと</h2>
+  <p>個々の機能ページに書くと重複するため、ここにまとめる。</p>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>決まり</th><th>内容</th><th>効く範囲</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><a href="../glossary.html#soft-delete">論理削除</a></td><td>物理削除は行わない。アーカイブを経てから削除し、いつでも復元できる</td><td>全テーブル</td></tr>
+      <tr><td class="nowrap"><a href="../glossary.html#archive">アーカイブ</a></td><td>読み取り専用にして既定の表示から外す。削除の前段でもある</td><td>スレッド、プロジェクト</td></tr>
+      <tr><td class="nowrap">組織による境界</td><td>すべてのデータは組織に属し、組織をまたぐ参照は存在しない</td><td>全テーブル</td></tr>
+      <tr><td class="nowrap"><a href="../devops/coding-conventions/index.html#datetime">日付と時刻</a></td><td>期間は <code>date</code>、記録の時刻は <code>timestamptz</code>。タイムゾーンなしの <code>timestamp</code> は使わない</td><td>スレッド、コメント、通知</td></tr>
+      <tr><td class="nowrap">権限の二段</td><td><a href="../glossary.html#org-admin">組織管理者</a>と組織メンバー。プロジェクト側は管理者だけが別に立つ</td><td>組織、プロジェクト</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../sidebar.js" defer></script>
+</body>
+</html>

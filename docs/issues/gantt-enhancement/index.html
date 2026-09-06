@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ガントの拡張 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 中</p>
+  <h1 class="title">ガントの拡張</h1>
+
+  <h2>概要</h2>
+  <p><a href="../../features/gantt/index.html">ガントチャート</a>について、二つを先送りにした。</p>
+  <ol>
+    <li><strong>バーのドラッグによる期間変更。</strong>現状は読み取り専用で、変更は詳細画面から行う</li>
+    <li><strong>課題間の依存関係。</strong>先行と後続を線でつなぐ表示がない</li>
+  </ol>
+
+  <h2>先送りとした理由</h2>
+
+  <h3>ドラッグ編集</h3>
+  <p>見た目の割に実装が広い。必要になるものを並べると次のとおりである。</p>
+  <ul>
+    <li>操作中の楽観的な画面更新と、保存失敗時の巻き戻し</li>
+    <li>他の人が同時に変更したときの衝突の解決</li>
+    <li>スナップの単位（日単位で吸い付くか、自由に置けるか）</li>
+    <li>タッチ操作への対応</li>
+  </ul>
+  <p>まず「見る」機能を完成させ、実際に使われてから判断することにした。</p>
+
+  <h3>依存関係</h3>
+  <p>線を引くこと自体は難しくない。
+  難しいのは、その線に何を意味させるかである。</p>
+  <p><strong>先行課題の日付がずれたとき、後続を自動で動かすのか。</strong>
+  動かすなら、連鎖してプロジェクト全体の日付が書き換わりうる。
+  動かさないなら、線は単なる注記になる。</p>
+  <p>さらに、<a href="../../glossary.html#parent-child">親子関係</a>には集計の意味を持たせないと決めている。
+  親の期間は子から計算せず、はみ出しは警告するだけである。
+  ここに自動で日付を動かす仕組みを足すと、方針が二つに割れる。</p>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>期間の変更が頻繁に行われ、詳細画面への往復が負担になっているとき（1）</li>
+    <li>「この課題が終わらないと次が始められない」という関係を、本文やコメントで書いて管理しはじめたとき（2）</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+  <p>2 は中間テーブルを作る。</p>
+<pre><code>CREATE TABLE thread_dependencies (
+  predecessor_id uuid NOT NULL REFERENCES threads(id),
+  successor_id   uuid NOT NULL REFERENCES threads(id),
+  PRIMARY KEY (predecessor_id, successor_id),
+  CONSTRAINT no_self CHECK (predecessor_id &lt;&gt; successor_id)
+);</code></pre>
+  <p>循環の検出は<a href="../../database/threads/index.html">親子関係</a>と同じく再帰CTEで行う。
+  <strong>自動でずらすかどうかは、実装より先に方針を決める。</strong>
+  親子の扱いと一貫させるなら、線は引くが日付は動かさない、が筋になる。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/gantt/index.html"><span class="card-no">FEATURE</span><p class="card-title">ガントチャート</p><p class="card-desc">読み取り専用にした理由</p></a>
+    <a class="card" href="../../ui/components/gantt-bar/index.html"><span class="card-no">UI</span><p class="card-title">ガントバー</p><p class="card-desc">掴めない見た目</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / ガントの拡張</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

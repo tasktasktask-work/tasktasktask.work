@@ -1,0 +1,47 @@
+{
+  "name": "task3",
+  "version": "0.0.0",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src tests scripts",
+    "fix": "biome check --write src tests scripts",
+    "styles:check": "node scripts/check-shared-styles.mjs",
+    "check": "pnpm typecheck && pnpm lint && pnpm styles:check && pnpm schema:lint",
+    "schema:diff": "node scripts/atlas.mjs migrate diff --env local",
+    "schema:apply": "node scripts/atlas.mjs migrate apply --env local && node --env-file-if-exists=.env scripts/apply-functions.mjs",
+    "schema:lint": "node scripts/lint-migrations.mjs",
+    "styles:sync": "node scripts/sync-shared-styles.mjs",
+    "schema:status": "node scripts/atlas.mjs migrate status --env local",
+    "schema:hash": "node scripts/atlas.mjs migrate hash --env local",
+    "schema:functions": "node --env-file-if-exists=.env scripts/apply-functions.mjs",
+    "test": "node --experimental-strip-types --env-file-if-exists=.env --test 'tests/*.test.ts'"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "^2.2.0",
+    "next": "^16.3.4",
+    "pg": "^8.13.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.12",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.11.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "typescript": "^7.0.2"
+  },
+  "imports": {
+    "#lib/*": "./src/lib/*",
+    "#features/*": "./src/features/*"
+  }
+}

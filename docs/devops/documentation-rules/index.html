@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ドキュメント規約 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">DevOps 06</p>
+  <h1 class="title">ドキュメント規約</h1>
+  <p class="lede">
+    ビルドを持たない静的なHTMLの集まりである。
+    共通部分は <code>theme.css</code> と <code>sidebar.js</code> の二つだけが担う。
+  </p>
+
+  <h2>構成</h2>
+
+<pre class="figure">docs/
+├── index.html          全体の入口
+├── glossary.html       用語集
+├── theme.css           共通スタイル（★仕様書にない追加）
+├── sidebar.js          共通サイドバーの注入
+├── features/{name}/    機能ごと
+├── database/{table}/   テーブルごと
+├── ui/
+│   ├── principles.html
+│   ├── components/{name}/
+│   └── pages/{path}/   実際のURLに対応させる
+├── issues/{name}/      先送りした課題
+├── devops/{slug}/      開発と運用
+└── sessions/{YYYYMMDD-HHMM}-{summary}/</pre>
+
+  <div class="note decide">
+    <span class="note-label">theme.css は仕様書からの追加である</span>
+    <p>ドキュメントの構成に <code>theme.css</code> は含まれていなかった。
+    共通で持つのは <code>sidebar.js</code> だけという想定である。</p>
+    <p>しかし約1,000行のスタイルを50近いファイルに複製すると、
+    色を一つ変えるだけで全ファイルを触ることになる。
+    <code>sidebar.js</code> に注入させる案もあるが、
+    <code>defer</code> で読むためスタイルの当たっていない画面が一瞬見える。</p>
+    <p><strong>意図的な逸脱として追加し、レビューで承認されている</strong>（2026-09-05）。</p>
+  </div>
+
+  <h2>新しいページを作るとき</h2>
+
+  <ol>
+    <li><strong>既存の近いページを複製する。</strong>ゼロから書かない。
+        機能ページなら <code>features/thread/index.html</code>、
+        テーブルなら <code>database/threads/index.html</code> を雛形にする</li>
+    <li><code>&lt;link rel="stylesheet"&gt;</code> と <code>&lt;script src&gt;</code> の
+        相対パスを、そのページの階層に合わせる</li>
+    <li><code>sidebar.js</code> の <code>groups</code> に追記する。<strong>忘れるとサイドバーに出ない</strong></li>
+    <li>本文から関連するページへリンクを張る。特に用語集へ</li>
+  </ol>
+
+  <h3>相対パスの数え方</h3>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>ページ</th><th>プレフィックス</th></tr></thead>
+    <tbody>
+      <tr><td><code>glossary.html</code></td><td>なし</td></tr>
+      <tr><td><code>features/index.html</code></td><td><code>../</code></td></tr>
+      <tr><td><code>features/thread/index.html</code></td><td><code>../../</code></td></tr>
+      <tr><td><code>ui/components/gantt-bar/index.html</code></td><td><code>../../../</code></td></tr>
+      <tr><td><code>ui/pages/o/[slug]/p/[key]/t/[number]/index.html</code></td><td><code>../</code> を8個</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><code>sidebar.js</code> は自身の <code>src</code> からルートを逆算するので、
+  この数さえ合っていれば <code>file://</code> でも GitHub Pages でも動く。</p>
+
+  <h2>用語集を最優先で更新する</h2>
+
+  <div class="note decide">
+    <span class="note-label">この規約が最も重い</span>
+    <p>会話の中で新しい語が出てきたら、<strong>設計や実装より先に</strong>
+    <a href="../../glossary.html">用語集</a>へ書く。</p>
+    <p>そして、その語を使っている本文の側からも用語集へリンクを張る。
+    どこからも参照されていない語が残っていたら、
+    それは使われていない語か、リンクの張り忘れである。</p>
+  </div>
+
+  <h3>孤立した用語を機械的に見つける</h3>
+
+<pre><code># 用語集の id 一覧と、本文からの参照を突き合わせる
+comm -23 \
+  &lt;(grep -o 'class="term" id="[^"]*"' glossary.html \
+      | sed 's/.*id="//;s/"//' | sort) \
+  &lt;(grep -rho 'glossary\.html#[a-z0-9-]*' --include='*.html' . \
+      | sed 's/.*#//' | sort -u)</code></pre>
+
+  <p>何も出力されなければ、すべての用語がどこかから参照されている。</p>
+
+  <h2>サイドバーの決まり</h2>
+
+  <ul>
+    <li><strong>セッションは直近5件まで。</strong>溢れたものは <code>groups</code> から削り、
+        <code>sessionTotal</code> に総数を入れる。総数が5を超えていれば「全 N 件」と表示される</li>
+    <li><strong>完了した課題は削る。</strong>対応が済んだ Issue はサイドバーから外す。
+        <a href="../../issues/index.html">課題の一覧</a>からは引き続き辿れる</li>
+    <li>変更した直後はブラウザのキャッシュで反映されないことがある。
+        <code>Cmd/Ctrl+Shift+R</code> で確認する</li>
+  </ul>
+
+  <h2>文章の書き方</h2>
+
+  <p><code>japanese-tech-writing</code> と <code>cognitive-rhythm-writing</code> の規範に従う。
+  特に守るもの。</p>
+
+  <ul>
+    <li>ダッシュ（2倍ダッシュ）を地の文に使わない。括弧か句点で分ける</li>
+    <li>中黒を並列に使わない。読点でつなぐ</li>
+    <li>用語の初出は太字で定義し、以後の言及は「」を使う</li>
+    <li><strong>決めたことだけでなく、その決定が捨てたものを書く。</strong>
+        「なぜこれがないのか」に答えられる状態を保つ</li>
+    <li>「重要なのは」「掘り下げる」「多角的に」といった、中身のない語を使わない</li>
+  </ul>
+
+  <h2>UI の作り方</h2>
+
+  <p><code>frontend-design</code> の規範に従う。
+  加えて、この製品固有の基準は<a href="../../ui/principles.html">UI設計方針</a>に置いた。</p>
+
+  <p>コンポーネントの見本は <code>theme.css</code> の
+  「製品コンポーネントの見本」の節に定義してある。
+  ドキュメント上の見本と実装が同じCSSを共有できるよう、
+  クラス名は <code>p-</code> を接頭辞にしている。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../glossary.html"><span class="card-no">TERM</span><p class="card-title">用語集</p><p class="card-desc">最優先で更新する</p></a>
+    <a class="card" href="../../ui/principles.html"><span class="card-no">UI</span><p class="card-title">UI設計方針</p><p class="card-desc">画面の基準</p></a>
+    <a class="card" href="../coding-conventions/index.html"><span class="card-no">DEVOPS</span><p class="card-title">コーディング規約</p><p class="card-desc">用語をコードでも使う</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>開発と運用 / ドキュメント規約</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>invitations | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">invitations</h1>
+  <p class="lede">
+    組織にメンバーが増える唯一の経路。
+    メールドメインによる自動参加も、URLを知っていれば入れる仕組みも用意していない。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+  <p><a href="../../glossary.html#invitation">招待</a>は、送った時点ではまだアカウントが存在しないことがある。
+  そのため <code>organization_members</code> の行を先に作ることはできず、
+  「誰を、どの組織に、どの役割で呼んだか」を保持する場所が要る。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE invitations (
+  id                  uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id     uuid        NOT NULL REFERENCES organizations(id),
+  email               text        NOT NULL,
+  role                text        NOT NULL DEFAULT 'member',
+  invited_by_user_id  uuid        NOT NULL REFERENCES users(id),
+  token_hash          bytea       NOT NULL,
+  expires_at          timestamptz NOT NULL,
+  accepted_at         timestamptz,
+  accepted_user_id    uuid        REFERENCES users(id),
+  revoked_at          timestamptz,
+  created_at          timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT invitations_email_lowercase
+    CHECK (email = lower(email)),
+  CONSTRAINT invitations_role_valid
+    CHECK (role IN ('admin', 'member')),
+  CONSTRAINT invitations_accepted_consistent
+    CHECK ((accepted_at IS NULL) = (accepted_user_id IS NULL))
+);
+
+CREATE UNIQUE INDEX invitations_token_hash_key ON invitations (token_hash);
+
+-- 同じ相手への未処理の招待は一件まで
+CREATE UNIQUE INDEX invitations_pending_uniq
+  ON invitations (organization_id, email)
+  WHERE accepted_at IS NULL AND revoked_at IS NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>email</code></td><td>text</td><td>招待先。小文字で正規化して保存する。この時点でアカウントがあるとは限らない</td></tr>
+      <tr><td><code>role</code></td><td>text</td><td>受諾時に <code>organization_members</code> へ渡す役割</td></tr>
+      <tr><td><code>token_hash</code></td><td>bytea</td><td>招待URLに含めた値の SHA-256</td></tr>
+      <tr><td><code>expires_at</code></td><td>timestamptz</td><td>発行から48時間後</td></tr>
+      <tr><td><code>accepted_at</code></td><td>timestamptz</td><td>受諾の時刻</td></tr>
+      <tr><td><code>accepted_user_id</code></td><td>uuid</td><td>受諾したアカウント。新規登録の場合はその場で作られたもの</td></tr>
+      <tr><td><code>revoked_at</code></td><td>timestamptz</td><td>送った側が取り消した時刻</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>受諾したときに起きること</h3>
+  <ol>
+    <li>そのメールアドレスの <code>users</code> が無ければ作る。パスワードはこの画面で設定する</li>
+    <li><code>organization_members</code> に <code>role</code> を引き継いで行を作る</li>
+    <li><code>accepted_at</code> と <code>accepted_user_id</code> を埋める</li>
+    <li><code>sessions</code> を作ってログイン状態にする</li>
+  </ol>
+  <p>すでに他の組織のアカウントを持っている人の場合、1 は飛ばして 2 から始まる。
+  同じアカウントが複数の組織に所属する形になる。</p>
+
+  <div class="note warn">
+    <span class="note-label">有効期間48時間の帰結</span>
+    <p>招待は「まだこのサービスを知らない人」に届く。
+    マジックリンクのように受け手が待っている状況ではない。
+    会議中や休暇中に届いた招待は期限切れになりやすく、再送の依頼が発生する。</p>
+    <p>マジックリンクと期間を揃えるという判断でこの値になった。
+    運用してみて再送が頻発するようなら、招待だけ長くすることを検討する。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">organizations ──&lt; invitations
+                       │
+users （送った人）─────┤
+                       └─→ 受諾で organization_members と users を作る</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../organization_members/index.html"><span class="card-no">TABLE</span><p class="card-title">organization_members</p><p class="card-desc">受諾の結果できる行</p></a>
+    <a class="card" href="../users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">送った人と受けた人</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">参加は招待だけ</p></a>
+    <a class="card" href="../../features/authentication/index.html"><span class="card-no">FEATURE</span><p class="card-title">認証</p><p class="card-desc">招待からの登録</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / invitations</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

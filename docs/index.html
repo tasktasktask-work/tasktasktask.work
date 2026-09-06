@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<style>
+  .hero { position: relative; margin-bottom: 3.5rem; }
+  .hero-mark {
+    position: absolute; right: -.5rem; top: -1.5rem;
+    width: 7rem; height: 7rem; opacity: .1; pointer-events: none;
+  }
+  .hero h1 { font-size: clamp(2.3rem, 6vw, 3.6rem); margin-bottom: 1.4rem; }
+  .hero h1 .accent { color: var(--shu); }
+  .model { margin: 0 0 2.2rem; overflow-x: auto; }
+  .model svg { display: block; min-width: 40rem; }
+  .kpi {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 1px; background: var(--rule); border: 1px solid var(--rule);
+    margin: 0 0 2.4rem;
+  }
+  .kpi > div { background: var(--card); padding: .95rem 1.1rem; }
+  .kpi dt {
+    font-family: var(--font-mono); font-size: .63rem; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--ink-faint); margin-bottom: .3rem;
+  }
+  .kpi dd { margin: 0; font-family: var(--font-display); font-weight: 700; font-size: .98rem; line-height: 1.5; }
+  .startpath { counter-reset: sp; list-style: none; padding: 0; max-width: var(--measure); }
+  .startpath li {
+    position: relative; padding-left: 2.6rem; margin-bottom: 1.1rem;
+  }
+  .startpath li::before {
+    counter-increment: sp; content: counter(sp, decimal-leading-zero);
+    position: absolute; left: 0; top: .15rem;
+    font-family: var(--font-mono); font-size: .72rem; color: var(--shu);
+    border: 1px solid var(--shu); border-radius: 2px; padding: .1rem .35rem;
+  }
+</style>
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+
+  <div class="hero">
+    <svg class="hero-mark" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="50" r="46" fill="none" stroke="#c8402c" stroke-width="4"/>
+      <text x="50" y="70" text-anchor="middle" font-family="Shippori Mincho B1, serif" font-size="62" font-weight="800" fill="#c8402c">3</text>
+    </svg>
+    <p class="eyebrow">Design Documents</p>
+    <h1 class="title">スレッドを基本単位に置いた<br><span class="accent">課題管理</span>のつくりかた</h1>
+    <p class="lede">
+      課題として書けるほど固まっていない相談を、どこに置けばいいのか。
+      多くの課題管理ツールでは、そういう話は課題の欄に無理やり収めるか、チャットへ流れて消えていく。
+      このプロダクトは、その置き場所をつくるところから設計をはじめた。
+    </p>
+  </div>
+
+  <div class="note ok">
+    <span class="note-label">名称</span>
+    <p>プロダクト名は <strong>TASK3</strong>、ドメインは <code>tasktasktask.work</code> である。
+    名前の <code>3</code> は、<a href="glossary.html#thread">スレッド</a>が持つ三つの<a href="glossary.html#thread-type">種別</a>
+    （<a href="glossary.html#kadai">課題</a>、<a href="glossary.html#giron">議論</a>、<a href="glossary.html#shitsumon">質問</a>）と読み合わせられる。
+    ロゴの意匠はこの読みを使っている。</p>
+  </div>
+
+  <h2>このプロダクトの骨格</h2>
+
+  <p>基本単位は課題ではなく<a href="glossary.html#thread">スレッド</a>である。
+  スレッドは三つの<a href="glossary.html#thread-type">種別</a>を持ち、そのうちのひとつが<a href="glossary.html#kadai">課題</a>にあたる。
+  残りの二つは、実装のゴールが決まっていない<a href="glossary.html#giron">議論</a>と、答えが返れば済む<a href="glossary.html#shitsumon">質問</a>である。</p>
+
+  <p>三つとも同じ形をしているので、同じ一覧に並び、同じように親子でつながる。
+  議論の下に課題をぶら下げることも、課題の下に質問を置くこともできる。
+  違うのは、課題だけが<a href="glossary.html#period">期間</a>を持ち<a href="glossary.html#gantt">ガントチャート</a>に載る、という一点である。</p>
+
+  <div class="model">
+    <svg viewBox="0 0 720 300" role="img" aria-label="組織、プロジェクト、スレッド、コメントの階層図">
+      <defs>
+        <marker id="ar" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto">
+          <path d="M0,0 L7,3.5 L0,7 z" fill="#7d8792"/>
+        </marker>
+      </defs>
+      <g font-family="JetBrains Mono, monospace" font-size="10" fill="#7d8792">
+        <!-- 組織 -->
+        <rect x="16" y="16" width="688" height="268" fill="none" stroke="#cbc2af" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="28" y="36" font-size="10" letter-spacing="1.5" fill="#7d8792">ORGANIZATION / 組織</text>
+
+        <!-- プロジェクト -->
+        <rect x="34" y="50" width="652" height="216" fill="#f6f3ec" stroke="#cbc2af" stroke-width="1"/>
+        <text x="46" y="70" font-size="10" letter-spacing="1.5" fill="#7d8792">PROJECT / プロジェクト &#160;&#160;<tspan fill="#c8402c">WEB</tspan></text>
+
+        <!-- 議論スレッド -->
+        <rect x="54" y="84" width="240" height="42" fill="#fffefb" stroke="#2c4a75" stroke-width="1.5"/>
+        <text x="66" y="102" font-family="Zen Kaku Gothic New, sans-serif" font-size="12" fill="#171b22">検索の要件をどうするか</text>
+        <text x="66" y="117" font-size="9" fill="#2c4a75">議論 &#160; WEB-3 &#160; オープン</text>
+
+        <!-- 課題スレッド1 -->
+        <rect x="100" y="140" width="240" height="42" fill="#fffefb" stroke="#c8402c" stroke-width="1.5"/>
+        <text x="112" y="158" font-family="Zen Kaku Gothic New, sans-serif" font-size="12" fill="#171b22">検索APIの実装</text>
+        <text x="112" y="173" font-size="9" fill="#c8402c">課題 &#160; WEB-7 &#160; 40% &#160; 9/8–9/19</text>
+
+        <!-- 質問スレッド -->
+        <rect x="146" y="196" width="240" height="42" fill="#fffefb" stroke="#3f6b52" stroke-width="1.5"/>
+        <text x="158" y="214" font-family="Zen Kaku Gothic New, sans-serif" font-size="12" fill="#171b22">全角の正規化はどこで？</text>
+        <text x="158" y="229" font-size="9" fill="#3f6b52">質問 &#160; WEB-9 &#160; オープン</text>
+
+        <!-- 親子の線 -->
+        <path d="M64,126 L64,161 L98,161" fill="none" stroke="#7d8792" stroke-width="1" marker-end="url(#ar)"/>
+        <path d="M110,182 L110,217 L144,217" fill="none" stroke="#7d8792" stroke-width="1" marker-end="url(#ar)"/>
+
+        <!-- コメント -->
+        <g>
+          <line x1="420" y1="96" x2="420" y2="240" stroke="#cbc2af" stroke-width="1"/>
+          <text x="410" y="80" font-size="9" letter-spacing="1.2" fill="#7d8792" text-anchor="start">COMMENTS / コメント（時系列で一本）</text>
+          <circle cx="420" cy="104" r="4" fill="#c8402c"/>
+          <text x="434" y="108" font-family="Zen Kaku Gothic New, sans-serif" font-size="11" fill="#4a525e">佐藤 &#160;要件を整理しました</text>
+          <circle cx="420" cy="140" r="4" fill="#c8402c"/>
+          <text x="434" y="144" font-family="Zen Kaku Gothic New, sans-serif" font-size="11" fill="#4a525e">田中 &#160;@佐藤 ここは別課題では</text>
+          <circle cx="420" cy="176" r="4" fill="#c8402c"/>
+          <text x="434" y="180" font-family="Zen Kaku Gothic New, sans-serif" font-size="11" fill="#4a525e">佐藤 &#160;WEB-7 を立てました</text>
+          <circle cx="420" cy="212" r="4" fill="#cbc2af"/>
+          <text x="434" y="216" font-family="Zen Kaku Gothic New, sans-serif" font-size="11" fill="#a8b0b9">編集も削除もできない</text>
+        </g>
+      </g>
+    </svg>
+  </div>
+
+  <h2>この設計を決めた前提</h2>
+
+  <dl class="kpi">
+    <div><dt>提供形態</dt><dd>マルチテナントSaaS</dd></div>
+    <div><dt>想定規模</dt><dd>100人／数万件</dd></div>
+    <div><dt>状態管理</dt><dd>進捗率 0–100 のみ</dd></div>
+    <div><dt>階層</dt><dd>深さの制限なし</dd></div>
+    <div><dt>技術</dt><dd>Next.js / PostgreSQL</dd></div>
+    <div><dt>実行環境</dt><dd>VPS + Docker Compose</dd></div>
+  </dl>
+
+  <p>状態を進捗率ひとつに絞ったこと、階層の深さを制限しなかったこと、プロジェクト間の移動を認めなかったこと。
+  こうした判断は、どれも何かを捨てて何かを取っている。
+  捨てたもののうち後で拾い直す可能性があるものは、<a href="issues/index.html">先送りした課題</a>に理由とともに書いてある。</p>
+
+  <h2>どこから読むか</h2>
+
+  <ol class="startpath">
+    <li><a href="glossary.html"><strong>用語集</strong></a><br>
+      この製品は既存ツールを下敷きにしていない。
+      「スレッド」も「進捗率」も他所とは意味が違うので、まずここを読む。</li>
+    <li><a href="features/index.html"><strong>機能</strong></a><br>
+      画面と振る舞いを機能ごとにまとめてある。何がどう動くかはここでわかる。</li>
+    <li><a href="database/index.html"><strong>データベース</strong></a><br>
+      テーブルの関係と、なぜその形なのか。実装に入る前に読む。</li>
+    <li><a href="ui/principles.html"><strong>UI設計方針</strong></a><br>
+      画面を作り足すときに、既存と食い違わせないための基準。</li>
+    <li><a href="devops/index.html"><strong>開発と運用</strong></a><br>
+      技術選定、スキーマの移し方、デプロイの構成、コードの書き方。</li>
+  </ol>
+
+  <h2>ドキュメントの地図</h2>
+
+  <div class="cards">
+    <a class="card" href="glossary.html"><span class="card-no">GLOSSARY</span><p class="card-title">用語集</p><p class="card-desc">34語。新しい語が出たら設計より先にここへ書く</p></a>
+    <a class="card" href="features/index.html"><span class="card-no">FEATURES</span><p class="card-title">機能</p><p class="card-desc">10機能。画面と振る舞いと、そう決めた理由</p></a>
+    <a class="card" href="database/index.html"><span class="card-no">DATABASE</span><p class="card-title">データベース</p><p class="card-desc">15テーブル。関係とER図とカラムの意味</p></a>
+    <a class="card" href="ui/principles.html"><span class="card-no">UI</span><p class="card-title">UI</p><p class="card-desc">設計方針、コンポーネント見本、ページモック</p></a>
+    <a class="card" href="devops/index.html"><span class="card-no">DEVOPS</span><p class="card-title">開発と運用</p><p class="card-desc">技術スタック、規約、移行、デプロイ</p></a>
+    <a class="card" href="issues/index.html"><span class="card-no">ISSUES</span><p class="card-title">先送りした課題</p><p class="card-desc">今回入れなかったものと、その理由</p></a>
+    <a class="card" href="sessions/index.html"><span class="card-no">SESSIONS</span><p class="card-title">セッション履歴</p><p class="card-desc">いつ何を決めたかの記録</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>TASK3 / tasktasktask.work</span>
+    <span>MIT License</span>
+    <span>最終更新 2026-09-05</span>
+    <span>state: planning</span>
+  </div>
+
+</div>
+</main>
+
+<script src="sidebar.js" defer></script>
+</body>
+</html>

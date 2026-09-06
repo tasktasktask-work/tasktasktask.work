@@ -1,0 +1,37 @@
+# ビルド文脈を必要なものだけに絞る。
+#
+# node_modules を外すのは大きさのためだけではない。
+# Dockerfile の build 段は deps 段から node_modules を写したあとに COPY . . を行う。
+# ホスト側の node_modules が文脈に入っていると、そこで上書きされる。
+# @node-rs/argon2 のような各アーキテクチャ向けのバイナリが、
+# 作った機械のものに置き換わってしまう。
+
+node_modules
+.pnpm-store
+.next
+*.tsbuildinfo
+
+.git
+.gitignore
+.github
+.devcontainer
+.vscode
+.claude
+.bin
+
+# 設計資料と、VPS へ置くもの。イメージには要らない。
+docs
+deploy
+README.md
+LICENSE
+
+# 秘密情報。イメージへ持ち込まない。
+.env
+.env.*
+!.env.example
+
+# 手元の添付ファイル置き場
+.data
+
+Dockerfile
+.dockerignore

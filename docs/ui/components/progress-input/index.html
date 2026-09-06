@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>進捗率入力 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Component</p>
+  <h1 class="title">進捗率入力</h1>
+  <p class="lede">
+    1刻みで自由に入れられる。
+    ただし実際に選ばれる値はほとんど 0、25、50、75、100 に偏る。
+    その両方を一つの入力欄で満たす。
+  </p>
+
+  <h2>datalist を使う</h2>
+
+  <p>選択式にすると細かい値が入れられない。
+  自由入力だけにすると、よく使う値を毎回打つことになる。
+  <code>&lt;input type="range"&gt;</code> に <code>&lt;datalist&gt;</code> を添えると、両方が成り立つ。</p>
+
+<pre><code>&lt;input type="range" min="0" max="100" step="1"
+       list="progress-marks" value="40"&gt;
+&lt;datalist id="progress-marks"&gt;
+  &lt;option value="0"&gt;&lt;/option&gt;
+  &lt;option value="25"&gt;&lt;/option&gt;
+  &lt;option value="50"&gt;&lt;/option&gt;
+  &lt;option value="75"&gt;&lt;/option&gt;
+  &lt;option value="100"&gt;&lt;/option&gt;
+&lt;/datalist&gt;
+
+&lt;input type="number" min="0" max="100" step="1" value="40"&gt;</code></pre>
+
+  <p>スライダーには目盛りが表示され、その位置に吸い付く。
+  隣に数値の入力欄を置き、キーボードでも直接打てるようにする。</p>
+
+  <div class="spec">
+    <div class="spec-head"><span>入力欄</span><span>ProgressInput（課題）</span></div>
+    <div class="spec-body">
+      <div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap">
+        <input type="range" min="0" max="100" step="1" list="pm" value="40" style="width:16rem;accent-color:#c8402c">
+        <datalist id="pm"><option value="0"></option><option value="25"></option><option value="50"></option><option value="75"></option><option value="100"></option></datalist>
+        <input type="number" min="0" max="100" step="1" value="40" style="width:5rem;font-family:var(--font-mono);padding:.35rem .5rem;border:1px solid var(--rule-strong);border-radius:2px;background:var(--card)">
+        <span style="font-family:var(--font-mono);font-size:.8rem;color:var(--ink-soft)">%</span>
+      </div>
+    </div>
+  </div>
+
+  <h2>議論と質問では形が変わる</h2>
+
+  <p>0か100しか取らないので、スライダーは使わない。
+  <a href="../../../glossary.html#open-close">オープンとクローズ</a>の二択として出す。</p>
+
+  <div class="spec">
+    <div class="spec-head"><span>入力欄</span><span>OpenCloseToggle（議論と質問）</span></div>
+    <div class="spec-body">
+      <div style="display:inline-flex;border:1px solid var(--rule-strong);border-radius:2px;overflow:hidden">
+        <button type="button" style="font-family:var(--font-body);font-size:.82rem;padding:.4rem 1rem;border:0;background:var(--ai);color:#fff;cursor:pointer">オープン</button>
+        <button type="button" style="font-family:var(--font-body);font-size:.82rem;padding:.4rem 1rem;border:0;border-left:1px solid var(--rule-strong);background:var(--card);color:var(--ink-mid);cursor:pointer">クローズ</button>
+      </div>
+    </div>
+  </div>
+
+  <p>保存される値は課題と同じ <code>progress</code> 列だが、
+  画面には数値を出さない。
+  質問の詳細に「進捗率100%」と表示されても、読み手には何のことかわからない。</p>
+
+  <h2>表示側</h2>
+
+  <div class="spec">
+    <div class="spec-head"><span>表示</span><span>ProgressMeter</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="p-progress" data-zero="true"><span class="bar"><span class="fill" style="width:0%"></span></span><span class="num">0%</span></span><span class="cap">0 / 灰</span></div>
+        <div class="spec-item"><span class="p-progress"><span class="bar"><span class="fill" style="width:25%"></span></span><span class="num">25%</span></span><span class="cap">1–99 / 朱</span></div>
+        <div class="spec-item"><span class="p-progress"><span class="bar"><span class="fill" style="width:60%"></span></span><span class="num">60%</span></span><span class="cap">1–99 / 朱</span></div>
+        <div class="spec-item"><span class="p-progress" data-done="true"><span class="bar"><span class="fill" style="width:100%"></span></span><span class="num">100%</span></span><span class="cap">100 / 緑</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p>0のときバーを灰にするのは、朱の1%が見えないためである。
+  100を緑にするのは、完了だけは一目で区別したいからである。
+  数値は等幅で組み、一覧で縦に並んだときに桁が揃うようにする。</p>
+
+  <h2>誰が入力するか</h2>
+
+  <p>担当者の自己申告である。
+  親の進捗率も子から計算せず、人が入れる。</p>
+
+  <div class="note warn">
+    <span class="note-label">この入力欄で表せないこと</span>
+    <p>「やらないと決めた」と「まだ手をつけていない」は、どちらも0のままになる。
+    「レビュー中」のような工程も数値では表せない。</p>
+    <p>どう扱うかは各組織の運用に委ねる方針を取った。
+    経緯は<a href="../../../issues/rejection-representation/index.html">却下の表現</a>に記録している。</p>
+  </div>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">UI</span><p class="card-title">コンポーネント</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../../glossary.html#progress"><span class="card-no">TERM</span><p class="card-title">進捗率</p><p class="card-desc">用語集</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / 進捗率入力</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../sidebar.js" defer></script>
+</body>
+</html>

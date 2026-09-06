@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>道具立ての整理 | ENISHI 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-06 14:28</p>
+  <h1 class="title">道具立ての整理</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    TypeScript を 7 に上げ、検査の CI を用意し、イメージの作り方を直した。
+    途中で、開発機でだけ通っていた依存が二つ見つかった。
+    どちらも「手元にあるものが、たまたま足りていた」という形をしていた。
+  </p>
+
+  <h2>TypeScript 7 と Next.js 16</h2>
+
+  <p>「ESLint を使っていないなら TypeScript 7 に上げられないか」という問いから始まった。
+  <code>typescript-eslint</code> は TypeScript の API に依存するので、
+  そこが外れているのは条件のひとつではある。</p>
+
+  <p>ただし十分ではなかった。実際の足枷は Next.js だった。</p>
+
+<pre><code>TypeScript 7.0.2 is not supported by this version of Next.js.
+The TypeScript 7 native compiler does not provide the JavaScript compiler API
+that Next.js requires. Install TypeScript 6 ... or upgrade to a Next.js
+v16.2.11 or later to get support for TypeScript 7.</code></pre>
+
+  <p>TypeScript 7 は Go で書き直された実装で、従来の JS コンパイラ API を持たない。
+  Next はその API を設定の読み込みとビルド時の型検査で使っていた。
+  <strong>この二つは片方だけ上げられない。</strong></p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>測ったもの</th><th>5.9.3</th><th>7.0.2</th></tr></thead>
+    <tbody>
+      <tr><td><code>tsc --noEmit</code>（3回平均）</td><td>1020 ms</td><td>335 ms</td></tr>
+      <tr><td><code>next build</code> の型検査</td><td>—</td><td>181 ms</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>速いだけで検出しないのでは意味がないので、わざと型を壊して確かめた。
+  <code>TS2322</code> が出ることを見てから採用している。</p>
+
+  <p>調整は二つ。CSS の副作用 import に型宣言が要ること
+  （<code>types/assets.d.ts</code>）と、
+  <code>typescript.tsdk</code> を指定しないこと
+  （TypeScript 7 は <code>lib/tsserver.js</code> を持たない）。</p>
+
+  <h2>検査の CI</h2>
+
+  <p>Deploy とは別のワークフローにした。
+  片方の失敗が、もう片方の判断を邪魔しないためである。</p>
+
+  <p>テストは実データベースに対して行うので、<code>postgres:18</code> を立てる。
+  作業用データベースは要らない。
+  <code>scripts/atlas.mjs</code> を直し、<code>diff</code> のときだけ
+  <code>ATLAS_DEV_URL</code> を要求するようにした。</p>
+
+  <h3>Atlas の版を固定した</h3>
+
+  <p>キャッシュの鍵を作るには版が決まっている必要がある。
+  そこで <code>-latest</code> をやめようとして、別の理由に気づいた。</p>
+
+<pre><code>$ atlas version
+atlas version v1.3.4-cdeb6c3-canary    ← -latest で入るもの
+                                          安定版は v1.3.0</code></pre>
+
+  <p><strong>スキーマを移す道具が、日によって別のものになっていた。</strong>
+  <code>.atlas-version</code> に版をまとめ、
+  手元の手順と CI と Dockerfile が同じファイルを読むようにした。</p>
+
+  <h2>開発機でだけ通っていたもの</h2>
+
+  <p>ここからが、このセッションで拾えた本題である。</p>
+
+  <h3>ホストの node_modules がイメージに入っていた</h3>
+
+  <p><code>.dockerignore</code> が無かった。
+  Dockerfile の build 段は、deps 段から <code>node_modules</code> を写したあとに
+  <code>COPY . .</code> を行う。
+  文脈にホストの <code>node_modules</code> が入っていると、そこで上書きされる。</p>
+
+  <p>この開発環境は aarch64 である。
+  <strong><code>@node-rs/argon2</code> のような各アーキテクチャ向けのバイナリが、
+  作った機械のものに置き換わっていた。</strong>
+  CI は fresh clone なので偶然無事だったが、手元のビルドは壊れた組み合わせだった。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th></th><th>前</th><th>後</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">ビルド文脈</td><td>1.2 GB</td><td>188 KB（55ファイル）</td></tr>
+      <tr><td class="nowrap"><code>node_modules</code> の上書き</td><td>起きる</td><td>起きない</td></tr>
+      <tr><td class="nowrap"><code>.env</code></td><td>文脈に入る</td><td>入らない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>イメージを作るのに本番の接続先が要った</h3>
+
+  <p><code>.env</code> を文脈から外した途端、ビルドが落ちた。</p>
+
+<pre><code>Error: 環境変数が正しくありません:
+  ✖ Invalid input: expected string, received undefined → at APP_ORIGIN
+  ✖ Invalid input: expected string, received undefined → at DATABASE_URL
+    at module evaluation (src/lib/env.ts:18:9)</code></pre>
+
+  <p><code>env.ts</code> と <code>db.ts</code> と <code>mail.ts</code> が、
+  モジュールを読み込んだ時点で実行時の設定を要求していた。
+  <code>next build</code> はページの情報を集めるためにモジュールを読み込むので、
+  そこで落ちる。</p>
+
+  <div class="note warn">
+    <span class="note-label">なぜ長く気づけなかったか</span>
+    <p>開発機には <code>.env</code> がある。
+    それがビルド文脈へ写り込んでいるあいだは、ビルドが通ってしまう。
+    <strong>手元では成功し、CI では失敗する</strong>という形をしていた。</p>
+    <p>Deploy ワークフローは fresh clone で動くので、
+    走らせていれば同じところで止まっていたはずである。
+    <code>.dockerignore</code> を入れたことで、先に表へ出た。</p>
+  </div>
+
+  <p><code>#lib/lazy.ts</code> を足し、最初に触られたときに作る形にした。
+  呼ぶ側の書き方は変わらない。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>対象</th><th>読み込み時</th><th>最初に触ったとき</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>env</code></td><td>何もしない</td><td>環境変数を検証する</td></tr>
+      <tr><td class="nowrap"><code>pool</code></td><td>何もしない</td><td>接続プールを作る</td></tr>
+      <tr><td class="nowrap"><code>mailSender</code></td><td>何もしない</td><td>送信の実装を選ぶ</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>検証を捨てたわけではない。足りなければ触った時点で落ちる。
+  タイミングが仕様なので <code>tests/lazy.test.ts</code> で固定した。
+  <a href="../../devops/coding-conventions/index.html#lazy">規約</a>にも書いた。</p>
+
+  <h2>共通していたこと</h2>
+
+  <p>二つとも、<strong>開発機にあるものが、たまたま足りていた</strong>という形をしていた。
+  ホストの <code>node_modules</code> と、手元の <code>.env</code> である。
+  どちらも本来そこに無いものが、あることを前提に動いていた。</p>
+
+  <p>見つけたきっかけは、ビルド文脈を絞ったことだった。
+  <strong>渡すものを減らすと、渡していたつもりのないものが見える。</strong></p>
+
+  <h2>確かめたこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>確認</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td>環境変数を一切与えずに <code>next build</code></td><td>通る</td></tr>
+      <tr><td>設定を与えた実行時のログインとマジックリンク</td><td>動く</td></tr>
+      <tr><td>設定が足りないときに触ると落ちるか</td><td>落ちる</td></tr>
+      <tr><td>CI と同じ手順を、真新しいデータベースに対して</td><td>すべて通る</td></tr>
+      <tr><td><code>docker build</code></td><td>通る</td></tr>
+      <tr><td>Atlas v1.3.0 で <code>status</code> / <code>diff</code> / <code>apply</code></td><td>動く</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>まだ動かしていないのは、レジストリへの push と、
+  VPS での <code>migrate</code> と <code>up -d</code> である。</p>
+
+  <h2>次にやること</h2>
+
+  <ol>
+    <li>権限判定のテスト。<code>VISIBLE_PROJECT_IDS</code> が非公開を漏らさないこと</li>
+    <li><a href="../../features/organization/index.html">組織とメンバー</a>。招待からの登録がここに入る</li>
+    <li><a href="../../issues/origin-encryption/index.html">VPS の80番</a>を Cloudflare に限る</li>
+  </ol>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">SESSIONS</span><p class="card-title">セッション履歴</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../devops/continuous-integration/index.html"><span class="card-no">DEVOPS</span><p class="card-title">CI</p><p class="card-desc">二つのワークフロー</p></a>
+    <a class="card" href="../../devops/coding-conventions/index.html#lazy"><span class="card-no">DEVOPS</span><p class="card-title">遅延の規約</p><p class="card-desc">読み込みで設定を要求しない</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-06 道具立ての整理</span>
+    <span>最終更新 2026-09-05</span>
+    <span>ENISHI 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

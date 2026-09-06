@@ -1,0 +1,23 @@
+node_modules/
+.next/
+out/
+build/
+.env
+.env.local
+*.log
+.DS_Store
+coverage/
+# Atlas が生成する作業ファイル
+.atlas/
+
+# pnpm のストア（このリポジトリ内に置かれる設定になっている）
+.pnpm-store/
+# TypeScript のインクリメンタルビルド情報
+*.tsbuildinfo
+
+# ローカルの添付ファイル置き場
+.data/
+
+# Claude Code の状態ファイル。
+# アカウントと組織の識別情報を含み、作業のたびに書き換わる。
+.devcontainer/.claude.json

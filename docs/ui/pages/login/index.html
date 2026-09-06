@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ログイン画面 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock</p>
+  <h1 class="title">ログイン</h1>
+  <p class="lede">
+    パスワードとマジックリンクを一枚に収める。
+    どちらでも同じアカウントに入れるので、選ばせるのではなく両方を並べる。
+  </p>
+
+  <div class="note decide">
+    <span class="note-label">この画面はどのURLにも現れる</span>
+    <p>未認証の人を <code>/login</code> へ送らない。
+    開いているURLのまま、この画面を出す。
+    認証が済んだら、そのURLにそのまま着地する。</p>
+    <p><code>/login</code> というURLも残してあるが、
+    ロックの通知メールがそこを指しているためであって、特別な場所ではない。
+    詳しくは<a href="../../../features/authentication/index.html">認証</a>に書いた。</p>
+  </div>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/login</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="brand"><span class="m">3</span>TASK3</div>
+          <div class="tag">issue &amp; discussion tracker</div>
+
+          <form onsubmit="return false">
+            <div class="auth-field">
+              <label for="mk-email">メールアドレス</label>
+              <input id="mk-email" type="email" value="asuka.sato@example.com">
+            </div>
+            <div class="auth-field">
+              <label for="mk-pw">パスワード</label>
+              <input id="mk-pw" type="password" value="················">
+            </div>
+            <button class="auth-btn" type="submit">ログイン</button>
+          </form>
+
+          <div class="auth-or">または</div>
+
+          <button class="auth-btn alt" type="button">ログイン用リンクをメールで受け取る</button>
+          <p style="font-size:.73rem;color:var(--ink-soft);margin:.7rem 0 0;line-height:1.75;text-align:center">
+            リンクは48時間有効で、一度使うと無効になります。<br>
+            パスワードを忘れた場合もこちらから入れます。
+          </p>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>この配置にした理由</h2>
+
+  <p>パスワードの下に「パスワードをお忘れですか」というリンクを置かない。
+  代わりに、マジックリンクのボタンをその役割に充てている。</p>
+
+  <p>パスワードを忘れた人はマジックリンクで入り、設定画面から入れ直す。
+  これによりパスワード再設定の画面とトークンの仕組みが不要になる。
+  補足の一文で、その使い方を伝えている。</p>
+
+  <h2>ロックされている状態</h2>
+
+  <p>パスワードの入力に10回連続で失敗するとロックがかかる。
+  時間では解除されない。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/login</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="brand"><span class="m">3</span>TASK3</div>
+          <div class="tag">issue &amp; discussion tracker</div>
+
+          <div class="note warn" style="margin-bottom:1.2rem;max-width:none">
+            <span class="note-label">パスワードでのログインが停止しています</span>
+            <p style="margin:0">連続して失敗したため、このアカウントのパスワードログインを止めています。
+            下のボタンからログイン用リンクを受け取ると、その場で解除されます。</p>
+          </div>
+
+          <div class="auth-field">
+            <label for="lk-email">メールアドレス</label>
+            <input id="lk-email" type="email" value="asuka.sato@example.com">
+          </div>
+          <button class="auth-btn" type="button">ログイン用リンクをメールで受け取る</button>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>ロックの画面ではパスワード欄を消す。
+  入力しても通らないものを残しておくと、利用者は何度も試すことになる。</p>
+
+  <p>解除の方法をその場に書いているのは、
+  <a href="../../../glossary.html#account-lock">アカウントロック</a>が第三者によって引き起こされうるためである。
+  身に覚えのない人が、理由も出口もわからないまま止まることを避ける。</p>
+
+  <h2>招待からの登録</h2>
+
+  <p>招待リンクを開いた人には、表示名とパスワードを設定する画面を出す。
+  メールアドレスは招待で確定しているので変更させない。
+  登録が済んだ時点でログイン状態にし、その組織のプロジェクト一覧へ送る。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../../features/authentication/index.html"><span class="card-no">FEATURE</span><p class="card-title">認証</p><p class="card-desc">二つの手段の併用</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / ログイン</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../sidebar.js" defer></script>
+</body>
+</html>

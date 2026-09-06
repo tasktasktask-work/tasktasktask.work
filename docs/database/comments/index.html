@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>comments | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">comments</h1>
+  <p class="lede">
+    投稿されたら変わらない。
+    そのため <code>updated_at</code> を持たない。
+    列がないこと自体が、この設計の宣言になっている。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+  <p><a href="../../glossary.html#comment">コメント</a>はスレッドに時系列で連なる発言である。
+  枝分かれしないので、返信先を指す列は持たない。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE comments (
+  id              uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id uuid        NOT NULL REFERENCES organizations(id),
+  thread_id       uuid        NOT NULL REFERENCES threads(id),
+  author_user_id  uuid        NOT NULL REFERENCES users(id),
+  body            text        NOT NULL,
+  deleted_at      timestamptz,
+  created_at      timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT comments_body_not_blank
+    CHECK (btrim(body) &lt;&gt; '')
+);
+
+CREATE INDEX comments_by_thread
+  ON comments (thread_id, created_at) WHERE deleted_at IS NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>author_user_id</code></td><td>uuid</td><td>書いた人。変わらない</td></tr>
+      <tr><td><code>body</code></td><td>text</td><td>Markdown。空のコメントは作れない</td></tr>
+      <tr><td><code>deleted_at</code></td><td>timestamptz</td><td>組織管理者による<a href="../../glossary.html#soft-delete">論理削除</a>のみ</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>updated_at がない</h3>
+  <p>他のテーブルにはある <code>updated_at</code> を、このテーブルだけ持たない。
+  投稿後に更新される経路が存在しないためである。</p>
+  <p>列を用意しておけば将来編集機能を足せる、という考え方は取らない。
+  使われない列があると、実装者は「編集できるのかもしれない」と読む。
+  列がないことで、編集できないという仕様がスキーマから読み取れる。</p>
+
+  <h3>deleted_at は持つ</h3>
+  <p>本人による削除はできないが、<a href="../../glossary.html#org-admin">組織管理者</a>による論理削除は残す。
+  誤って機密情報を書き込んだ場合など、消さざるを得ない場面があるためである。</p>
+
+  <h2>メンションをどう保持するか</h2>
+
+  <p>本文中の <code>@表示名</code> を構造化して別テーブルに持つことはしない。
+  <code>body</code> をそのまま保存し、投稿時に解析して <code>notifications</code> を作る。</p>
+
+  <div class="note">
+    <span class="note-label">この方式の帰結</span>
+    <p>ユーザーが<a href="../users/index.html">表示名</a>を変えても、過去のコメントの <code>@</code> 表記は古いままになる。
+    通知は投稿時点で作られているので機能には影響しないが、表示は食い違う。</p>
+    <p>構造化して保持すれば解決するが、Markdown の本文と構造化データの二重管理になる。
+    表示の食い違いを受け入れるほうを選んだ。</p>
+  </div>
+
+  <h2>アーカイブとの関係</h2>
+  <p>スレッドまたはプロジェクトがアーカイブされていると、新しいコメントを作れない。
+  この判定は <code>threads</code> と <code>projects</code> の <code>archived_at</code> を見て行う。
+  <code>comments</code> 自身はアーカイブの状態を持たない。</p>
+
+  <h2>関係</h2>
+<pre class="figure">threads ──&lt; comments ──&lt; attachments
+                │
+users ──────────┘（author_user_id）</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">親。アーカイブ判定もここを見る</p></a>
+    <a class="card" href="../attachments/index.html"><span class="card-no">TABLE</span><p class="card-title">attachments</p><p class="card-desc">コメントに付く添付</p></a>
+    <a class="card" href="../notifications/index.html"><span class="card-no">TABLE</span><p class="card-title">notifications</p><p class="card-desc">投稿時に作られる</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/comment/index.html"><span class="card-no">FEATURE</span><p class="card-title">コメント</p><p class="card-desc">不変であることの理由</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / comments</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

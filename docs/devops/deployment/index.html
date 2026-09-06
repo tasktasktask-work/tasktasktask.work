@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>デプロイ構成 | ENISHI 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">DevOps 04</p>
+  <h1 class="title">デプロイ構成</h1>
+  <p class="lede">
+    VPS では複数のサービスが動いている。
+    このアプリはそこへ相乗りする。
+    ソースコードは VPS に置かず、ビルド済みのイメージだけを送る。
+  </p>
+
+  <h2>構成</h2>
+
+<pre class="figure">クライアント ═SSL═&gt; Cloudflare ──&gt; VPS
+                                    │
+                                    ├── nginx-proxy   （稼働中）
+                                    │     VIRTUAL_HOST で振り分ける
+                                    │
+                                    ├── postgres      （稼働中）
+                                    │
+                                    └── tasktasktask-work-app
+                                          Next.js / :3000
+                                          ボリューム: ./data/attachments</pre>
+
+  <p>ネットワークは二つに参加する。
+  <code>nginxproxy-network</code> で振り分けを受け、
+  <code>postgres-network</code> でデータベースへ届く。
+  どちらも既にあるものへ <code>external</code> として繋ぐ。</p>
+
+  <p>ポートはホストに晒さない。<code>expose</code> だけを書き、
+  nginx-proxy からのみ到達できるようにする。</p>
+
+  <h2>VPS に置くもの</h2>
+
+<pre class="figure">/path/to/tasktasktask-work/
+├── compose.yaml          deploy/compose.yaml を写す
+├── .env                  deploy/.env.example をもとに手で作る
+└── data/attachments/     空のディレクトリ</pre>
+
+  <p>これだけである。ソースコードも <code>schema/</code> も置かない。</p>
+
+  <div class="note warn">
+    <span class="note-label">ディレクトリの持ち主</span>
+    <p>コンテナは <code>node</code>（uid 1000）で動く。
+    <code>data/attachments</code> がそのユーザーで書けなければ、
+    <strong>添付のアップロードだけが失敗する</strong>。
+    画面は動くので、試すまで気づけない。</p>
+  </div>
+
+  <h2>イメージ</h2>
+
+  <p>アプリの実行とマイグレーションの適用を、ひとつのイメージが兼ねる。
+  実行時のイメージに Atlas と <code>migrations/</code> を持ち込んである。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>入っているもの</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td><code>.next/standalone</code></td><td>アプリ本体。必要な依存だけが同梱される</td></tr>
+      <tr><td><code>atlas</code></td><td>マイグレーションの適用</td></tr>
+      <tr><td><code>migrations/</code> <code>db/functions.sql</code></td><td>適用する中身</td></tr>
+      <tr><td><code>scripts/apply-functions.mjs</code></td><td>関数とトリガの適用</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><code>pg</code> と <code>@node-rs/argon2</code> は Next の standalone 出力に取り込まれるので、
+  マイグレーション側からもそのまま使える。</p>
+
+  <h3>作って送る</h3>
+
+  <p>GitHub Actions の <strong>Deploy</strong> ワークフローを手で起こす。
+  イメージを作り、レジストリへ push するところまでを行う。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>secret</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>DOCKER_REGISTRY_HOST</code></td><td>レジストリのホスト</td></tr>
+      <tr><td class="nowrap"><code>DOCKER_REGISTRY_USERNAME</code></td><td>ログインに使う名前</td></tr>
+      <tr><td class="nowrap"><code>DOCKER_REGISTRY_PASSWORD</code></td><td>ログインに使うパスワード</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>押した回数だけ動く形にしてある（<code>workflow_dispatch</code>）。
+  <strong>VPS への反映まではやらない。</strong>
+  マイグレーションを流す順序を人が見て決める必要があるためである。</p>
+
+  <p>手元から送ることもできる。</p>
+
+<pre><code>docker build -t "$REGISTRY/tasktasktask.work:latest" .
+docker push "$REGISTRY/tasktasktask.work:latest"</code></pre>
+
+  <div class="note ok">
+    <span class="note-label">アーキテクチャは揃っている</span>
+    <p>GitHub の runner も VPS も x86_64 である。
+    揃っていなければ <code>Exec format error</code> で起動に失敗するので、
+    片方を変えるときは確かめること。</p>
+    <p>この開発環境（devcontainer）は aarch64 なので、
+    <strong>手元で作ったイメージは VPS では動かない。</strong>
+    手元のビルドは Dockerfile の確認までにとどめ、送るものは CI が作る。</p>
+  </div>
+
+  <h2>入れ替える</h2>
+
+<pre><code>ssh VPS
+cd /path/to/tasktasktask-work
+
+docker compose pull
+docker compose run --rm app migrate    # ← アプリを入れ替える前
+docker compose up -d</code></pre>
+
+  <div class="note decide">
+    <span class="note-label">順序を守る</span>
+    <p>マイグレーションを <code>up -d</code> のあとに流すと、
+    新しいコードが古いスキーマの上で動く瞬間ができる。</p>
+    <p>この順序が守れることが、<a href="../database-migration/index.html">段階的な変更の手順</a>の前提になっている。
+    足す、両方書く、埋める、読み替える、消す。
+    どの段階も「先にスキーマ、あとからコード」で成り立っている。</p>
+  </div>
+
+  <h3>起動時に自動で流さない</h3>
+
+  <p><code>migrate</code> は使い捨てのコンテナとして明示的に呼ぶ。
+  アプリの起動処理に混ぜない。
+  コンテナが複数立ち上がったときに同時に流れて衝突する。</p>
+
+  <h3>作業用データベースを本番に向けない</h3>
+
+  <div class="note warn">
+    <span class="note-label">Atlas は作業用データベースの中身を作り直す</span>
+    <p><code>ATLAS_DEV_URL</code> が本番を指したまま実行すると、そこにあるデータが消える。</p>
+    <p>コンテナの中で走る <code>migrate</code> は <code>atlas.hcl</code> を経由せず、
+    <code>--url "$DATABASE_URL"</code> を直に渡している。
+    <code>apply</code> に作業用データベースは要らないので、渡す口ごと無くしてある。</p>
+    <p>手元の <code>pnpm schema:*</code> にも、二つが同じ値なら止まる検査を入れた。</p>
+  </div>
+
+  <h2>Cloudflare と VPS のあいだ</h2>
+
+  <p>SSL は Cloudflare が終端し、そこから VPS へは平文で届く。</p>
+
+  <div class="note warn">
+    <span class="note-label">この構成が抱えるもの</span>
+    <p>VPS の IP へ直接届く経路があれば、そこを通る内容は読める。
+    セッションの Cookie も、マジックリンクのURLも含まれる。
+    加えて <code>X-Forwarded-For</code> を偽装できるので、
+    <code>sessions.created_ip</code> の値は本物とは限らなくなる。</p>
+    <p>塞ぐには、VPS のファイアウォールで 80 番を Cloudflare の IP 範囲だけに限る。
+    <strong>ただし VPS では他のサービスも動いており、制限はそのすべてに及ぶ。</strong>
+    Cloudflare を通していないホスト名や、IP で直接叩いている経路が先に壊れる。</p>
+    <p>そのため、何が壊れるかの調査を含む手順として
+    <a href="../../issues/origin-encryption/index.html">オリジンまでの経路</a>に切り出した。
+    <strong>まだ適用していない。</strong></p>
+  </div>
+
+  <h2>アップロードの上限</h2>
+
+  <div class="note decide">
+    <span class="note-label">開発では通り、本番でだけ落ちる</span>
+    <p>nginx の <code>client_max_body_size</code> は既定 1MB である。
+    添付は1ファイル10MBまで許しているので、
+    <strong>そのままだと本番でだけ 413 で落ちる</strong>。</p>
+    <p>nginx-proxy はコンテナ側の <code>CLIENT_MAX_BODY_SIZE</code> を読んで
+    そのバーチャルホストの設定に反映するので、<code>compose.yaml</code> で <code>12m</code> を指定してある。
+    10MB そのものではないのは、多部分形式の包みぶんを見込んでいるためである。</p>
+  </div>
+
+  <h2>バックアップ</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>対象</th><th>方法</th><th>頻度</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">PostgreSQL</td><td><code>pg_dump</code> を圧縮して外部へ転送</td><td>日次</td></tr>
+      <tr><td class="nowrap"><strong>data/attachments</strong></td><td>ディレクトリを同期して外部へ転送</td><td>日次</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">添付ファイルを忘れやすい</span>
+    <p>データベースだけをバックアップして安心してしまう構成がよくある。
+    <strong>添付の実体はファイルシステム側にあり、データベースが持つのは在り処だけ</strong>である。
+    片方だけ戻すと、添付は全部リンク切れになる。</p>
+    <p>両方を同じ時点で揃えて戻せることを、実際に一度試しておく。</p>
+  </div>
+
+  <h2>監視しておくもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>対象</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">ディスク使用量</td><td>添付が積み上がる。1ファイル10MBまでだが、合計の上限がない</td></tr>
+      <tr><td class="nowrap">メール送信数</td><td>Cloudflare の無料枠は月3,000通。超えると<strong>ログインができなくなる</strong></td></tr>
+      <tr><td class="nowrap">未送信の通知</td><td><code>notifications.emailed_at</code> が NULL のまま溜まっていないか</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>二行目が重要である。
+  <a href="../../features/authentication/index.html">認証</a>がメールに依存しているので、
+  送信の上限に達すると<a href="../../glossary.html#magic-link">マジックリンク</a>が届かず、
+  新規のログインが止まる。通知の送りすぎが、入り口を塞ぐ。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../tech-stack/index.html"><span class="card-no">DEVOPS</span><p class="card-title">技術スタック</p><p class="card-desc">選んだものと選ばなかったもの</p></a>
+    <a class="card" href="../database-migration/index.html"><span class="card-no">DEVOPS</span><p class="card-title">スキーマ移行</p><p class="card-desc">段階的な変更の手順</p></a>
+    <a class="card" href="../../issues/origin-encryption/index.html"><span class="card-no">ISSUE</span><p class="card-title">オリジンまでの経路</p><p class="card-desc">Cloudflare と VPS のあいだ</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>開発と運用 / デプロイ構成</span>
+    <span>最終更新 2026-09-05</span>
+    <span>ENISHI 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

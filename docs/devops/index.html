@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>開発と運用 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">DevOps</p>
+  <h1 class="title">開発と運用</h1>
+  <p class="lede">
+    決め事を置く場所。
+    レビューで新しい約束ができたら、実装より先にここを更新する。
+    そうしないと、次に同じ議論が起きる。
+  </p>
+
+  <h2>作るもの</h2>
+  <div class="cards">
+    <a class="card" href="tech-stack/index.html"><span class="card-no">01</span><p class="card-title">技術スタック</p><p class="card-desc">何を選び、何を選ばなかったか</p></a>
+    <a class="card" href="coding-conventions/index.html"><span class="card-no">02</span><p class="card-title">コーディング規約</p><p class="card-desc">SQLの書き方、権限の通し方、命名</p></a>
+  </div>
+
+  <h2>運ぶもの</h2>
+  <div class="cards">
+    <a class="card" href="database-migration/index.html"><span class="card-no">03</span><p class="card-title">スキーマ移行</p><p class="card-desc">Atlas による宣言的な管理</p></a>
+    <a class="card" href="deployment/index.html"><span class="card-no">04</span><p class="card-title">デプロイ構成</p><p class="card-desc">VPS、Docker Compose、バックアップ</p></a>
+    <a class="card" href="continuous-integration/index.html"><span class="card-no">05</span><p class="card-title">継続的インテグレーション</p><p class="card-desc">Test と Deploy の二つのワークフロー</p></a>
+  </div>
+
+  <h2>書くもの</h2>
+  <div class="cards">
+    <a class="card" href="documentation-rules/index.html"><span class="card-no">06</span><p class="card-title">ドキュメント規約</p><p class="card-desc">ページの追加手順、サイドバー、用語集の扱い</p></a>
+    <a class="card" href="commit-workflow/index.html"><span class="card-no">07</span><p class="card-title">コミットの流れ</p><p class="card-desc">メッセージの受け渡しと、二つのフック</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>開発と運用</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../sidebar.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+/* 自動的には生成されない。docs/theme.css の @shared ブロックと同一に保つこと。
+   pnpm styles:check が差分を検出する。 */
+
+/* アプリの上帯 -------------------------------------------------------------- */
+.app-top {
+  display: flex; align-items: center; gap: 1rem;
+  padding: .55rem 1rem;
+  border-bottom: 1px solid var(--rule);
+  background: var(--card);
+}
+.app-logo {
+  display: flex; align-items: center; gap: .45rem;
+  font-family: var(--font-display); font-weight: 800; font-size: .95rem;
+}
+.app-logo .m {
+  width: 1.35rem; height: 1.35rem; border: 1.4px solid var(--shu); border-radius: 3px;
+  color: var(--shu); font-size: .74rem; display: inline-flex; align-items: center; justify-content: center;
+}
+.app-org {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: .82rem; color: var(--ink-mid);
+  padding: .2rem .55rem; border: 1px solid var(--rule); border-radius: 2px;
+  background: var(--paper);
+}
+.app-org .slug { font-family: var(--font-mono); font-size: .68rem; color: var(--ink-faint); }
+.app-top .sp { flex: 1; }
+.app-bell { position: relative; font-size: 1rem; color: var(--ink-mid); }
+.app-bell .n {
+  position: absolute; top: -.3rem; right: -.45rem;
+  background: var(--shu); color: #fff; border-radius: 999px;
+  font-family: var(--font-mono); font-size: .58rem; line-height: 1;
+  padding: .15rem .3rem;
+}
+
+/* アプリの左帯 -------------------------------------------------------------- */
+.app-shell { display: grid; grid-template-columns: 13rem 1fr; min-height: 26rem; }
+.app-side {
+  border-right: 1px solid var(--rule);
+  background: var(--paper);
+  padding: .8rem 0;
+}
+.app-side h5 {
+  font-family: var(--font-mono); font-size: .6rem; letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-faint);
+  margin: .9rem 0 .35rem; padding: 0 .9rem; font-weight: 500;
+}
+.app-side a {
+  display: flex; align-items: center; gap: .5rem;
+  padding: .32rem .9rem; font-size: .82rem;
+  color: var(--ink-mid); text-decoration: none;
+  border-left: 2px solid transparent;
+}
+.app-side a:hover { background: rgba(200,64,44,.05); color: var(--shu); }
+.app-side a.on { color: var(--shu); font-weight: 700; border-left-color: var(--shu); background: rgba(200,64,44,.07); }
+.app-side a .k {
+  font-family: var(--font-mono); font-size: .64rem; color: var(--ink-faint);
+  border: 1px solid var(--rule-strong); border-radius: 2px; padding: 0 .25rem;
+}
+.app-side a.on .k { color: var(--shu); border-color: var(--shu); }
+
+.app-main { padding: 1.1rem 1.3rem 2rem; min-width: 0; }
+
+.app-head { display: flex; align-items: flex-start; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap; }
+.app-head h2 {
+  font-family: var(--font-display); font-size: 1.25rem; margin: 0;
+  padding: 0; border: 0; line-height: 1.5;
+}
+.app-head h2::before { display: none; }
+.app-head .sub { font-size: .76rem; color: var(--ink-soft); margin-top: .15rem; }
+.app-btn {
+  font-family: var(--font-body); font-size: .8rem;
+  padding: .35rem .85rem; border-radius: 2px; cursor: pointer;
+  border: 1px solid var(--shu); background: var(--shu); color: #fff;
+}
+.app-btn.ghost { background: var(--card); color: var(--ink-mid); border-color: var(--rule-strong); }
+
+.app-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--rule); margin-bottom: 1rem; }
+.app-tabs a {
+  padding: .4rem .95rem; font-size: .83rem; text-decoration: none;
+  color: var(--ink-soft); border-bottom: 2px solid transparent; margin-bottom: -1px;
+}
+.app-tabs a.on { color: var(--shu); font-weight: 700; border-bottom-color: var(--shu); }
+.app-tabs a:hover { color: var(--shu); }
+
+.app-filters {
+  display: flex; flex-wrap: wrap; gap: .45rem; align-items: center;
+  padding: .55rem .7rem; margin-bottom: .9rem;
+  background: var(--paper); border: 1px solid var(--rule);
+  font-size: .78rem;
+}
+.app-filters select, .app-filters input[type="text"] {
+  font-family: var(--font-body); font-size: .78rem;
+  padding: .22rem .45rem; border: 1px solid var(--rule-strong);
+  border-radius: 2px; background: var(--card); color: var(--ink);
+}
+.app-filters label { display: inline-flex; align-items: center; gap: .28rem; color: var(--ink-mid); }
+.app-filters .sp { flex: 1; }
+
+/* スレッド詳細 -------------------------------------------------------------- */
+.app-detail { display: grid; grid-template-columns: 1fr 15rem; gap: 1.6rem; align-items: start; }
+@media (max-width: 900px) { .app-detail { grid-template-columns: 1fr; } }
+.app-props { border: 1px solid var(--rule); background: var(--paper); font-size: .8rem; }
+.app-props .row { display: flex; gap: .6rem; padding: .5rem .7rem; border-bottom: 1px solid var(--rule); }
+.app-props .row:last-child { border-bottom: 0; }
+.app-props .k {
+  width: 4.6rem; flex: none; color: var(--ink-faint);
+  font-family: var(--font-mono); font-size: .66rem; letter-spacing: .06em; padding-top: .15rem;
+}
+.app-props .v { min-width: 0; display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; }
+.app-body-md {
+  border: 1px solid var(--rule); padding: 1rem 1.1rem; background: var(--card);
+  font-size: .88rem; line-height: 1.85; margin-bottom: 1.4rem;
+}
+.app-body-md p { max-width: none; margin: 0 0 .8rem; }
+.app-body-md ul { max-width: none; margin: 0 0 .8rem; }
+.app-edited { font-family: var(--font-mono); font-size: .66rem; color: var(--ink-faint); }
+.app-compose {
+  border: 1px solid var(--rule-strong); background: var(--card); padding: .7rem;
+  margin-top: 1rem;
+}
+.app-compose textarea {
+  width: 100%; min-height: 4.5rem; resize: vertical;
+  font-family: var(--font-body); font-size: .86rem; line-height: 1.8;
+  border: 1px solid var(--rule); border-radius: 2px; padding: .5rem .6rem;
+  background: var(--paper); color: var(--ink);
+}
+.app-compose .foot {
+  display: flex; align-items: center; gap: .8rem; margin-top: .55rem; flex-wrap: wrap;
+}
+.app-compose .warn-inline {
+  font-size: .74rem; color: var(--ki); display: inline-flex; align-items: center; gap: .3rem;
+}
+
+/* ログイン ----------------------------------------------------------------- */
+.auth-wrap {
+  display: flex; align-items: center; justify-content: center;
+  padding: 3rem 1rem; background: var(--paper);
+  background-image:
+    linear-gradient(to right,  rgba(23,27,34,.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(23,27,34,.04) 1px, transparent 1px);
+  background-size: 26px 26px;
+  min-height: 26rem;
+}
+.auth-card {
+  width: min(24rem, 100%); background: var(--card);
+  border: 1px solid var(--rule-strong); padding: 2rem 1.8rem 1.8rem;
+}
+.auth-card .brand {
+  display: flex; align-items: center; gap: .5rem; justify-content: center;
+  font-family: var(--font-display); font-weight: 800; font-size: 1.15rem;
+  margin-bottom: .35rem;
+}
+.auth-card .brand .m {
+  width: 1.7rem; height: 1.7rem; border: 1.6px solid var(--shu); border-radius: 4px;
+  color: var(--shu); display: inline-flex; align-items: center; justify-content: center; font-size: .95rem;
+}
+.auth-card .tag {
+  text-align: center; font-family: var(--font-mono); font-size: .62rem;
+  letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint);
+  margin-bottom: 1.6rem;
+}
+.auth-field { margin-bottom: .9rem; }
+.auth-field label {
+  display: block; font-size: .74rem; color: var(--ink-soft);
+  margin-bottom: .25rem; letter-spacing: .04em;
+}
+.auth-field input {
+  width: 100%; font-family: var(--font-body); font-size: .88rem;
+  padding: .5rem .6rem; border: 1px solid var(--rule-strong);
+  border-radius: 2px; background: var(--paper); color: var(--ink);
+}
+.auth-btn {
+  width: 100%; font-family: var(--font-body); font-size: .88rem; font-weight: 700;
+  padding: .58rem; border: 1px solid var(--shu); background: var(--shu); color: #fff;
+  border-radius: 2px; cursor: pointer;
+}
+.auth-btn.alt { background: var(--card); color: var(--shu); }
+.auth-or {
+  display: flex; align-items: center; gap: .7rem; margin: 1.2rem 0;
+  font-family: var(--font-mono); font-size: .64rem; letter-spacing: .12em; color: var(--ink-faint);
+}
+.auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--rule); }

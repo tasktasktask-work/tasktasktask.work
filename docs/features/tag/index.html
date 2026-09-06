@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>タグ | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Feature 07</p>
+  <h1 class="title">タグ</h1>
+  <p class="lede">
+    親子関係は階層という一本の軸しか表せない。
+    <code>bug</code> や <code>要相談</code> のように、階層と直交する分類はそれでは表せない。
+    タグはその軸を足すためにある。
+  </p>
+
+  <h2>親子では代わりにならない</h2>
+
+  <p>無制限の<a href="../../glossary.html#parent-child">親子関係</a>があれば、大きな塊の下に小さな作業を並べられる。
+  「v1.0リリース」という親を立てれば、マイルストーンの役割も果たせる。
+  実際、そのためにマイルストーンという別概念は用意しなかった。</p>
+
+  <p>しかし <code>frontend</code> という分類は、階層のどこにも属さない。
+  親を <code>frontend</code> にすると、その課題は他の親を持てなくなる。
+  <a href="../../glossary.html#tag">タグ</a>は何個でも付けられるので、この軸を扱える。</p>
+
+  <h2>組織の単位で定義する</h2>
+
+  <p>タグはプロジェクトごとではなく組織ごとに定義し、プロジェクトをまたいで共通に使う。
+  <code>bug</code> や <code>要相談</code> のような分類は、プロジェクトが変わっても同じ意味で使われるからである。</p>
+
+  <p>誰でも新しいタグを作れる。
+  作成を管理者に限ると、必要なタグが作れないまま使われなくなる。</p>
+
+  <div class="note warn">
+    <span class="note-label">見込んでおくこと</span>
+    <p>組織単位かつ誰でも作成可という組み合わせは、タグが増え続けることを意味する。
+    選択肢に数十個が並ぶ状態は起こりうる。
+    整理の仕組み（統合、リネーム、未使用の一括削除）は初期リリースに含めていない。</p>
+  </div>
+
+  <h2>見え方</h2>
+
+  <div class="spec">
+    <div class="spec-head"><span>タグ</span><span>TagChip</span></div>
+    <div class="spec-body">
+      <div class="spec-grid">
+        <div class="spec-item"><span class="p-tag" style="--tag-color:#c8402c">bug</span><span class="cap">赤</span></div>
+        <div class="spec-item"><span class="p-tag" style="--tag-color:#2c4a75">設計</span><span class="cap">藍</span></div>
+        <div class="spec-item"><span class="p-tag" style="--tag-color:#3f6b52">frontend</span><span class="cap">緑</span></div>
+        <div class="spec-item"><span class="p-tag" style="--tag-color:#8f6410">要相談</span><span class="cap">黄</span></div>
+        <div class="spec-item"><span class="p-tag" style="--tag-color:#7d8792">保留</span><span class="cap">灰</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p>色は円形の小さな点で示し、文字色は変えない。
+  タグの色数が増えても文字の可読性が落ちないようにするためである。
+  色だけで意味を伝えないので、色覚の違いによる読み取りの差も生じない。</p>
+
+  <h2>絞り込みでの役割</h2>
+
+  <p>全文検索を持たない構成では、<a href="../../glossary.html#thread-list">スレッド一覧</a>の絞り込みが探すための唯一の手段になる。
+  タグはその軸のひとつとして働く。</p>
+
+  <p>また、<a href="../../glossary.html#progress">進捗率</a>だけでは表せない「却下」や「保留」を、
+  タグで示すという運用も選べる。
+  この判断は各組織に委ねている。</p>
+
+  <h2>関連する画面</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/index.html"><span class="card-no">/p/{key}</span><p class="card-title">スレッド一覧</p><p class="card-desc">タグによる絞り込み</p></a>
+  </div>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../../database/tags/index.html"><span class="card-no">TABLE</span><p class="card-title">tags</p><p class="card-desc">タグの定義</p></a>
+    <a class="card" href="../../database/thread_tags/index.html"><span class="card-no">TABLE</span><p class="card-title">thread_tags</p><p class="card-desc">スレッドとの結び</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能 / タグ</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

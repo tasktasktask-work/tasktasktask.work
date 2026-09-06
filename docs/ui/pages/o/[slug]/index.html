@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プロジェクト一覧画面 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock</p>
+  <h1 class="title">プロジェクト一覧</h1>
+  <p class="lede">
+    組織に入って最初に見る画面。
+    閲覧できるプロジェクトだけが並ぶ。
+  </p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-top">
+        <span class="app-logo"><span class="m">3</span>TASK3</span>
+        <span class="app-org">株式会社アクメ <span class="slug">acme</span> &#9662;</span>
+        <span class="sp"></span>
+        <span class="app-bell">&#128276;<span class="n">3</span></span>
+        <span class="hanko sm">佐</span>
+      </div>
+      <div class="app-shell">
+        <nav class="app-side">
+          <h5>プロジェクト</h5>
+          <a href="#" class=""><span class="k">WEB</span>検索基盤の刷新</a>
+          <a href="#" class=""><span class="k">BILL</span>請求まわり</a>
+          <h5>わたし</h5>
+          <a href="#" class="">担当スレッド</a>
+          <a href="#" class="">通知</a>
+        </nav>
+        <div class="app-main">
+          <div class="app-head">
+            <div><h2>プロジェクト</h2><div class="sub">株式会社アクメ / 3件</div></div>
+            <span style="flex:1"></span>
+            <button class="app-btn">新しいプロジェクト</button>
+          </div>
+
+          <div class="cards" style="margin-bottom:1.6rem">
+            <a class="card" href="#">
+              <span class="card-no">WEB</span>
+              <p class="card-title">検索基盤の刷新</p>
+              <p class="card-desc">検索機能を作り直す。全文検索は次フェーズ。</p>
+              <p style="margin:.6rem 0 0;font-size:.74rem;color:var(--ink-soft)">課題 12 / 議論 3 / 質問 4</p>
+            </a>
+            <a class="card" href="#">
+              <span class="card-no">BILL &#160;<span style="color:var(--ai)">非公開</span></span>
+              <p class="card-title">請求まわり</p>
+              <p class="card-desc">請求書の様式変更と、締め処理の見直し。</p>
+              <p style="margin:.6rem 0 0;font-size:.74rem;color:var(--ink-soft)">課題 8 / 議論 1 / 質問 0</p>
+            </a>
+            <a class="card" href="#" style="opacity:.55">
+              <span class="card-no">OLD &#160;<span style="color:var(--ink-faint)">アーカイブ済み</span></span>
+              <p class="card-title">旧管理画面の保守</p>
+              <p class="card-desc">読み取り専用。2026年3月に終了。</p>
+              <p style="margin:.6rem 0 0;font-size:.74rem;color:var(--ink-soft)">課題 41 / 議論 6 / 質問 9</p>
+            </a>
+          </div>
+
+          <label style="font-size:.78rem;color:var(--ink-mid);display:inline-flex;gap:.35rem;align-items:center">
+            <input type="checkbox" checked> アーカイブ済みのプロジェクトも表示する
+          </label>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>読み取れるようにしていること</h2>
+
+  <ul>
+    <li><strong>プロジェクトキー</strong>をカードの左上に置く。この文字列が <code>WEB-128</code> の前半になる</li>
+    <li><strong>非公開かどうか</strong>をキーの隣に添える。公開のものには何も書かない</li>
+    <li><strong>種別ごとの件数</strong>を出す。議論と質問が多いプロジェクトは、まだ形が定まっていないという意味になる</li>
+    <li><strong>アーカイブ済み</strong>は薄く表示し、既定で出す。プロジェクトの数は多くないので、隠すより並べたほうが探しやすい</li>
+  </ul>
+
+  <div class="note">
+    <span class="note-label">スレッド一覧との違い</span>
+    <p><a href="../../../../glossary.html#thread-list">スレッド一覧</a>ではアーカイブ済みを既定で隠す。
+    こちらでは既定で出す。
+    件数の桁が違うためで、数万件の中に混ぜると読めなくなるが、数個なら並んでいたほうが早い。</p>
+  </div>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../../../features/project/index.html"><span class="card-no">FEATURE</span><p class="card-title">プロジェクト</p><p class="card-desc">境界としての役割</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / プロジェクト一覧</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../../sidebar.js" defer></script>
+</body>
+</html>

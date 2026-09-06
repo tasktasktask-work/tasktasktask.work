@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>スレッド一覧画面 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock</p>
+  <h1 class="title">スレッド一覧</h1>
+  <p class="lede">
+    階層を作らず平らに並べる。親と子へは行のリンクから辿る。
+    全文検索がないため、この画面の絞り込みが探すための唯一の手段になる。
+  </p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/p/WEB</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-top">
+        <span class="app-logo"><span class="m">3</span>TASK3</span>
+        <span class="app-org">株式会社アクメ <span class="slug">acme</span> &#9662;</span>
+        <span class="sp"></span>
+        <span class="app-bell">&#128276;<span class="n">3</span></span>
+        <span class="hanko sm">佐</span>
+      </div>
+      <div class="app-shell">
+        <nav class="app-side">
+          <h5>プロジェクト</h5>
+          <a href="#" class="on"><span class="k">WEB</span>検索基盤の刷新</a>
+          <a href="#"><span class="k">BILL</span>請求まわり</a>
+          <h5>わたし</h5>
+          <a href="#">担当スレッド</a>
+          <a href="#">通知</a>
+        </nav>
+        <div class="app-main">
+          <div class="app-head">
+            <div><h2>検索基盤の刷新</h2><div class="sub">WEB / 公開 / 19件</div></div>
+            <span style="flex:1"></span>
+            <button class="app-btn">スレッドを立てる</button>
+          </div>
+
+          <div class="app-tabs">
+            <a href="#" class="on">スレッド</a>
+            <a href="#">ガント</a>
+            <a href="#">設定</a>
+          </div>
+
+          <div class="app-filters">
+            <select><option>種別 すべて</option><option>課題</option><option>議論</option><option>質問</option></select>
+            <select><option>担当者 すべて</option><option>佐藤 明日香</option><option>田中 亮</option><option>未設定</option></select>
+            <select><option>タグ すべて</option><option>backend</option><option>設計</option><option>要相談</option></select>
+            <label><input type="checkbox" checked> 完了を隠す</label>
+            <label><input type="checkbox"> アーカイブ済みを表示</label>
+            <span class="sp"></span>
+            <span style="color:var(--ink-faint);font-family:var(--font-mono);font-size:.7rem">更新の新しい順</span>
+          </div>
+
+          <div class="p-list">
+            <div class="p-row">
+              <span class="p-type" data-type="giron">議論</span>
+              <a class="ttl" href="#">検索の要件をどうするか</a>
+              <span class="p-oc" data-oc="open">オープン</span>
+              <span class="hanko sm">佐</span>
+              <span class="p-id">WEB-3</span>
+              <span class="meta"><span class="p-tag" style="--tag-color:#2c4a75">設計</span><a class="rel-link" href="#">子 2件 &#8594;</a><span>更新 9/4 13:40</span></span>
+            </div>
+            <div class="p-row">
+              <span class="p-type" data-type="kadai">課題</span>
+              <a class="ttl" href="#">検索APIの実装</a>
+              <span class="p-progress"><span class="bar"><span class="fill" style="width:40%"></span></span><span class="num">40%</span></span>
+              <span class="hanko sm">佐</span>
+              <span class="p-id">WEB-7</span>
+              <span class="meta"><span class="p-tag" style="--tag-color:#c8402c">backend</span><a class="rel-link" href="#">&#8592; 親 WEB-3</a><a class="rel-link" href="#">子 1件 &#8594;</a><span>9/8 – 9/19</span></span>
+            </div>
+            <div class="p-row">
+              <span class="p-type" data-type="kadai">課題</span>
+              <a class="ttl" href="#">検索UIの実装</a>
+              <span class="p-progress" data-zero="true"><span class="bar"><span class="fill" style="width:0%"></span></span><span class="num">0%</span></span>
+              <span class="hanko sm">田</span>
+              <span class="p-id">WEB-8</span>
+              <span class="meta"><span class="p-tag" style="--tag-color:#3f6b52">frontend</span><a class="rel-link" href="#">&#8592; 親 WEB-3</a><span>9/15 – 9/26</span><span class="badge ki">親からはみ出し</span></span>
+            </div>
+            <div class="p-row">
+              <span class="p-type" data-type="shitsumon">質問</span>
+              <a class="ttl" href="#">全角の正規化はどこでやっている？</a>
+              <span class="p-oc" data-oc="open">オープン</span>
+              <span class="hanko sm">佐</span>
+              <span class="p-id">WEB-9</span>
+              <span class="meta"><a class="rel-link" href="#">&#8592; 親 WEB-7</a><span>更新 9/2 09:15</span></span>
+            </div>
+            <div class="p-row">
+              <span class="p-type" data-type="kadai">課題</span>
+              <a class="ttl" href="#">検索結果のキャッシュ設計</a>
+              <span class="p-progress" data-zero="true"><span class="bar"><span class="fill" style="width:0%"></span></span><span class="num">0%</span></span>
+              <span class="hanko sm">佐</span>
+              <span class="p-id">WEB-12</span>
+              <span class="meta"><span class="badge ki">期間未設定</span><span>更新 8/29</span></span>
+            </div>
+            <div class="p-row">
+              <span class="p-type" data-type="kadai">課題</span>
+              <a class="ttl" href="#">インデックスの再構築手順</a>
+              <span class="p-progress" data-zero="true"><span class="bar"><span class="fill" style="width:0%"></span></span><span class="num">0%</span></span>
+              <span></span>
+              <span class="p-id">WEB-14</span>
+              <span class="meta"><span class="badge ki">期間未設定</span><span style="color:var(--ink-faint)">担当者なし</span><span>更新 8/28</span></span>
+            </div>
+            <div class="p-row" data-archived="true">
+              <span class="p-type" data-type="kadai">課題</span>
+              <a class="ttl" href="#">旧検索ロジックの撤去</a>
+              <span class="p-progress"><span class="bar"><span class="fill" style="width:60%"></span></span><span class="num">60%</span></span>
+              <span class="hanko sm">鈴</span>
+              <span class="p-id">WEB-5</span>
+              <span class="meta"><span class="badge mute">アーカイブ済み</span><a class="rel-link" href="#">子 1件 &#8594;</a><span>活動中の子があるため表示</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>平らに並べる理由</h2>
+
+  <p>階層に深さの制限がないため、入れ子で表示すると深いところが読めなくなる。
+  そして担当者やタグで絞り込むと、階層はかえって邪魔になる。
+  絞り込みの結果として残った子だけが、親のいない状態でインデントされて並ぶことになる。</p>
+
+  <p>代わりに、行ごとに <code>&#8592; 親 WEB-3</code> と <code>子 2件 &#8594;</code> のリンクを置く。
+  構造を辿りたいときはここから移動する。</p>
+
+  <p>構造そのものを俯瞰したいときは<a href="gantt/index.html">ガント</a>を見る。
+  あちらは入れ子で並ぶ。同じデータを二つの画面で違う形に見せているが、
+  一方は探すための画面、もう一方は計画を読むための画面である。</p>
+
+  <h2>絞り込みの既定値</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>絞り込み</th><th>既定</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">完了を隠す</td><td>オン</td><td>進捗率100のものは、通常の作業では見る必要がない</td></tr>
+      <tr><td class="nowrap">アーカイブ済みを表示</td><td>オフ</td><td>畳んだものを既定で出すと、畳んだ意味がなくなる</td></tr>
+      <tr><td class="nowrap">種別 / 担当者 / タグ</td><td>すべて</td><td>最初は全体を見せ、絞るのは利用者に任せる</td></tr>
+      <tr><td class="nowrap">並び順</td><td>更新の新しい順</td><td>動いているものが上に来る</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>最後の行について</h2>
+
+  <p>WEB-5 はアーカイブ済みだが、絞り込みがオフでも表示されている。
+  活動中の子スレッドを持つためである。</p>
+
+  <p>親をアーカイブしても子は連鎖しない。
+  そのままだと、動いている子が親ごと視界から消える。
+  そこで、活動中の子を持つアーカイブ済みスレッドは読み取り専用として一覧に残す。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="t/[number]/index.html"><span class="card-no">PAGE</span><p class="card-title">スレッド詳細</p><p class="card-desc">行をクリックした先</p></a>
+    <a class="card" href="gantt/index.html"><span class="card-no">PAGE</span><p class="card-title">ガント</p><p class="card-desc">同じデータの階層表示</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / スレッド一覧</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../../../../sidebar.js" defer></script>
+</body>
+</html>

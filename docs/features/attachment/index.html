@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>添付ファイル | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Feature 06</p>
+  <h1 class="title">添付ファイル</h1>
+  <p class="lede">
+    アップロードされたファイルの種別を、このシステムは検査しない。
+    拡張子も、先頭のバイト列も見ない。
+    その代わり、配信の仕方で守る。
+  </p>
+
+  <h2>検査をやめた理由</h2>
+
+  <p>スレッドやコメントに付けるファイルを<a href="../../glossary.html#attachment">添付ファイル</a>と呼ぶ。保存先はサーバー上のローカルボリュームで、実体はファイルシステム側にある。</p>
+
+  <p>設計の途中まで、許可する形式を並べたホワイトリストを置く方針だった。
+  マジックバイトで種別を判定し、リストにあるものだけを通す。
+  それをやめたのは、次の四つが同時に成り立つとわかったからである。</p>
+
+  <h3>判定できない形式が半分近くある</h3>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>形式</th><th>先頭のバイト列</th><th>判定</th></tr></thead>
+    <tbody>
+      <tr><td>JPEG, PNG, GIF, WebP, PDF</td><td><code>FFD8FF</code> <code>89504E47</code> ほか</td><td>できる</td></tr>
+      <tr><td>xlsx, docx, pptx</td><td><code>PK\x03\x04</code></td><td>zip と区別できない</td></tr>
+      <tr><td>zip</td><td><code>PK\x03\x04</code></td><td>Office と同一</td></tr>
+      <tr><td>txt, csv, md, json</td><td>規則なし</td><td>できない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Office 文書の実体は zip である。
+  区別するには中身を展開して構成ファイルまで読む必要があり、それはもうマジックバイト判定ではない。</p>
+
+  <h3>判定できる形式も素通りする</h3>
+
+  <p><code>GIF89a</code> で始まり、その後ろに HTML と JavaScript を詰めたファイルは、判定を正しく通過する。
+  先頭数バイトの確認は、残りの中身について何も保証しない。</p>
+
+  <h3>実行ファイル対策としては成立しない</h3>
+
+  <p>zip を許可すれば、その中に何を入れても通る。
+  zip を禁じても、拡張子を変えれば通る。</p>
+
+  <h3>そもそもサーバーがファイルを実行しない</h3>
+
+  <p>置かれたファイルが実行される危険は、Webルート上のファイルを解釈実行する構成に固有のものである。
+  ローカルボリュームに保存して Node.js が配信するだけの構成では、<code>.php</code> を置かれても単なるバイト列にすぎない。</p>
+
+  <div class="note decide">
+    <span class="note-label">結論</span>
+    <p>検査は、実装と維持のコストを払う割に守れる範囲が狭い。
+    そして「検証済み」という誤った安心を与える。
+    守れないものを守っているように見せる仕組みは、判断を誤らせる分だけ有害である。</p>
+  </div>
+
+  <h2>何が実際に効くのか</h2>
+
+  <p>添付ファイルの本当の危険は、保存された XSS である。
+  攻撃者が HTML や SVG をアップロードし、同僚がそのURLを開くと、このサービスのオリジンで JavaScript が動き、セッションが盗まれる。</p>
+
+  <p>これに効くのは中身の検査ではなく、返し方である。</p>
+
+  <ol>
+    <li><strong>必ず <code>Content-Disposition: attachment</code> を付ける。</strong>ブラウザは表示せずダウンロードする</li>
+    <li><strong><code>X-Content-Type-Options: nosniff</code> を付ける。</strong>中身を見て勝手に HTML と解釈する挙動を止める</li>
+    <li><strong><code>Content-Type</code> は <code>application/octet-stream</code> 固定。</strong>インライン表示する画像だけを例外とする</li>
+    <li><strong><code>Content-Security-Policy: default-src 'none'; sandbox</code> を付ける。</strong>万一実行されかけても止まる</li>
+    <li><strong>画面に表示する画像は、サーバー側で読み直して書き出し直す。</strong></li>
+  </ol>
+
+  <p>5 が要になる。
+  検査して通すのではなく、作り直して安全なものだけを出力する。
+  読めなかったファイルは画像として扱わず、ダウンロードできるだけの添付になる。
+  維持すべきリストがどこにも存在せず、デコーダそのものが判定器になる。</p>
+
+  <p>副産物として、ポリグロットも Exif の位置情報も構造的に消える。
+  サムネイルも同じ処理から得られる。</p>
+
+  <h3>配信は本体と同じオリジンから行う</h3>
+
+  <p>設計の途中まで、添付を別のドメインから配信する方針だった。
+  万一スクリプトが動いても、本体のオリジンとは別なのでセッションに触れられない、という理屈である。</p>
+
+  <p>採らなかった。実際に守っているのは上の四つのヘッダであって、オリジンの分離ではないからである。
+  分離が足すのは「この配信経路に手を入れた誰かが将来間違えたとき、被害を抑える」という保険だけで、
+  その保険には実費がある。</p>
+
+  <div class="note warn">
+    <span class="note-label">別オリジンにすると認可を作り直すことになる</span>
+    <p>別のドメインにはセッションの Cookie が送られない。
+    つまり<a href="../../glossary.html#private-project">非公開プロジェクト</a>の添付を誰に見せるかを、
+    署名付きURLのような別の仕組みで決めることになる。
+    同一オリジンなら Cookie がそのまま使え、閲覧判定は他の画面と同じ経路で済む。</p>
+  </div>
+
+  <p>同一オリジンにしたぶん、経路の作り方に条件を付ける。</p>
+
+  <ul>
+    <li><strong>添付を返す経路を1本に限る。</strong>その関数が常に四つのヘッダを付ける。
+        インライン表示を切り替えるパラメータを作らない</li>
+    <li><strong>インライン表示するのは、サーバー側で再エンコードした出力だけ。</strong>
+        <code>Content-Type</code> は決め打ちの値から選び、利用者由来の値を反映しない</li>
+    <li><strong>ヘッダが付いていることをテストで確かめる。</strong>
+        この経路の誤りは、同一オリジンではセッションの盗難に直結する</li>
+  </ul>
+
+  <h2>保存と制限</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>項目</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">保存先</td><td>VPS 上のローカルボリューム。保存先は抽象化し、将来のオブジェクトストレージ移行に備える</td></tr>
+      <tr><td class="nowrap">ファイル名</td><td>生成したIDで保存する。元のファイル名はメタデータとして持ち、表示時にエスケープする</td></tr>
+      <tr><td class="nowrap">サイズ上限</td><td>1ファイル 10MB</td></tr>
+      <tr><td class="nowrap">形式の制限</td><td>なし</td></tr>
+      <tr><td class="nowrap">画像の前処理</td><td>ブラウザ側で圧縮してから送る。サーバー側で再エンコードする</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>ファイル名をそのままパスに使わない理由は二つある。
+  <code>../../</code> を含む名前によるパストラバーサルと、
+  右横書きの制御文字を混ぜて <code>report‮gpj.exe</code> を <code>report.exe.jpg</code> に見せかける手口である。</p>
+
+  <div class="note">
+    <span class="note-label">ブラウザ側圧縮の位置づけが変わった</span>
+    <p>アップロード前に <code>browser-image-compression</code> で圧縮する方針は残す。
+    ただしサーバー側で再エンコードする以上、これは安全のための処理ではなく通信量の削減である。
+    PNG は変換せず原本を送る。スクリーンショットの文字が JPEG 変換で潰れると、添付の用をなさなくなるためである。</p>
+  </div>
+
+  <h2>残っている危険</h2>
+
+  <p>形式を制限しないため、マルウェアの受け渡しには使える。
+  配信ヘッダは実行を防ぐが、利用者が自分でダウンロードして開くことは止められない。</p>
+
+  <p>これに効くのはウイルススキャンだけである。
+  拡張子でもマジックバイトでもない。
+  導入の検討は<a href="../../issues/virus-scan/index.html">ウイルススキャン</a>に記録した。</p>
+
+  <p>あわせて、容量の監視とバックアップ対象への追加が運用上必要になる。
+  詳しくは<a href="../../devops/deployment/index.html">デプロイ構成</a>に書いた。</p>
+
+  <h2>関連する画面</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html"><span class="card-no">/t/{number}</span><p class="card-title">スレッド詳細</p><p class="card-desc">添付の一覧と投稿</p></a>
+  </div>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../../database/attachments/index.html"><span class="card-no">TABLE</span><p class="card-title">attachments</p><p class="card-desc">保存先、元の名前、サイズ</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能 / 添付ファイル</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

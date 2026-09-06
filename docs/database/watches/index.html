@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>watches | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">watches</h1>
+  <p class="lede">
+    このテーブルに行が作られるのは、ユーザーが自分でボタンを押したときだけである。
+    スレッドを立てても、担当者になっても、コメントを書いても、行は増えない。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+  <p><a href="../../glossary.html#notification">通知</a>の三つのきっかけのうち、
+  「新しいコメントが付いた」だけは宛先が自明でない。
+  メンションと担当者設定は相手が決まっているが、コメントの投稿には特定の宛先がない。</p>
+  <p>誰に届けるかを表すのが<a href="../../glossary.html#watch">ウォッチ</a>である。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE watches (
+  thread_id  uuid        NOT NULL REFERENCES threads(id),
+  user_id    uuid        NOT NULL REFERENCES users(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+
+  PRIMARY KEY (thread_id, user_id)
+);
+
+CREATE INDEX watches_by_user ON watches (user_id);</code></pre>
+
+  <p>列が三つしかない。
+  <a href="../thread_tags/index.html">thread_tags</a> と同じく、付け外しが日常的に起きる中間テーブルなので物理削除とした。
+  「すべてのレコードは論理削除」という方針からの逸脱にあたるが、
+  <strong>中間テーブルに限った例外として承認されている</strong>（2026-09-05 のレビュー）。</p>
+
+  <h2>自動で行を作らない</h2>
+
+  <p>作成者、担当者、コメントした人を自動的にウォッチ扱いにする設計もありえた。
+  そうしなかったので、次のことが起きる。</p>
+
+  <div class="note warn">
+    <span class="note-label">この設計が前提とする運用</span>
+    <p><strong>自分が立てたスレッドに返信が来ても、ウォッチしていなければ気づけない。</strong></p>
+    <p>これを補うのは<a href="../../glossary.html#mention">メンション</a>だけである。
+    「返信するときは相手を <code>@</code> で呼ぶ」という運用が、この設計の前提になっている。</p>
+    <p>自動付与を入れるかどうかの検討は<a href="../../issues/notification-enhancement/index.html">通知の拡張</a>に記録した。</p>
+  </div>
+
+  <h2>通知を作るときの問い合わせ</h2>
+
+<pre><code>-- コメント投稿時、ウォッチしている人に通知を作る
+INSERT INTO notifications (organization_id, user_id, kind, thread_id, comment_id, actor_user_id)
+SELECT $1, w.user_id, 'comment', $2, $3, $4
+  FROM watches w
+ WHERE w.thread_id = $2
+   AND w.user_id  &lt;&gt; $4;          -- 書いた本人には送らない</code></pre>
+
+  <p>投稿した本人を除く条件が要る。
+  自分のコメントで自分に通知が来る状態は、通知一覧をすぐに無意味にする。</p>
+
+  <div class="note">
+    <span class="note-label">権限が変わったウォッチャーの扱い</span>
+    <p>非公開プロジェクトから外された人のウォッチ行は残る。
+    通知を作るときにプロジェクトの閲覧権限を確認し、失っている場合は作らない。</p>
+    <p>行を消す方式も取れるが、再び参加したときに以前のウォッチが失われる。
+    通知の生成時に判定するほうを選んだ。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">threads ──&lt; watches &gt;── users
+                │
+                └─→ コメント投稿時に notifications を作る</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../notifications/index.html"><span class="card-no">TABLE</span><p class="card-title">notifications</p><p class="card-desc">ここから作られる</p></a>
+    <a class="card" href="../threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">ウォッチの対象</p></a>
+    <a class="card" href="../thread_tags/index.html"><span class="card-no">TABLE</span><p class="card-title">thread_tags</p><p class="card-desc">同じく物理削除の例外</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/notification/index.html"><span class="card-no">FEATURE</span><p class="card-title">通知とウォッチ</p><p class="card-desc">三つのきっかけ</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / watches</span>
+    <span>最終更新 2026-09-05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>
