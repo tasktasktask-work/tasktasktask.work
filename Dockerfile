@@ -3,7 +3,7 @@
 # 本番用のイメージ。アプリの実行とマイグレーションの適用を兼ねる。
 #
 #   docker compose up -d                  アプリを動かす
-#   docker compose run --rm app migrate   スキーマを適用する
+#   docker compose run --rm migrate       スキーマを適用する
 #
 # VPS 側にはソースを置かない。このイメージだけを push する。
 
@@ -42,7 +42,10 @@ RUN ARCH="${TARGETARCH:-$(dpkg --print-architecture)}" \
  && /atlas version
 
 FROM base AS runtime
+
 ENV NODE_ENV=production
+ENV HOSTNAME=0.0.0.0
+ENV PORT=3000
 
 # 添付ファイルの置き場。compose.yaml がホスト側のディレクトリを差し込む。
 RUN mkdir -p /var/lib/task3/attachments && chown -R node:node /var/lib/task3

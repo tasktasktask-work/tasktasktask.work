@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>初回デプロイで VPS の CPU が張り付いた | ENISHI 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-07 01:48</p>
+  <h1 class="title">初回デプロイで VPS の CPU が張り付いた</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    VPS へ最初に置いた直後、CPU が通常の20倍あたりまで上がって戻らなくなった。
+    他のサービスも同居しているので、影響はこのアプリだけに留まらない。
+    原因の見当は二度外し、三度目で形が見えた。
+  </p>
+
+  <h2>症状</h2>
+
+  <p>通常 200 msec ほどで推移していた CPU が、4700 msec まで上がってそのまま高止まりした。
+  「動いていない」のではなく「何かが全力で回っている」形である。</p>
+
+  <p>実行した手順は次のとおりだった。</p>
+
+<pre><code>docker compose up -d
+docker compose run --rm app migrate</code></pre>
+
+  <p>順序が<a href="../../devops/deployment/index.html">記録した手順</a>と逆になっているが、
+  これは今回の原因ではない。
+  アプリは起動時にデータベースへ触らない作りなので、
+  テーブルが無くても立ち上がる。</p>
+
+  <h2>外した見当</h2>
+
+  <h3>イメージのアーキテクチャ</h3>
+
+  <p>最初に疑ったのはこれだった。
+  x86_64 の VPS に arm64 のイメージを置くと、binfmt があれば
+  QEMU がエミュレーションで動かす。
+  Node のようなプロセスでは CPU を数倍から十数倍消費するので、
+  張り付き方の形とは合っていた。</p>
+
+  <p><strong>確認したところ <code>linux/amd64</code> だった。</strong>外れである。</p>
+
+  <h3>container_name の衝突</h3>
+
+  <p><code>app</code> には <code>container_name</code> を指定してある。
+  <code>run</code> が同じ名前を取ろうとして衝突したのではないか、と考えた。</p>
+
+  <p>調べたところ、<strong><code>docker compose run</code> は <code>container_name</code> を無視して
+  自前の名前を作る</strong>。これも外れである。</p>
+
+  <h2>有力な説明</h2>
+
+  <p><code>app</code> には <code>restart: unless-stopped</code> が付いている。
+  落ちても起き上がってほしいからである。</p>
+
+  <p>この方針は<strong>終了コードに関わらず起動し直す</strong>。
+  成功して終わっても、また立ち上がる。</p>
+
+  <div class="note warn">
+    <span class="note-label">一時的な処理に、常駐向けの方針が引き継がれた</span>
+    <p><code>docker compose run --rm app migrate</code> は
+    <code>app</code> の設定から一時コンテナを作る。
+    そこに <code>unless-stopped</code> が付いていれば、
+    <strong>移行が終わるたびに走り直す</strong>。</p>
+    <p><code>migrate</code> は Atlas（120MB の Go バイナリ）と Node を
+    毎回立ち上げてデータベースを叩く。
+    これが延々と回れば、CPU は張り付く。</p>
+  </div>
+
+  <p>確証は取れていない。
+  <code>--rm</code> を付けていたためコンテナが残っておらず、後から確かめようがない。
+  ただし機構としては筋が通り、症状とも合う。</p>
+
+  <h2>直した形</h2>
+
+  <p>どの説が正しいかに関わらず起こらない形にした。
+  <code>migrate</code> を別のサービスとして定義する。</p>
+
+<pre><code>  migrate:
+    image: ${APP_IMAGE:?APP_IMAGE を .env に設定してください}
+    profiles: ["tools"]
+    restart: "no"
+    command: migrate
+    env_file: .env
+    networks:
+      - postgres-network</code></pre>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>指定</th><th>意図</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>restart: "no"</code></td><td>終わったら終わる。常駐向けの方針を引き継がない</td></tr>
+      <tr><td class="nowrap"><code>profiles: ["tools"]</code></td><td><code>up -d</code> では起動しない</td></tr>
+      <tr><td class="nowrap"><code>networks</code> を絞る</td><td>データベースに届けばよい。nginx-proxy も添付の置き場も要らない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>docker exec で済ませない理由</h2>
+
+  <p>今回は <code>docker exec</code> で流して完了させた。
+  それで動くが、手順として残すのは避けた。</p>
+
+  <p><code>exec</code> は<strong>アプリが動いていることが前提</strong>である。
+  つまり <code>up -d</code> を先に済ませることになり、
+  新しいコードが古いスキーマの上で動く時間ができる。</p>
+
+  <p><a href="../../devops/database-migration/index.html">段階的な変更の手順</a>は
+  「先にスキーマ、あとからコード」で成り立っている。
+  初回は差がないが、列を消す段になると効いてくる。</p>
+
+  <h2>あわせて直したこと</h2>
+
+  <p>Dockerfile に <code>ENV HOSTNAME=0.0.0.0</code> を明示した。</p>
+
+<pre><code>const hostname = process.env.HOSTNAME || '0.0.0.0'</code></pre>
+
+  <p>一見 <code>0.0.0.0</code> に落ちるように見えるが、
+  <strong>Docker はコンテナに <code>HOSTNAME</code> を必ず設定する</strong>。
+  右側には落ちず、そのホスト名に bind する。
+  今回の CPU とは別件だが、nginx-proxy から届かない構成になりうる。</p>
+
+  <h2>残しておきたいこと</h2>
+
+  <p>設定を使い回すと、意図の違うものまで一緒に付いてくる。
+  <code>restart: unless-stopped</code> は「落ちても起き上がってほしい」という意図で書いたもので、
+  「一度だけ流す」処理に付けるつもりはなかった。
+  <strong>同じ image を使うことと、同じ service を使うことは別である。</strong></p>
+
+  <p>もうひとつ。見当を二度外した。
+  どちらも症状の形とは合っていて、確かめるまでは尤もらしかった。
+  <strong>アーキテクチャの確認は一行で済んだ</strong>のに、
+  それを待たずに動いていたら、直したつもりで同じことを繰り返していた。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">SESSIONS</span><p class="card-title">セッション履歴</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../devops/deployment/index.html"><span class="card-no">DEVOPS</span><p class="card-title">デプロイ構成</p><p class="card-desc">手順と、migrate を分けた理由</p></a>
+    <a class="card" href="../20260906-0815-deployment/index.html"><span class="card-no">SESSION</span><p class="card-title">デプロイ構成の作り直し</p><p class="card-desc">この構成を決めたとき</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-07 デプロイの障害</span>
+    <span>最終更新 2026-09-05</span>
+    <span>ENISHI 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

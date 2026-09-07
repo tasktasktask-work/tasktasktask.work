@@ -112,7 +112,9 @@
     <tbody>
       <tr><td class="nowrap"><code>docker build</code></td><td>確認済み。<a href="../20260906-1428-toolchain/index.html">その後の修正を経て再確認</a></td></tr>
       <tr><td class="nowrap">レジストリへの push</td><td>未確認</td></tr>
-      <tr><td class="nowrap"><code>docker compose run --rm app migrate</code></td><td>未確認</td></tr>
+      <tr><td class="nowrap"><code>docker compose run --rm app migrate</code></td>
+          <td>実行したが VPS の CPU が張り付いた。
+          <a href="../20260907-0148-deploy-incident/index.html">別サービスに切り出して解決</a></td></tr>
       <tr><td class="nowrap"><code>docker compose up -d</code> と nginx-proxy 越しの疎通</td><td>未確認</td></tr>
       <tr><td class="nowrap"><code>data/attachments</code> への書き込み</td><td>未確認</td></tr>
     </tbody>

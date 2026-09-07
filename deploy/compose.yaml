@@ -2,7 +2,7 @@
 # それに ./data/attachments だけである。ソースコードは置かない。
 #
 #   docker compose pull
-#   docker compose run --rm app migrate    ← アプリを入れ替える前に流す
+#   docker compose run --rm migrate        ← アプリを入れ替える前に流す
 #   docker compose up -d
 #
 # イメージは GitHub Actions の Deploy ワークフローが作って push する。
@@ -50,6 +50,29 @@ services:
 
     networks:
       - nginxproxy-network
+      - postgres-network
+
+  # スキーマの適用。up -d では起動しない（profiles があるため）。
+  #
+  #   docker compose run --rm migrate
+  #
+  # app と別のサービスにしてあるのは、restart の方針を引き継がせないためである。
+  # unless-stopped は終了コードに関わらず起動し直す。
+  # 一時的な処理に付くと、終わるたびに走り直して止まらなくなる。
+  # migrate は Atlas と Node を毎回立ち上げてデータベースを叩くので、
+  # 回り続ければ CPU を食い尽くす。
+  migrate:
+    image: ${APP_IMAGE:?APP_IMAGE を .env に設定してください}
+    profiles: ["tools"]
+    restart: "no"
+    command: migrate
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      TZ: UTC
+      PGTZ: UTC
+    # 添付の置き場も nginx-proxy も要らない。データベースにだけ届けばよい。
+    networks:
       - postgres-network
 
 networks:

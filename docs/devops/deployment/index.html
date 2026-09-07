@@ -79,6 +79,17 @@
   <p><code>pg</code> と <code>@node-rs/argon2</code> は Next の standalone 出力に取り込まれるので、
   マイグレーション側からもそのまま使える。</p>
 
+  <div class="note warn">
+    <span class="note-label">HOSTNAME を明示する</span>
+    <p>Next の standalone 出力は、待ち受ける先をこう決める。</p>
+<pre><code>const hostname = process.env.HOSTNAME || '0.0.0.0'</code></pre>
+    <p>一見 <code>0.0.0.0</code> に落ちるように見えるが、
+    <strong>Docker はコンテナに <code>HOSTNAME</code> を必ず設定する</strong>。
+    右側には落ちず、そのホスト名に bind する。
+    nginx-proxy から届かない構成になりうるので、
+    Dockerfile で <code>ENV HOSTNAME=0.0.0.0</code> を明示する。</p>
+  </div>
+
   <h3>作って送る</h3>
 
   <p>GitHub Actions の <strong>Deploy</strong> ワークフローを手で起こす。
@@ -120,7 +131,7 @@ docker push "$REGISTRY/tasktasktask.work:latest"</code></pre>
 cd /path/to/tasktasktask-work
 
 docker compose pull
-docker compose run --rm app migrate    # ← アプリを入れ替える前
+docker compose run --rm migrate        # ← アプリを入れ替える前
 docker compose up -d</code></pre>
 
   <div class="note decide">
@@ -131,6 +142,35 @@ docker compose up -d</code></pre>
     足す、両方書く、埋める、読み替える、消す。
     どの段階も「先にスキーマ、あとからコード」で成り立っている。</p>
   </div>
+
+  <h3>migrate は別のサービスにする</h3>
+
+  <div class="note warn">
+    <span class="note-label">常駐向けの再起動方針を、一時的な処理に引き継がせない</span>
+    <p><code>app</code> には <code>restart: unless-stopped</code> が付いている。
+    落ちても起き上がってほしいからである。</p>
+    <p>この方針は<strong>終了コードに関わらず起動し直す</strong>。
+    一時的な処理に付くと、終わるたびに走り直して止まらなくなる。
+    <code>migrate</code> は Atlas と Node を毎回立ち上げてデータベースを叩くので、
+    回り続ければ CPU を食い尽くす。</p>
+    <p>そのため <code>migrate</code> を別のサービスとして定義し、
+    <code>restart: "no"</code> を明示してある。
+    <code>profiles</code> を付けているので <code>up -d</code> では起動しない。</p>
+  </div>
+
+  <p>データベースに届けばよいので、
+  添付の置き場も <code>nginxproxy-network</code> も持たせていない。</p>
+
+  <h3>docker exec ではなく run を使う</h3>
+
+  <p><code>docker exec</code> でも同じ処理は流せるが、
+  <strong>アプリが動いていることが前提</strong>になる。
+  つまり <code>up -d</code> を先に済ませることになり、
+  新しいコードが古いスキーマの上で動く時間ができる。</p>
+
+  <p><code>run</code> なら使い捨てのコンテナで完結するので、
+  アプリを入れ替える前に流せる。
+  <a href="../database-migration/index.html">段階的な変更の手順</a>は、この順序で成り立っている。</p>
 
   <h3>起動時に自動で流さない</h3>
 

@@ -121,14 +121,14 @@
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 5,
+      sessionTotal: 6,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260907-0148-deploy-incident/index.html", label: "2026-09-07 デプロイ障害", d: 2 },
         { path: "sessions/20260906-1428-toolchain/index.html", label: "2026-09-06 道具立て", d: 2 },
         { path: "sessions/20260906-0815-deployment/index.html", label: "2026-09-06 デプロイ", d: 2 },
         { path: "sessions/20260905-1709-authentication/index.html", label: "2026-09-05 認証", d: 2 },
-        { path: "sessions/20260905-1454-project-initialization/index.html", label: "2026-09-05 初期化", d: 2 },
-        { path: "sessions/20260905-1210-initial-specification/index.html", label: "2026-09-05 仕様策定", d: 2 }
+        { path: "sessions/20260905-1454-project-initialization/index.html", label: "2026-09-05 初期化", d: 2 }
       ]
     }
   ];

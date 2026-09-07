@@ -52,9 +52,18 @@ ssh VPS
 cd /path/to/tasktasktask-work
 
 docker compose pull
-docker compose run --rm app migrate   # ← アプリを入れ替える前に流す
+docker compose run --rm migrate       # ← アプリを入れ替える前に流す
 docker compose up -d
 ```
+
+## migrate を別サービスにしてある理由
+
+`app` の設定をそのまま使い回すと、`restart: unless-stopped` が
+一時的な処理にも付いてしまう。この方針は**終了コードに関わらず起動し直す**ので、
+移行が終わるたびに走り直し、止まらなくなる。
+
+`migrate` は Atlas と Node を毎回立ち上げてデータベースを叩くため、
+回り続けると CPU を食い尽くす。`profiles` を付けてあるので `up -d` では起動しない。
 
 ## 気をつけること
 
