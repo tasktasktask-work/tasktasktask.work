@@ -992,4 +992,63 @@ td.nowrap, th.nowrap { white-space: nowrap; }
   font-family: var(--font-mono); font-size: .64rem; letter-spacing: .12em; color: var(--ink-faint);
 }
 .auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+
+/* 画面の枠と、画面の中の知らせ ---------------------------------------------- */
+.app-frame { max-width: 68rem; margin: 0 auto; border: 1px solid var(--rule); background: var(--card); }
+.app-empty {
+  padding: 2.4rem 1rem; text-align: center; color: var(--ink-faint);
+  font-size: .85rem; border: 1px dashed var(--rule-strong); background: var(--paper);
+}
+/* 画面の中の短い知らせ。文章の中で使う .note とは別に持つ。
+   .note は本文の幅に合わせてあり、画面の部品としては余白が広すぎる。 */
+.app-note {
+  margin: 0 0 1rem; padding: .65rem .85rem;
+  border: 1px solid var(--rule); border-left: 3px solid var(--ai);
+  background: var(--ai-wash); font-size: .82rem; line-height: 1.75;
+}
+.app-note > :last-child { margin-bottom: 0; }
+.app-note.warn { border-left-color: var(--ki);     background: var(--ki-wash); }
+.app-note.ok   { border-left-color: var(--midori); background: var(--midori-wash); }
+
+/* メンバーと招待の一覧 ------------------------------------------------------ */
+.app-people { border: 1px solid var(--rule); background: var(--card); }
+.app-person {
+  display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
+  padding: .7rem .9rem; border-bottom: 1px solid var(--rule); font-size: .87rem;
+}
+.app-person:last-child { border-bottom: 0; }
+.app-person .who { min-width: 0; flex: 1; }
+.app-person .nm { font-weight: 500; }
+.app-person .ad {
+  display: block; font-family: var(--font-mono); font-size: .7rem; color: var(--ink-faint);
+  overflow: hidden; text-overflow: ellipsis;
+}
+.app-person form { display: flex; align-items: center; gap: .4rem; margin: 0; }
+.app-person select {
+  font-family: var(--font-body); font-size: .78rem;
+  padding: .22rem .45rem; border: 1px solid var(--rule-strong);
+  border-radius: 2px; background: var(--paper); color: var(--ink);
+}
+.app-person .err { flex-basis: 100%; font-size: .74rem; color: var(--ki); }
+.app-role {
+  font-family: var(--font-mono); font-size: .66rem; letter-spacing: .08em;
+  padding: .1rem .45rem; border: 1px solid var(--rule-strong); color: var(--ink-soft);
+}
+.app-role[data-role="admin"] { color: var(--shu); border-color: var(--shu); background: var(--shu-wash); }
+.app-pending { color: var(--ink-soft); background: var(--paper); }
+.app-pending[data-expired="true"] .nm { text-decoration: line-through; }
+
+/* 画面の中の小さなフォーム -------------------------------------------------- */
+.app-form {
+  border: 1px solid var(--rule); background: var(--card);
+  padding: .9rem 1rem; margin-bottom: 1.4rem; max-width: 34rem;
+}
+.app-form .line { display: flex; gap: .5rem; align-items: flex-end; flex-wrap: wrap; }
+.app-form .line > * { flex: 1 1 12rem; }
+.app-form .line > button { flex: 0 0 auto; }
+.app-form select {
+  width: 100%; font-family: var(--font-body); font-size: .88rem;
+  padding: .5rem .6rem; border: 1px solid var(--rule-strong);
+  border-radius: 2px; background: var(--paper); color: var(--ink);
+}
 /* @shared:shell end ------------------------------------------------------ */

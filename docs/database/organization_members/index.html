@@ -80,6 +80,31 @@ SELECT 1
 
   <p>非公開プロジェクトの閲覧判定は、この結果と <code>project_members</code> の結果の論理和になる。</p>
 
+  <p>この判定は <code>src/lib/db.ts</code> の <code>orgAdminExists()</code> という断片にまとめてある。
+  同じ条件を各所へ書き写すと、片方だけ直したときに穴が開く。
+  <a href="../../sessions/20260907-1050-permission-tests/index.html">実際に一度開けている</a>。</p>
+
+  <h2>行が増えるときと、畳まれるとき</h2>
+
+  <p>行が増える経路は<a href="../invitations/index.html">招待</a>の受諾だけである。
+  一度外れた人を呼び戻したときも、畳んである行を起こさずに新しい行を足す。
+  入って抜けてを繰り返した人には畳んだ行が何本も並んでいて、
+  まとめて起こすと生きた行が二本になり、部分一意索引に当たる。</p>
+
+  <p>畳むときは <code>deleted_at</code> を埋める。
+  そのとき、その人の <a href="../project_members/index.html">project_members</a> も一緒に畳む。
+  <strong>権限のためではない。</strong>
+  閲覧判定はこの行が残っていても漏れないようにしてあり、
+  畳むのは意味を失った行を残さないためである。</p>
+
+  <div class="note warn">
+    <span class="note-label">最後の管理者を守るには、先に鍵をかける</span>
+    <p>数えてから変えるまでのあいだに、別の要求が同じことをすると、
+    どちらも「自分のほかにもう一人いる」と読んで通ってしまう。</p>
+    <p>管理者の行を <code>FOR UPDATE</code> で掴んでから数える。
+    掴んだ行の中に自分がいるかどうかで、操作してよいかも同時に決まる。</p>
+  </div>
+
   <h2>関係</h2>
 <pre class="figure">organizations ──&lt; organization_members &gt;── users</pre>
 
@@ -98,7 +123,7 @@ SELECT 1
 
   <div class="sheet-foot">
     <span>データベース / organization_members</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

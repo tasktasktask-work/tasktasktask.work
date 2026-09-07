@@ -80,7 +80,10 @@
         { path: "ui/components/gantt-bar/index.html",        label: "ガントバー", d: 2 },
         { path: "ui/pages/index.html",                       label: "ページモック" },
         { path: "ui/pages/login/index.html",                 label: "ログイン", d: 2 },
+        { path: "ui/pages/join/index.html",                  label: "招待を受ける", d: 2 },
         { path: "ui/pages/o/[slug]/index.html",              label: "プロジェクト一覧", d: 2 },
+        { path: "ui/pages/o/[slug]/members/index.html",      label: "メンバー", d: 2 },
+        { path: "ui/pages/o/[slug]/settings/index.html",     label: "組織の設定", d: 2 },
         { path: "ui/pages/o/[slug]/dashboard/index.html",    label: "担当スレッド", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/index.html",      label: "スレッド一覧", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/t/[number]/index.html", label: "スレッド詳細", d: 2 },
@@ -105,6 +108,8 @@
       label: "先送りした課題",
       items: [
         { path: "issues/index.html",                          label: "課題の一覧" },
+        { path: "issues/account-settings/index.html",          label: "アカウントの設定", d: 2 },
+        { path: "issues/organization-signup/index.html",       label: "組織を自分で作る", d: 2 },
         { path: "issues/rejection-representation/index.html",  label: "却下の表現", d: 2 },
         { path: "issues/custom-workflow/index.html",           label: "状態のカスタマイズ", d: 2 },
         { path: "issues/thread-mutability/index.html",         label: "スレッドの可変性", d: 2 },
@@ -121,14 +126,14 @@
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 6,
+      sessionTotal: 8,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260907-1137-organization-members/index.html", label: "2026-09-07 組織とメンバー", d: 2 },
+        { path: "sessions/20260907-1050-permission-tests/index.html", label: "2026-09-07 権限判定のテスト", d: 2 },
         { path: "sessions/20260907-0148-deploy-incident/index.html", label: "2026-09-07 デプロイ障害", d: 2 },
         { path: "sessions/20260906-1428-toolchain/index.html", label: "2026-09-06 道具立て", d: 2 },
-        { path: "sessions/20260906-0815-deployment/index.html", label: "2026-09-06 デプロイ", d: 2 },
-        { path: "sessions/20260905-1709-authentication/index.html", label: "2026-09-05 認証", d: 2 },
-        { path: "sessions/20260905-1454-project-initialization/index.html", label: "2026-09-05 初期化", d: 2 }
+        { path: "sessions/20260906-0815-deployment/index.html", label: "2026-09-06 デプロイ", d: 2 }
       ]
     }
   ];

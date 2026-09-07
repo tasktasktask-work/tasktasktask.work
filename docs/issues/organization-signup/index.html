@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>組織を自分で作る | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 中</p>
+  <h1 class="title">組織を自分で作る</h1>
+
+  <h2>概要</h2>
+  <p>組織に人が増える経路は<a href="../../glossary.html#invitation">招待</a>だけで、
+  招待を送れるのは<a href="../../glossary.html#org-admin">組織管理者</a>だけである。
+  すると最初の組織管理者を作る手段が、画面のどこにも無い。</p>
+
+  <p>いまは手元の実行で作っている。</p>
+
+<pre><code>pnpm org:create --name "株式会社アクメ" --slug acme \
+                --admin someone@example.com --admin-name "佐藤 明日香"</code></pre>
+
+  <p>組織と、組織管理者としての所属と、ログイン用リンクを作って出力する。
+  出力されたリンクは、こちらから本人へ渡す。</p>
+
+  <h2>先送りとした理由</h2>
+  <p>誰でも組織を作れる状態にすると、その組織の費用を誰が持つのかという問いが立つ。
+  <a href="../billing/index.html">課金とプラン</a>が決まる前に入口だけ開けると、
+  作られた組織の扱いを後から決めることになる。</p>
+
+  <p>いまの利用者数では、手元の実行で足りている。
+  <strong>この手順が回らなくなる規模になったときが、作るときである。</strong></p>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>問い合わせから組織を作る回数が、週に何度も発生するようになったとき</li>
+    <li>料金の形が決まり、支払いの主体を組織に紐づけられるようになったとき</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+  <p>登録した人がその場で組織管理者になる。
+  <code>pnpm org:create</code> がやっていることと同じで、
+  違うのは実行する人だけである。</p>
+
+  <p>決めることが二つ残る。</p>
+
+  <ul>
+    <li><strong>slug の取り合い</strong> 早い者勝ちにするか、予約語を置くか。
+      <code>admin</code> や <code>login</code> のような語が取られると、後から URL を分けにくくなる</li>
+    <li><strong>捨てアドレスの扱い</strong> 誰でも作れる状態は、誰でも作り捨てられる状態でもある。
+      アドレスの確認を挟んでから組織を作る形にする</li>
+  </ul>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">参加は招待だけ</p></a>
+    <a class="card" href="../billing/index.html"><span class="card-no">ISSUE</span><p class="card-title">課金とプラン</p><p class="card-desc">先に決めたいこと</p></a>
+    <a class="card" href="../account-settings/index.html"><span class="card-no">ISSUE</span><p class="card-title">アカウントの設定</p><p class="card-desc">同じ経路で生じた課題</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / 組織を自分で作る</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

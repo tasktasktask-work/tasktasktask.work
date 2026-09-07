@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>メンバー | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock &#183; /o/{slug}/members</p>
+  <h1 class="title">メンバー</h1>
+  <p class="lede">
+    誰が同じ<a href="../../../../../glossary.html#organization">組織</a>にいるのかは、
+    メンションの相手を探すときにも要る。
+    だから一覧はメンバーなら誰でも見られる。
+    変えられるのは<a href="../../../../../glossary.html#org-admin">組織管理者</a>だけである。
+  </p>
+
+  <h2>組織管理者が見る画面</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/members</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="app-org">株式会社アクメ <span class="slug">acme</span></span>
+          <span class="sp"></span>
+          <span class="hanko sm">佐</span>
+          <button class="app-btn ghost">ログアウト</button>
+        </div>
+        <div class="app-shell">
+          <nav class="app-side">
+            <h5>プロジェクト</h5>
+            <a href="#">一覧</a>
+            <h5>組織</h5>
+            <a href="#" class="on">メンバー</a>
+            <a href="#">設定</a>
+          </nav>
+          <div class="app-main">
+            <div class="app-head">
+              <div><h2>メンバー</h2><div class="sub">株式会社アクメ / 4 人</div></div>
+            </div>
+
+            <form class="app-form" onsubmit="return false">
+              <div class="line">
+                <div class="auth-field" style="margin-bottom:0">
+                  <label for="mk-inv">招待するメールアドレス</label>
+                  <input id="mk-inv" type="email" placeholder="someone@example.com">
+                </div>
+                <div class="auth-field" style="margin-bottom:0;flex:0 1 10rem">
+                  <label for="mk-role">役割</label>
+                  <select id="mk-role"><option>メンバー</option><option>組織管理者</option></select>
+                </div>
+                <button class="app-btn" type="submit">招待を送る</button>
+              </div>
+            </form>
+
+            <div class="app-people">
+              <div class="app-person">
+                <span class="hanko sm">佐</span>
+                <span class="who"><span class="nm">佐藤 明日香</span><span class="ad">asuka.sato@example.com</span></span>
+                <form onsubmit="return false">
+                  <select><option>組織管理者</option><option>メンバー</option></select>
+                  <button class="app-btn ghost" type="submit">変更</button>
+                  <span class="ad" style="display:inline">あなた</span>
+                </form>
+                <form onsubmit="return false"><button class="app-btn ghost" type="submit">外す</button></form>
+              </div>
+              <div class="app-person">
+                <span class="hanko sm">田</span>
+                <span class="who"><span class="nm">田中 亮</span><span class="ad">ryo.tanaka@example.com</span></span>
+                <form onsubmit="return false">
+                  <select><option>メンバー</option><option>組織管理者</option></select>
+                  <button class="app-btn ghost" type="submit">変更</button>
+                </form>
+                <form onsubmit="return false"><button class="app-btn ghost" type="submit">外す</button></form>
+              </div>
+              <div class="app-person">
+                <span class="hanko sm">鈴</span>
+                <span class="who"><span class="nm">鈴木 千尋</span><span class="ad">chihiro@example.com</span></span>
+                <span class="app-role" title="パスワードでのログインを停止しています">ロック中</span>
+                <form onsubmit="return false">
+                  <select><option>メンバー</option><option>組織管理者</option></select>
+                  <button class="app-btn ghost" type="submit">変更</button>
+                </form>
+                <form onsubmit="return false"><button class="app-btn ghost" type="submit">外す</button></form>
+              </div>
+              <div class="app-person">
+                <span class="hanko sm">高</span>
+                <span class="who"><span class="nm">高橋 悠</span><span class="ad">yu.takahashi@partner.example.jp</span></span>
+                <form onsubmit="return false">
+                  <select><option>メンバー</option><option>組織管理者</option></select>
+                  <button class="app-btn ghost" type="submit">変更</button>
+                </form>
+                <form onsubmit="return false"><button class="app-btn ghost" type="submit">外す</button></form>
+              </div>
+            </div>
+
+            <div class="app-head" style="margin-top:2rem">
+              <div><h2>送った招待</h2><div class="sub">受け取られるまで、ここに残ります</div></div>
+            </div>
+
+            <div class="app-people">
+              <div class="app-person app-pending" data-expired="false">
+                <span class="who"><span class="nm">nao.kimura@example.com</span><span class="ad">佐藤 明日香 が招待</span></span>
+                <span class="app-role">メンバー</span>
+                <form onsubmit="return false"><button class="app-btn ghost" type="submit">取り消す</button></form>
+              </div>
+              <div class="app-person app-pending" data-expired="true">
+                <span class="who"><span class="nm">old.address@example.com</span><span class="ad">田中 亮 が招待 / 期限切れ</span></span>
+                <span class="app-role">メンバー</span>
+                <form onsubmit="return false"><button class="app-btn ghost" type="submit">取り消す</button></form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>メンバーが見る画面</h2>
+
+  <p>招待のフォームと、送った招待の一覧が消える。
+  役割は選択ではなく表示になる。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/members</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="app-org">株式会社アクメ <span class="slug">acme</span></span>
+          <span class="sp"></span>
+          <span class="hanko sm">田</span>
+          <button class="app-btn ghost">ログアウト</button>
+        </div>
+        <div class="app-shell">
+          <nav class="app-side">
+            <h5>プロジェクト</h5>
+            <a href="#">一覧</a>
+            <h5>組織</h5>
+            <a href="#" class="on">メンバー</a>
+          </nav>
+          <div class="app-main">
+            <div class="app-head">
+              <div><h2>メンバー</h2><div class="sub">株式会社アクメ / 4 人</div></div>
+            </div>
+            <div class="app-people">
+              <div class="app-person">
+                <span class="hanko sm">佐</span>
+                <span class="who"><span class="nm">佐藤 明日香</span></span>
+                <span class="app-role" data-role="admin">組織管理者</span>
+              </div>
+              <div class="app-person">
+                <span class="hanko sm">田</span>
+                <span class="who"><span class="nm">田中 亮</span></span>
+                <span class="app-role" data-role="member">メンバー</span>
+              </div>
+              <div class="app-person">
+                <span class="hanko sm">鈴</span>
+                <span class="who"><span class="nm">鈴木 千尋</span></span>
+                <span class="app-role" data-role="member">メンバー</span>
+              </div>
+              <div class="app-person">
+                <span class="hanko sm">高</span>
+                <span class="who"><span class="nm">高橋 悠</span></span>
+                <span class="app-role" data-role="member">メンバー</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="note decide">
+    <span class="note-label">メールアドレスは組織管理者にだけ出す</span>
+    <p>招待の重複や、誰を外すのかを確かめるのに要るのは管理する側だけである。
+    他のメンバーには表示名と役割があれば足りる。</p>
+    <p>出し分けは SQL の中で行う。
+    画面で絞る形にすると、その一箇所を忘れたときに漏れる。</p>
+  </div>
+
+  <h2>失敗は、その行に出す</h2>
+
+  <p>役割を変える操作は、ひとつだけ失敗しうる。
+  最後の<a href="../../../../../glossary.html#org-admin">組織管理者</a>を降ろそうとしたときである。</p>
+
+  <div class="mock">
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-people" style="max-width:34rem">
+        <div class="app-person">
+          <span class="hanko sm">佐</span>
+          <span class="who"><span class="nm">佐藤 明日香</span><span class="ad">asuka.sato@example.com</span></span>
+          <form onsubmit="return false">
+            <select><option>メンバー</option><option>組織管理者</option></select>
+            <button class="app-btn ghost" type="submit">変更</button>
+            <span class="err">組織管理者がいなくなります。先に別の人を組織管理者にしてください。</span>
+          </form>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>画面の上部にまとめて出すと、誰について起きたのかが分からなくなる。
+  この知らせは、まさにその一人についてのものである。</p>
+
+  <p>外す操作には確認を挟む。
+  外された人にはその組織の何も見えなくなり、戻す手段は招待し直すことだけである。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../../../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">決めたことの全体</p></a>
+    <a class="card" href="../settings/index.html"><span class="card-no">/o/{slug}/settings</span><p class="card-title">組織の設定</p><p class="card-desc">隣の画面</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / メンバー</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../../../sidebar.js" defer></script>
+</body>
+</html>

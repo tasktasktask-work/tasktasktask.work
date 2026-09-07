@@ -48,6 +48,41 @@ export async function listThreads(projectId: string) { ... }</code></pre>
   <p><a href="../../database/index.html">すべてのテーブルが <code>organization_id</code> を直接持つ</a>のは、
   この条件を結合なしで書けるようにするためである。</p>
 
+  <h2 id="trust">スコープに書いてある役割を、信用しない</h2>
+
+  <p><code>OrgScope</code> には <code>isOrgAdmin</code> が入っている。
+  所属から組み立てた値なので正しいが、正しさは組み立てた経路を通ったときだけ保証される。
+  呼ぶ側は好きな値のスコープを作れる。</p>
+
+  <div class="note decide">
+    <span class="note-label">規約</span>
+    <p><strong><code>scope.isOrgAdmin</code> は画面の出し分けにだけ使う。</strong>
+    書き込みの可否と、出す情報の絞り込みは、そのつど SQL の中で確かめる。</p>
+  </div>
+
+<pre><code>// #lib/db.ts が断片を持っている。引数の位置を渡して埋め込む
+export function orgAdminExists(orgParam: string, userParam: string): string;
+export function orgMemberExists(orgParam: string, userParam: string): string;
+
+// 良い例：更新できるかを SQL の側で決める
+await pool.query(
+  `UPDATE organizations
+      SET name = $3
+    WHERE id = $1 AND deleted_at IS NULL
+      AND ${orgAdminExists('$1', '$2')}`,
+  [scope.organizationId, scope.userId, name],
+);
+
+// 悪い例：呼ぶ側の申告で決める
+if (scope.isOrgAdmin) { await pool.query(`UPDATE organizations SET name = $2 ...`); }</code></pre>
+
+  <p>返す情報を絞るときも同じである。
+  メンバー一覧のメールアドレスは <code>CASE WHEN ... THEN u.email ELSE NULL END</code> で出し分ける。
+  呼ぶ側で絞る形にすると、その一箇所を忘れたときに漏れる。</p>
+
+  <p>この「信用しない」は、偽ったスコープを渡すテストで固定してある
+  （<code>tests/organization.test.ts</code> の <code>fakedAdminScope</code>）。</p>
+
   <h2>閲覧できるかの判定を一箇所に置く</h2>
 
   <p><a href="../../glossary.html#private-project">非公開プロジェクト</a>の判定は、
@@ -137,13 +172,24 @@ SELECT EXISTS (SELECT 1 FROM ancestors WHERE id = $2) AS would_cycle;</code></pr
   <p>行数の下限は CHECK では書けない。
   役割を変更するときと、メンバーを外すときの両方で確認する。</p>
 
-<pre><code>-- 同じトランザクションの中で、外したあとに管理者が残るかを見る
-SELECT count(*) &gt; 0 AS has_admin
+  <p>ただし、数えてから変えるまでのあいだが空く。
+  二人の管理者が同時に互いを降ろすと、どちらも「自分のほかにもう一人いる」と読んで通る。
+  <strong>先に管理者の行を掴んでから数える。</strong></p>
+
+<pre><code>-- 同じトランザクションの中で、先に鍵をかけてから数える
+SELECT user_id
   FROM organization_members
  WHERE organization_id = $1
    AND role = 'admin'
    AND deleted_at IS NULL
-   AND user_id &lt;&gt; $2;</code></pre>
+ ORDER BY user_id
+   FOR UPDATE;</code></pre>
+
+  <p>二つめの要求は、一つめが終わるまで待つ。
+  管理者が増える側は待たせない。増えるぶんには下限を割らないためである。</p>
+
+  <p>掴んだ行の中に自分がいるかどうかで、操作してよいかも同時に決まる。
+  役割の確認と、数の確認と、順番待ちが、この一本にまとまっている。</p>
 
   <p>これを怠ると、組織が誰にも操作できない状態になる。
   復旧にはデータベースへの直接の介入が要る。</p>

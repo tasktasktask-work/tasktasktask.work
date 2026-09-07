@@ -7,12 +7,8 @@ import { z } from 'zod';
 import { createSession, destroySession } from './cookie.ts';
 import { requestMagicLink } from './magic-link.ts';
 import { sendAccountLocked } from './mail.ts';
-import {
-  hashPassword,
-  MIN_PASSWORD_LENGTH,
-  verifyPassword,
-  wasteTimeLikeVerifying,
-} from './password.ts';
+import { hashPassword, verifyPassword, wasteTimeLikeVerifying } from './password.ts';
+import { MIN_PASSWORD_LENGTH } from './policy.ts';
 import { clearLoginFailures, findUserByEmail, isLocked, recordFailedLogin } from './queries.ts';
 import { safeReturnTo } from './return-to.ts';
 

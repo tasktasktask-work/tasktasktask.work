@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アカウントの設定 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 中</p>
+  <h1 class="title">アカウントの設定</h1>
+
+  <h2>概要</h2>
+  <p>いま自分について変えられるものが何もない。
+  表示名も、パスワードも、メール通知の受け取りも、登録したあとは固定である。</p>
+
+  <p>登録の経路によっては、そもそも設定されていないものがある。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>入り方</th><th>パスワード</th><th>表示名</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><a href="../../glossary.html#invitation">招待</a>から登録</td><td>そのとき決める</td><td>そのとき決める</td></tr>
+      <tr><td class="nowrap"><code>pnpm org:create</code></td><td><strong>設定されない</strong></td><td>引数で決まる</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>下の行で作られた人は、<a href="../../glossary.html#magic-link">マジックリンク</a>でしか入れない。
+  入れはするので止まりはしないが、パスワードを持てないままである。</p>
+
+  <h2>先送りとした理由</h2>
+  <p>マジックリンクがあるので、誰も締め出されない。
+  パスワードを持たない人も、忘れた人も、
+  <a href="../../glossary.html#account-lock">ロック</a>された人も、同じリンクで入れる。</p>
+
+  <p><strong>この機能が無いことで、できなくなる操作が一つもない。</strong>
+  組織とプロジェクトのほうが先に要る。</p>
+
+  <h2>実装するとしたら</h2>
+  <p><code>/settings</code> に置く。組織の下ではない。
+  ひとりが複数の組織に所属するので、
+  <code>/o/{slug}/</code> の下に置くと、どの組織で変えたのかという問いが生まれる。</p>
+
+  <ul>
+    <li><strong>表示名</strong> 変えるとすべての組織での表示が変わる。それでよい</li>
+    <li><strong>パスワード</strong> 現在のパスワードを要求する。持っていない人には要求しない</li>
+    <li><strong>メール通知</strong> <code>users.email_notifications_enabled</code> の切り替え</li>
+    <li><strong>メールアドレス</strong> 変更後のアドレスへ確認のリンクを送ってから差し替える</li>
+  </ul>
+
+  <p>メールアドレスの変更だけは扱いが重い。
+  アドレスは<a href="../../glossary.html#invitation">招待</a>の宛先であり、ログインの識別子でもある。
+  確認を挟まずに変えられると、乗っ取りの経路になる。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/authentication/index.html"><span class="card-no">FEATURE</span><p class="card-title">認証</p><p class="card-desc">パスワードとマジックリンク</p></a>
+    <a class="card" href="../../database/users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">変える対象の列</p></a>
+    <a class="card" href="../organization-signup/index.html"><span class="card-no">ISSUE</span><p class="card-title">組織を自分で作る</p><p class="card-desc">同じ経路で生じた課題</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / アカウントの設定</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

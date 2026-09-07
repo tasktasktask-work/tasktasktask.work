@@ -1,14 +1,13 @@
 import { hash, verify } from '@node-rs/argon2';
+import { MIN_PASSWORD_LENGTH } from './policy.ts';
 
 /*
  * パスワードの取り扱い。
  *
- * 文字種を強制しないのは、記号や数字を必須にすると
- * Password1! のような、規則を満たすだけの推測しやすい文字列に流れるためである。
- * 長さだけを条件にするほうが結果として強い。
+ * 決まりごと（最短の長さ）は policy.ts にある。
+ * この拡張はブラウザ側の束に入れられないので、
+ * 画面から参照したい値をここに置かない。
  */
-
-export const MIN_PASSWORD_LENGTH = 8;
 
 /*
  * algorithm を指定していないのは、@node-rs/argon2 の既定が Argon2id だからである。

@@ -81,6 +81,21 @@ CREATE UNIQUE INDEX invitations_pending_uniq
   同じアカウントが複数の組織に所属する形になる。</p>
 
   <div class="note warn">
+    <span class="note-label">すでにアカウントがある人には、パスワードを訊かない</span>
+    <p>訊いて上書きできると、<strong>招待リンクを踏ませるだけで他人のパスワードを書き換えられる</strong>。
+    受諾で変わるのは、所属と、<a href="../../glossary.html#account-lock">ロック</a>の状態と、ログイン中のアカウントだけである。</p>
+    <p>表示名も同じ理由で変えない。</p>
+  </div>
+
+  <p>一度外れた人を呼び戻したときは、畳んである
+  <a href="../organization_members/index.html">organization_members</a> の行を起こさず、新しい行を足す。
+  入って抜けてを繰り返した人には畳んだ行が何本も並んでいて、
+  まとめて起こすと生きた行が二本になり、部分一意索引に当たる。</p>
+
+  <p>受諾は、その画面を開いた時点では起きない。
+  リンクを先読みするメールソフトに、勝手に消費させないためである。</p>
+
+  <div class="note warn">
     <span class="note-label">有効期間48時間の帰結</span>
     <p>招待は「まだこのサービスを知らない人」に届く。
     マジックリンクのように受け手が待っている状況ではない。
@@ -108,7 +123,7 @@ users （送った人）─────┤
 
   <div class="sheet-foot">
     <span>データベース / invitations</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

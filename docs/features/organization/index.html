@@ -85,10 +85,131 @@
   選べる値が一つしかなくても、列とインタフェースを後から足すほうが高くつくからである。
   実際に複数の値を扱えるようにする作業は<a href="../../issues/i18n/index.html">多言語対応</a>に送った。</p>
 
+  <h2>最初の組織管理者は、外から作る</h2>
+
+  <p>参加が招待だけで、招待を送れるのが組織管理者だけだと、
+  最初のひとりを作る手段が画面のどこにも無い。</p>
+
+<pre><code>pnpm org:create --name "株式会社アクメ" --slug acme \
+                --admin someone@example.com --admin-name "佐藤 明日香"</code></pre>
+
+  <p>組織と、組織管理者としての所属と、ログイン用リンクを作って出力する。
+  パスワードはこの経路では設定しないので、受け取った人はまずマジックリンクで入る。</p>
+
+  <p>誰でも組織を作れる入口は、料金の形が決まってからにしたい。
+  <a href="../../issues/organization-signup/index.html">組織を自分で作る</a>として先送りにしてある。</p>
+
+  <h2>組織のスコープ</h2>
+
+  <p>組織はデータの境界なので、条件から <code>organization_id</code> が落ちれば他社のデータが混ざる。
+  「書き忘れないようにする」では守れないため、書かなければ何も引けない形にしてある。</p>
+
+  <p><code>/o/{slug}/...</code> のページは、まず URL の slug から
+  <a href="../../glossary.html#org-scope">組織のスコープ</a>を組み立てる。
+  データにさわる関数はすべてこれを第一引数に取るので、
+  スコープが取れなければその先へ進めない。</p>
+
+  <div class="note decide">
+    <span class="note-label">存在しない slug と、所属していない組織を区別しない</span>
+    <p>どちらも 404 を返す。
+    「その組織はあるが、あなたは所属していない」と答えると、
+    slug を総当たりして他社の存在と名前を確かめられる。</p>
+  </div>
+
+  <p>未ログインのときは、そのURLのままログイン画面を出す。
+  <code>/login</code> へは送らない。</p>
+
+  <h2>権限は、SQL の中で確かめる</h2>
+
+  <p>スコープには <code>isOrgAdmin</code> が入っているが、
+  これは<strong>画面の出し分けにしか使わない</strong>。
+  呼ぶ側は好きな値のスコープを組み立てられるからである。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>操作</th><th>どこで確かめるか</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">招待を送る、取り消す</td><td>SQL の中で組織管理者かどうかを見る</td></tr>
+      <tr><td class="nowrap">役割を変える、メンバーを外す</td><td>掴んだ管理者の行に自分がいるかで見る</td></tr>
+      <tr><td class="nowrap">組織名を変える</td><td><code>UPDATE</code> の <code>WHERE</code> に条件を入れる</td></tr>
+      <tr><td class="nowrap">メンバーのメールアドレス</td><td><code>CASE WHEN</code> で出し分ける</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>メールアドレスを組織管理者にしか返さないのは、
+  招待の重複や、誰を外すのかを確かめるのに要るのが管理する側だけだからである。
+  他のメンバーには表示名と役割があれば足りる。</p>
+
+  <h2>最後の組織管理者は降ろせない</h2>
+
+  <p>組織管理者がいなくなると、その組織は設定もメンバーも触れなくなる。
+  中の誰にも戻す手段がない。</p>
+
+  <p>行数の下限は <code>CHECK</code> で書けないので、アプリケーション側で守る。
+  素朴に数えると、二人の管理者が同時に互いを降ろしたときに抜ける。
+  どちらも「自分のほかにもう一人いる」と読むためである。</p>
+
+<pre><code>SELECT user_id
+  FROM organization_members
+ WHERE organization_id = $1 AND role = 'admin' AND deleted_at IS NULL
+ ORDER BY user_id
+   FOR UPDATE</code></pre>
+
+  <p>先に管理者の行を掴んでから数える。
+  二つめの要求は、一つめが終わるまで待つ。
+  管理者が増える側は待たせない。増えるぶんには下限を割らないためである。</p>
+
+  <h2>招待を受けるとき</h2>
+
+  <p>招待リンクは、招待されたメールボックスにしか届かない。
+  開けたこと自体が、そのアドレスの持ち主である証拠になる。
+  <a href="../../glossary.html#magic-link">マジックリンク</a>と同じ性質なので、有効期間も48時間で揃えてある。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>状況</th><th>することと、しないこと</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">アカウントが無い</td><td>表示名とパスワードを訊いて作る</td></tr>
+      <tr><td class="nowrap">アカウントがある</td><td><strong>パスワードも表示名も訊かない</strong>。所属を足すだけ</td></tr>
+      <tr><td class="nowrap"><a href="../../glossary.html#account-lock">ロック</a>されている</td><td>ロックを解く。マジックリンクと同じ扱いにする</td></tr>
+      <tr><td class="nowrap">一度外れた人</td><td>畳んだ行は起こさず、新しい行を足す</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">すでにアカウントがある人には、パスワードを訊かない</span>
+    <p>訊いて上書きできると、<strong>招待リンクを踏ませるだけで他人のパスワードを書き換えられる</strong>。
+    受諾したときに変わるのは、所属と、ロックの状態と、ログイン中のアカウントだけである。</p>
+  </div>
+
+  <p>受諾の画面は、開いただけでは何も変えない。
+  リンクを先読みするメールソフトに、勝手に受諾させないためである。</p>
+
+  <p>受諾すると、別のアカウントでログインしていても招待された側へ切り替わる。
+  一度外れた人を呼び戻したときは、畳んである行を起こさずに新しい行を足す。
+  入って抜けてを繰り返した人には畳んだ行が何本も並んでいて、
+  まとめて起こすと生きた行が二本になるためである。</p>
+
+  <h2>メンバーを外すと何が起きるか</h2>
+
+  <p>所属を切れば、その組織の何も見えなくなる。
+  <a href="../project/index.html">閲覧できるプロジェクトの判定</a>が、
+  所属をいちばん外側で確かめているためである。</p>
+
+  <p>それでも <code>project_members</code> の行を一緒に畳んでいる。
+  意味を失った行を残さないためで、権限のためではない。
+  権限が行の後片付けに依存する形は、
+  <a href="../../sessions/20260907-1050-permission-tests/index.html">一度そこで漏れを作っている</a>。</p>
+
   <h2>関連する画面</h2>
   <div class="cards">
     <a class="card" href="../../ui/pages/o/[slug]/index.html"><span class="card-no">/o/{slug}</span><p class="card-title">プロジェクト一覧</p><p class="card-desc">組織に入って最初に見る画面</p></a>
-    <a class="card" href="../../ui/pages/login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">招待からの登録もここへ着地する</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/members/index.html"><span class="card-no">/o/{slug}/members</span><p class="card-title">メンバー</p><p class="card-desc">一覧、役割、招待</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/settings/index.html"><span class="card-no">/o/{slug}/settings</span><p class="card-title">組織の設定</p><p class="card-desc">組織管理者だけが開ける</p></a>
+    <a class="card" href="../../ui/pages/join/index.html"><span class="card-no">/join</span><p class="card-title">招待を受ける</p><p class="card-desc">メールのリンクの着地点</p></a>
+    <a class="card" href="../../ui/pages/login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">組織の一覧へ着地する</p></a>
   </div>
 
   <h2>関連するテーブル</h2>
@@ -100,7 +221,7 @@
 
   <div class="sheet-foot">
     <span>機能 / 組織とメンバー</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

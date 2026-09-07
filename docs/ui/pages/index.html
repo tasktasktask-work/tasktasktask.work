@@ -21,8 +21,12 @@
   </p>
 
   <h2>URL の構造</h2>
-<pre class="figure">/login                                  ログインと招待の受諾
+<pre class="figure">/                                       所属している組織の一覧
+/login                                  ログイン
+/join?token=...                         招待の受諾
 /o/{slug}                               プロジェクト一覧
+/o/{slug}/members                       メンバーと招待
+/o/{slug}/settings                      組織の設定（組織管理者だけ）
 /o/{slug}/dashboard                     担当スレッドと通知
 /o/{slug}/p/{key}                       スレッド一覧
 /o/{slug}/p/{key}/gantt                 ガントチャート
@@ -38,7 +42,10 @@
   <h2>画面</h2>
   <div class="cards">
     <a class="card" href="login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">パスワードとマジックリンクを一枚に</p></a>
+    <a class="card" href="join/index.html"><span class="card-no">/join</span><p class="card-title">招待を受ける</p><p class="card-desc">アカウントの有無で入力欄が変わる</p></a>
     <a class="card" href="o/[slug]/index.html"><span class="card-no">/o/{slug}</span><p class="card-title">プロジェクト一覧</p><p class="card-desc">組織に入って最初に見る</p></a>
+    <a class="card" href="o/[slug]/members/index.html"><span class="card-no">/members</span><p class="card-title">メンバー</p><p class="card-desc">一覧、役割、招待</p></a>
+    <a class="card" href="o/[slug]/settings/index.html"><span class="card-no">/settings</span><p class="card-title">組織の設定</p><p class="card-desc">組織管理者だけが開ける</p></a>
     <a class="card" href="o/[slug]/dashboard/index.html"><span class="card-no">/dashboard</span><p class="card-title">担当スレッド</p><p class="card-desc">プロジェクトをまたいで集める</p></a>
     <a class="card" href="o/[slug]/p/[key]/index.html"><span class="card-no">/p/{key}</span><p class="card-title">スレッド一覧</p><p class="card-desc">平らに並べて絞り込む</p></a>
     <a class="card" href="o/[slug]/p/[key]/gantt/index.html"><span class="card-no">/gantt</span><p class="card-title">ガントチャート</p><p class="card-desc">階層表示、読み取り専用</p></a>

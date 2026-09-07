@@ -43,10 +43,7 @@ export function LoginForm() {
       <div className="tag">issue &amp; discussion tracker</div>
 
       {notice ? (
-        <div
-          className={isError ? 'note warn' : 'note ok'}
-          style={{ marginBottom: '1.2rem', maxWidth: 'none' }}
-        >
+        <div className={isError ? 'app-note warn' : 'app-note ok'}>
           <p style={{ margin: 0 }}>{notice}</p>
         </div>
       ) : null}

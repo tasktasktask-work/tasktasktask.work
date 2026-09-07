@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>組織とメンバーを実装した | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-07 11:37</p>
+  <h1 class="title">組織とメンバーを実装した</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    認証は済んでいるので、ログインはできる。
+    ところが入った先には何もない。
+    <a href="../../glossary.html#organization">組織</a>がなければプロジェクトも置けないので、次はここになる。
+  </p>
+
+  <h2>最初のひとりは、どこから来るのか</h2>
+
+  <p>組織に人が増える経路は<a href="../../glossary.html#invitation">招待</a>だけだと決めてある。
+  招待を送れるのは組織管理者だけである。
+  すると、最初の組織管理者を作る手段が画面のどこにもない。</p>
+
+  <p>自分で組織を作れる入口を付ける手はある。
+  ただし誰でも作れる状態は、料金の話が決まっていない今は早い。
+  <a href="../../issues/billing/index.html">課金とプラン</a>を決めてから作る入口にしたい。</p>
+
+  <p>そこで、最初のひとりだけは手元の実行で作る。</p>
+
+<pre><code>pnpm org:create --name "株式会社アクメ" --slug acme \
+                --admin someone@example.com --admin-name "佐藤 明日香"</code></pre>
+
+  <p>組織と、組織管理者としての所属と、ログイン用リンクを作って出力する。
+  パスワードはこの経路では設定しない。
+  受け取った人がリンクで入り、あとから決める。</p>
+
+  <div class="note">
+    <span class="note-label">パスワードを設定する画面がまだない</span>
+    <p>この経路で作られたアカウントは、当面<a href="../../glossary.html#magic-link">マジックリンク</a>でしか入れない。
+    表示名も変えられない。
+    <a href="../../issues/account-settings/index.html">アカウントの設定</a>として先送りにした。</p>
+  </div>
+
+  <h2>スコープが無ければ、何も引けない</h2>
+
+  <p>組織はデータの境界である。
+  条件から <code>organization_id</code> が落ちれば、他社のデータが混ざる。</p>
+
+  <p>「書き忘れないようにする」では守れないので、書かなければ何も引けない形にした。
+  <code>/o/{slug}/...</code> のページは、まず URL の slug から
+  <a href="../../glossary.html#org-scope">組織のスコープ</a>を組み立てる。</p>
+
+<pre><code>const found = await currentScope(slug);
+if (!found.ok) {
+  return found.anonymous ? &lt;LoginScreen /&gt; : notFound();
+}</code></pre>
+
+  <p>スコープが取れなければ、その先のクエリに渡す第一引数が無い。
+  データにさわる関数はすべて <code>OrgScope</code> を第一引数に取るので、
+  型の側から通れない。</p>
+
+  <div class="note decide">
+    <span class="note-label">存在しない slug と、所属していない組織を区別しない</span>
+    <p>どちらも 404 を返す。
+    「その組織はあるが、あなたは所属していない」と答えると、
+    slug を総当たりして他社の存在と名前を確かめられる。</p>
+  </div>
+
+  <p>未ログインのときは、そのURLのままログイン画面を出す。
+  <code>/login</code> へは送らない。
+  <code>/o/acme/members</code> を開いた人は、そのURLでログインしてそのまま着地する。</p>
+
+  <h2>スコープに書いてある役割を、信用しない</h2>
+
+  <p><code>OrgScope</code> には <code>isOrgAdmin</code> が入っている。
+  非公開プロジェクトの閲覧判定に使うためである。</p>
+
+  <p>この値は所属から組み立てたものなので、正しい。
+  ただし正しさは、組み立てた経路を通ったときだけ保証される。
+  呼ぶ側は好きな値のスコープを作れる。</p>
+
+  <div class="note warn">
+    <span class="note-label">画面に出さないことは、防御ではない</span>
+    <p>役割を変える、メンバーを外す、招待を送る、組織名を変える。
+    どれも <strong>SQL の中で組織管理者かどうかを確かめる</strong>。
+    <code>scope.isOrgAdmin</code> は画面の出し分けにしか使わない。</p>
+    <p>メンバー一覧のメールアドレスも同じで、
+    <code>CASE WHEN EXISTS (...組織管理者...)</code> で出し分けている。
+    呼ぶ側が絞る形にすると、その一箇所を忘れたときに漏れる。</p>
+  </div>
+
+  <p>この「信用しない」を、偽ったスコープを渡すテストで固定した。
+  <code>isOrgAdmin: true</code> と書いたスコープをメンバーの id で渡しても、
+  役割は変わらず、メールアドレスも返らない。</p>
+
+  <p>判定の条件そのものは
+  <a href="../20260907-1050-permission-tests/index.html">前のセッションで一箇所にまとめた</a>ものを、
+  <code>orgMemberExists()</code> と <code>orgAdminExists()</code> という断片に切り出して使い回している。
+  同じ条件を書き写す場所を、これ以上増やさないためである。</p>
+
+  <h2>最後の組織管理者を、降ろせなくする</h2>
+
+  <p>組織管理者が一人もいなくなると、その組織は設定もメンバーも触れなくなる。
+  中の誰にも戻す手段がない。</p>
+
+  <p>行数の下限は <code>CHECK</code> で書けないので、アプリケーション側で守る。
+  素朴に数えて判定すると、二人の管理者が同時に互いを降ろしたときに抜ける。
+  どちらも「自分のほかにもう一人いる」と読むためである。</p>
+
+<pre><code>SELECT user_id
+  FROM organization_members
+ WHERE organization_id = $1 AND role = 'admin' AND deleted_at IS NULL
+ ORDER BY user_id
+   FOR UPDATE</code></pre>
+
+  <p>先に管理者の行を掴んでから数える。
+  二つめの要求は、一つめが終わるまで待つ。
+  管理者が増える側は待たせない。
+  増えるぶんには下限を割らないためである。</p>
+
+  <p>掴んだ行の中に自分がいるかどうかで、操作の可否も同時に決まる。
+  役割の確認と、数の確認と、順番待ちが、この一本にまとまっている。</p>
+
+  <h2>招待を受けるとき</h2>
+
+  <p>招待リンクは、招待されたメールボックスにしか届かない。
+  開けたこと自体が、そのアドレスの持ち主である証拠になる。
+  マジックリンクと同じ性質なので、有効期間も48時間で揃えてある。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>状況</th><th>することと、しないこと</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">アカウントが無い</td><td>表示名とパスワードを訊いて作る</td></tr>
+      <tr><td class="nowrap">アカウントがある</td><td><strong>パスワードも表示名も訊かない</strong>。所属を足すだけ</td></tr>
+      <tr><td class="nowrap">ロックされている</td><td>ロックを解く。マジックリンクと同じ扱いにする</td></tr>
+      <tr><td class="nowrap">一度外れた人</td><td>畳んだ行は起こさず、新しい行を足す</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>二行目が大事なところである。
+  すでにアカウントがある人にパスワードを訊いて上書きできると、
+  <strong>招待リンクを踏ませるだけで他人のパスワードを書き換えられる</strong>。
+  訊かない形にしてある。</p>
+
+  <p>四行目は、入って抜けてを繰り返した人のためである。
+  畳んである行をまとめて起こすと、生きた行が二本になって部分一意索引に当たる。
+  過去の所属は記録として残し、新しい所属は新しい行にする。</p>
+
+  <p>受諾の画面は、開いただけでは何も変えない。
+  リンクを先読みするメールソフトに、勝手に受諾させないためである。</p>
+
+  <h2>作ったもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>場所</th><th>中身</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>queries.ts</code></td><td>スコープの組み立て、メンバー一覧、役割、外す、組織名</td></tr>
+      <tr><td class="nowrap"><code>invitations.ts</code></td><td>招待の発行、一覧、取り消し、確認、受諾</td></tr>
+      <tr><td class="nowrap"><code>scope.ts</code></td><td>ページとスコープの橋渡し</td></tr>
+      <tr><td class="nowrap"><code>actions.ts</code></td><td>Server Actions。slug からスコープを組み立て直す</td></tr>
+      <tr><td class="nowrap"><code>mail.ts</code></td><td>招待メールの文面</td></tr>
+      <tr><td class="nowrap">画面</td><td><code>/</code>、<code>/o/{slug}</code>、<code>/o/{slug}/members</code>、<code>/o/{slug}/settings</code>、<code>/join</code></td></tr>
+      <tr><td class="nowrap">テスト</td><td><code>tests/organization.test.ts</code> に45件</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>フォームから届く <code>organization_id</code> は使わない。
+  Server Action は slug を受け取り、そこからスコープを組み立て直す。
+  他社の id を書いたフォームを投げても、所属していなければ何も起きない。</p>
+
+  <h2>あわせて直したこと</h2>
+
+  <p>画面で使っていた <code>.app-frame</code> と <code>.app-empty</code> が、どこにも定義されていなかった。
+  ログイン画面の知らせに使っていた <code>.note</code> は
+  <code>docs/theme.css</code> にしかなく、製品側では効いていない。</p>
+
+  <p>共有ブロックへ <code>.app-note</code> として入れ直し、
+  メンバー一覧のための <code>.app-people</code> と、小さなフォームのための <code>.app-form</code> を足した。
+  意匠の正本は <code>docs/theme.css</code> なので、そちらに書いて <code>pnpm styles:sync</code> で写している。</p>
+
+  <p>ドキュメント10ファイルの表題と柱に、以前の呼び名が残っていた。
+  <a href="../../index.html">TASK3</a> に揃えた。</p>
+
+  <h2>次にやること</h2>
+
+  <p>プロジェクトである。
+  <code>/o/{slug}</code> はいま空の枠を出しているだけで、そこに一覧が並ぶ。
+  作成、公開と非公開の切り替え、非公開のメンバー管理、アーカイブ。
+  閲覧の判定はもう固めてあるので、それを使う側を作ることになる。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">SESSIONS</span><p class="card-title">セッション履歴</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">決めたことの全体</p></a>
+    <a class="card" href="../20260907-1050-permission-tests/index.html"><span class="card-no">SESSION</span><p class="card-title">権限判定のテスト</p><p class="card-desc">この実装が使う判定を固めたとき</p></a>
+    <a class="card" href="../../issues/account-settings/index.html"><span class="card-no">ISSUE</span><p class="card-title">アカウントの設定</p><p class="card-desc">先送りにしたこと</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-07 組織とメンバー</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

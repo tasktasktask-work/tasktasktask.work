@@ -100,6 +100,34 @@ export type OrgScope = {
 };
 
 /**
+ * その人が組織に所属していることを確かめる断片。
+ *
+ * 引数の位置を渡して埋め込む。SQL の断片を組み立てているが、
+ * 受け取るのはプレースホルダの番号か列名だけで、利用者の入力は通らない。
+ *
+ * 関数にしてあるのは、埋め込む先ごとに引数の位置が変わるためである。
+ * 同じ条件を各所に書き写すと、片方だけ直したときに穴が開く。
+ * 実際に一度開けた（docs/sessions/20260907-1050-permission-tests/index.html）。
+ */
+export function orgMemberExists(orgParam: string, userParam: string): string {
+  return `EXISTS (
+        SELECT 1 FROM organization_members om
+         WHERE om.organization_id = ${orgParam}
+           AND om.user_id = ${userParam}
+           AND om.deleted_at IS NULL)`;
+}
+
+/** 組織管理者であることを確かめる断片。使い方は orgMemberExists と同じ。 */
+export function orgAdminExists(orgParam: string, userParam: string): string {
+  return `EXISTS (
+        SELECT 1 FROM organization_members om
+         WHERE om.organization_id = ${orgParam}
+           AND om.user_id = ${userParam}
+           AND om.role = 'admin'
+           AND om.deleted_at IS NULL)`;
+}
+
+/**
  * 閲覧できるプロジェクトの id を返す副問い合わせ。
  *
  * 組織の所属、公開設定、プロジェクトメンバー、組織管理者。
@@ -123,11 +151,7 @@ export const VISIBLE_PROJECT_IDS = `
       * 非公開プロジェクトが見えてしまう。
       * 外すときに両方を消す、という規律に頼らずに済ませる。
       */
-     AND EXISTS (
-        SELECT 1 FROM organization_members om
-         WHERE om.organization_id = p.organization_id
-           AND om.user_id = $2
-           AND om.deleted_at IS NULL)
+     AND ${orgMemberExists('p.organization_id', '$2')}
      AND (
        p.visibility = 'public'
        OR EXISTS (
@@ -135,12 +159,7 @@ export const VISIBLE_PROJECT_IDS = `
            WHERE pm.project_id = p.id
              AND pm.user_id = $2
              AND pm.deleted_at IS NULL)
-       OR EXISTS (
-          SELECT 1 FROM organization_members om
-           WHERE om.organization_id = p.organization_id
-             AND om.user_id = $2
-             AND om.role = 'admin'
-             AND om.deleted_at IS NULL)
+       OR ${orgAdminExists('p.organization_id', '$2')}
      )`;
 
 /* ==========================================================================

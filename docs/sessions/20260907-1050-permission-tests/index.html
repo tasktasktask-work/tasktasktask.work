@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>辞めた人に、非公開プロジェクトが見えていた | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-07 10:50</p>
+  <h1 class="title">辞めた人に、非公開プロジェクトが見えていた</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    画面をひとつも作らないうちに、権限の判定だけ先にテストで固めておこうと考えた。
+    実装が増えてからでは、あとから振る舞いを変えにくくなる。
+    そのつもりで書き始めたのだが、固める前の振る舞いのほうに穴があった。
+  </p>
+
+  <h2>判定はどこにあるか</h2>
+
+  <p>閲覧できる<a href="../../glossary.html#project">プロジェクト</a>の判定は、
+  <code>src/lib/db.ts</code> の <code>VISIBLE_PROJECT_IDS</code> という副問い合わせにだけ書いてある。
+  一覧も詳細もガントも、この一本を <code>IN (...)</code> の中に差し込んで使う。</p>
+
+  <p>見るべきものは四つある。
+  組織に所属しているか、そのプロジェクトが公開か、<a href="../../database/project_members/index.html">プロジェクトメンバー</a>か、
+  <a href="../../glossary.html#org-admin">組織管理者</a>か。
+  この四つを各所に書き写すと、どこかで一つ落ちる。
+  だから一箇所にまとめてある。</p>
+
+  <h2>まとめてあっても、中では散っていた</h2>
+
+  <p>直す前の形はこうだった。</p>
+
+<pre><code>WHERE p.organization_id = $1
+  AND p.deleted_at IS NULL
+  AND (
+    (p.visibility = 'public' AND EXISTS (...組織メンバー...))
+    OR EXISTS (...project_members...)
+    OR EXISTS (...組織管理者...)
+  )</code></pre>
+
+  <p>三つの枝のうち、一つめと三つめは組織の所属を見ている。
+  二つめだけが見ていない。</p>
+
+  <div class="note warn">
+    <span class="note-label">組織から外しても、プロジェクトの行が残っていれば見える</span>
+    <p>組織からメンバーを外す操作は <code>organization_members.deleted_at</code> を埋める。
+    <code>project_members</code> の行はそのままである。</p>
+    <p>すると二つめの枝が通る。
+    <strong>組織を離れた人に、非公開プロジェクトが見え続ける。</strong></p>
+  </div>
+
+  <p>実際にそうなるのかを、使い捨ての手順で確かめた。
+  組織から外した利用者に対して非公開プロジェクトが返ってくる。
+  推測ではなかった。</p>
+
+  <h2>直した形</h2>
+
+  <p>所属の確認を、枝の中から最も外側へ移した。</p>
+
+<pre><code>WHERE p.organization_id = $1
+  AND p.deleted_at IS NULL
+  AND EXISTS (...組織メンバー...)      -- ここへ出した
+  AND (
+    p.visibility = 'public'
+    OR EXISTS (...project_members...)
+    OR EXISTS (...組織管理者...)
+  )</code></pre>
+
+  <p>「外すときは両方の行を消す」という規律でも塞げる。
+  ただしその規律は、消す処理を書く人が毎回思い出さないと保てない。
+  条件の側で成り立たせておけば、思い出さなくてよい。</p>
+
+  <div class="note decide">
+    <span class="note-label">組織が境界であることを、条件の形で示す</span>
+    <p>組織はデータの境界である。
+    境界の確認が、三つある枝のうちの二つに書かれている状態は、
+    それ自体が「境界ではない何か」に見える。</p>
+    <p>いちばん外側に一度だけ書くと、読んだ人にも同じ意味で伝わる。</p>
+  </div>
+
+  <h2>固めた振る舞い</h2>
+
+  <p><code>tests/permission.test.ts</code> に14件。
+  副問い合わせを直接叩くものと、<code>listThreads</code> を通すものの両方を置いた。
+  副問い合わせが正しくても、使う側が差し込み忘れれば漏れるためである。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>群</th><th>固定したこと</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">公開プロジェクト</td><td>組織メンバーには見える。属さない人と別組織の人には見えない</td></tr>
+      <tr><td class="nowrap">非公開プロジェクト</td><td>メンバーというだけでは見えない。<code>project_members</code> なら見える。組織管理者は無条件で見える</td></tr>
+      <tr><td class="nowrap">組織から外れた人</td><td>公開も見えない。<strong><code>project_members</code> が残っていても非公開は見えない</strong>。管理者だった人も見えない</td></tr>
+      <tr><td class="nowrap">プロジェクトの状態</td><td><a href="../../glossary.html#archive">アーカイブ</a>済みは見える。<a href="../../glossary.html#soft-delete">論理削除</a>は組織管理者にも見えない</td></tr>
+      <tr><td class="nowrap">組織の取り違え</td><td>複数の組織に属していても混ざらない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>あわせて、スコープの <code>isOrgAdmin</code> を <code>true</code> に偽って渡しても結果が変わらないことを固定した。
+  判定はデータベースの側で行われていて、呼ぶ側の申告では動かない。</p>
+
+  <h2>テストが本当に落ちるかを確かめた</h2>
+
+  <p>直したあとに書いたテストは、直したコードに対しては当然通る。
+  通ることは、漏れを捕まえられる証拠にならない。</p>
+
+  <p>そこで直す前の条件へ一時的に戻して、同じテストを流した。</p>
+
+<pre><code>直す前の SQL: 辞めた人に非公開が ★ 見える
+直した後の SQL: 辞めた人に非公開が 見えない</code></pre>
+
+  <p>落ちることを見てから、元に戻した。</p>
+
+  <h2>残しておきたいこと</h2>
+
+  <p>一箇所にまとめたことで安心していた。
+  まとめた中身が三つに枝分かれしていて、そのうちの一つだけが条件を落としている。
+  <strong>集約したかどうかと、その中が揃っているかどうかは別である。</strong></p>
+
+  <p>もうひとつ。
+  この漏れは、組織とプロジェクトの実装に入る前に見つかった。
+  この副問い合わせを使う場所が増えたあとでは、直したときの影響を確かめる範囲も広がっていた。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">SESSIONS</span><p class="card-title">セッション履歴</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../database/project_members/index.html"><span class="card-no">TABLE</span><p class="card-title">project_members</p><p class="card-desc">直した判定 SQL の全文</p></a>
+    <a class="card" href="../20260907-1137-organization-members/index.html"><span class="card-no">SESSION</span><p class="card-title">組織とメンバー</p><p class="card-desc">この判定を使う側を実装した</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-07 権限判定のテスト</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

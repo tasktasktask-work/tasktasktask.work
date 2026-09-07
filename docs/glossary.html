@@ -77,6 +77,25 @@
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/organization/index.html">組織とメンバー</a></div>
   </article>
 
+  <article class="term" id="org-scope">
+    <h3>組織のスコープ<span class="reading">organization scope</span></h3>
+    <p>「いまどの<a href="#organization">組織</a>を、誰として見ているか」をひとまとめにした値を<strong>組織のスコープ</strong>と呼ぶ。
+    組織の id、利用者の id、<a href="#org-admin">組織管理者</a>かどうか、表示に使うタイムゾーンの四つを持つ。</p>
+    <p>組織はデータの境界なので、問い合わせの条件から組織が落ちれば他社のデータが混ざる。
+    そこでデータにさわる関数はすべて、この値を第一引数に取る。
+    URL の <code>/o/{slug}/</code> から所属を確かめて組み立てるので、
+    <strong>所属していなければスコープが作れず、その先の問い合わせも書けない</strong>。</p>
+    <p>ただし、スコープに入っている「組織管理者かどうか」は画面の出し分けにしか使わない。
+    書き込みの可否は、そのつど SQL の中で確かめる。
+    呼ぶ側は好きな値のスコープを組み立てられるからである。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>業務委託の方が二社に入っていますが、片方のデータがもう片方に出たりしませんか。</span></p>
+      <p><span class="who">開発者</span><span>URL の組織から毎回スコープを組み直すので、混ざりません。組織を外れれば、その場で何も引けなくなります。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#organization">組織</a><a href="#org-admin">組織管理者</a><a href="#private-project">非公開プロジェクト</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/organization/index.html">組織とメンバー</a><a href="features/project/index.html">プロジェクト</a></div>
+  </article>
+
   <article class="term" id="project">
     <h3>プロジェクト<span class="reading">project</span></h3>
     <p>スレッドを入れる箱を<strong>プロジェクト</strong>と呼ぶ。

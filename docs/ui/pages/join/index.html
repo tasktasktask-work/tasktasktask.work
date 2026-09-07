@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>招待を受ける | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock &#183; /join</p>
+  <h1 class="title">招待を受ける</h1>
+  <p class="lede">
+    この画面を開く人は、たいていこのサービスを知らない。
+    だから最初に書くのは、誰がどの組織へ呼んでいるのかである。
+    入力欄より先にそれを置く。
+  </p>
+
+  <h2>アカウントが無い人</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/join?token=&#8230;</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="brand"><span class="m">3</span>TASK3</div>
+          <div class="tag">佐藤 明日香 さんからの招待</div>
+
+          <div class="app-note">
+            <p style="margin:0"><strong>株式会社アクメ</strong> にメンバーとして参加します。</p>
+          </div>
+
+          <form onsubmit="return false">
+            <div class="auth-field">
+              <label for="jn-email">メールアドレス</label>
+              <input id="jn-email" type="email" value="nao.kimura@example.com" disabled>
+            </div>
+            <div class="auth-field">
+              <label for="jn-name">表示名</label>
+              <input id="jn-name" type="text" placeholder="佐藤 明日香">
+            </div>
+            <div class="auth-field">
+              <label for="jn-pw">パスワード（8文字以上）</label>
+              <input id="jn-pw" type="password">
+            </div>
+            <button class="auth-btn" type="submit">参加する</button>
+          </form>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>メールアドレスは招待で確定しているので、変えられない状態で出す。
+  欄ごと消してもよいが、どのアドレス宛の招待なのかは見せておきたい。
+  複数のアドレスを使い分けている人が、どれで登録されるのかを確かめられる。</p>
+
+  <h2>すでにアカウントがある人</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/join?token=&#8230;</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="brand"><span class="m">3</span>TASK3</div>
+          <div class="tag">田中 亮 さんからの招待</div>
+
+          <div class="app-note">
+            <p style="margin:0"><strong>合同会社ベータ</strong> に組織管理者として参加します。</p>
+          </div>
+
+          <form onsubmit="return false">
+            <div class="auth-field">
+              <label for="jn2-email">メールアドレス</label>
+              <input id="jn2-email" type="email" value="asuka.sato@example.com" disabled>
+            </div>
+            <button class="auth-btn" type="submit">参加する</button>
+          </form>
+
+          <p style="font-size:.76rem;color:var(--ink-soft);margin-top:.9rem">
+            このメールアドレスのアカウントはすでにあります。パスワードは変わりません。
+          </p>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">パスワードを訊かない</span>
+    <p>訊いて上書きできると、<strong>招待リンクを踏ませるだけで他人のパスワードを書き換えられる</strong>。
+    この画面で入力欄が消えるのは、見た目の簡略化ではなく、その経路を塞ぐためである。</p>
+  </div>
+
+  <h2>使えない招待</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/join?token=&#8230;</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="brand"><span class="m">3</span>TASK3</div>
+          <div class="app-note warn">
+            <p style="margin:0">招待の有効期間（48時間）が切れています。招待した人に送り直しを頼んでください。</p>
+          </div>
+          <a class="auth-btn alt" href="#" style="display:block;text-align:center">ログイン画面へ</a>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>期限切れ、取り消し済み、使用済み、そもそも存在しない。
+  四つの理由で、それぞれ違う文言を出す。
+  <a href="../../../glossary.html#magic-link">マジックリンク</a>と違って、
+  <strong>受け取った人には自分で送り直す手段がない</strong>ためである。
+  何が起きたのかが分からないと、誰に頼めばよいのかも分からない。</p>
+
+  <div class="note decide">
+    <span class="note-label">開いただけでは、何も起きない</span>
+    <p>この画面は招待の中身を読むだけで、参加は送信して初めて成立する。
+    開いた時点で受諾すると、リンクを先読みするメールソフトが勝手に消費してしまう。</p>
+  </div>
+
+  <h2>参加したあと</h2>
+
+  <p>その場でログイン状態にし、参加した組織のプロジェクト一覧へ送る。
+  別のアカウントでログインしていた場合も、招待された側へ切り替わる。
+  招待リンクを開けたこと自体が、そのアドレスの持ち主である証拠になっているためである。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">参加は招待だけ</p></a>
+    <a class="card" href="../../../database/invitations/index.html"><span class="card-no">TABLE</span><p class="card-title">invitations</p><p class="card-desc">受諾したときに起きること</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / 招待を受ける</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../sidebar.js" defer></script>
+</body>
+</html>

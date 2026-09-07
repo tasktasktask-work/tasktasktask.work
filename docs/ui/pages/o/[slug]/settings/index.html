@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>組織の設定 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock &#183; /o/{slug}/settings</p>
+  <h1 class="title">組織の設定</h1>
+  <p class="lede">
+    変えられるものが、いまは組織名しかない。
+    残りの三つは値としては持っているが、選べる値が一つずつしかないためである。
+  </p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/settings</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="app-org">株式会社アクメ <span class="slug">acme</span></span>
+          <span class="sp"></span>
+          <span class="hanko sm">佐</span>
+          <button class="app-btn ghost">ログアウト</button>
+        </div>
+        <div class="app-shell">
+          <nav class="app-side">
+            <h5>プロジェクト</h5>
+            <a href="#">一覧</a>
+            <h5>組織</h5>
+            <a href="#">メンバー</a>
+            <a href="#" class="on">設定</a>
+          </nav>
+          <div class="app-main">
+            <div class="app-head">
+              <div><h2>組織の設定</h2><div class="sub">変えられるのは組織管理者だけです</div></div>
+            </div>
+
+            <form class="app-form" onsubmit="return false">
+              <div class="line">
+                <div class="auth-field" style="margin-bottom:0">
+                  <label for="mk-name">組織名</label>
+                  <input id="mk-name" type="text" value="株式会社アクメ">
+                </div>
+                <button class="app-btn" type="submit">保存</button>
+              </div>
+            </form>
+
+            <div class="app-props" style="max-width:34rem">
+              <div class="row"><span class="k">SLUG</span><span class="v"><code>acme</code></span></div>
+              <div class="row"><span class="k">言語</span><span class="v">日本語</span></div>
+              <div class="row"><span class="k">タイムゾーン</span><span class="v">Asia/Tokyo</span></div>
+              <div class="row"><span class="k">メンバー</span><span class="v">4 人</span></div>
+            </div>
+
+            <div class="app-note">
+              <p style="margin:0">slug は変えられません。URL に入っていて、外に貼られたリンクがそれを指しているためです。
+              言語とタイムゾーンは、選べる値が増えたときに変えられるようにします。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>メンバーには、この画面が無い</h2>
+
+  <p>サイドバーに「設定」が出ない。
+  URL を直接開いた場合は 404 を返す。</p>
+
+  <div class="note decide">
+    <span class="note-label">権限が無いことを、権限が無いと伝えない</span>
+    <p>「あなたには権限がありません」と出しても、できることは変わらない。
+    伝わるのは「そこに何かがある」という事実だけである。</p>
+    <p>所属していない組織の URL も、同じく 404 を返す。
+    区別すると、slug を総当たりして他社の存在を確かめられる。</p>
+  </div>
+
+  <h2>slug を変えられなくした理由</h2>
+
+  <p>slug は URL に入っている。
+  変えると、貼られたリンクと開いているタブが行き先を失う。</p>
+
+  <p><a href="../../../../../glossary.html#project-key">プロジェクトキー</a>を変えられなくしたのと同じ判断である。
+  どちらも識別子として外へ出ていくので、後から入れ替えると読み手の側が壊れる。</p>
+
+  <p>表示に使う名前は変えられる。
+  会社名が変わっても、URL はそのままでよい。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../../../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">組織が持つ設定</p></a>
+    <a class="card" href="../../../../../issues/i18n/index.html"><span class="card-no">ISSUE</span><p class="card-title">多言語対応</p><p class="card-desc">言語とタイムゾーンの続き</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / 組織の設定</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../../../sidebar.js" defer></script>
+</body>
+</html>
