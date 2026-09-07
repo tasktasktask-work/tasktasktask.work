@@ -104,6 +104,57 @@ const projectId = form.get('projectId');</code></pre>
   推測できないから安全なのではなく、
   <a href="#trust">受け取った値を確かめているから安全</a>である。</p>
 
+  <h2 id="mutating-links">書き換える動線を、リンクにしない</h2>
+
+  <p>Next.js の <code>Link</code> は、画面に現れた時点で行き先を先読みする。
+  <strong>押していないのに、そのパスのサーバ側が動く。</strong></p>
+
+  <p>だから GET で状態を変えてはいけない。
+  通知を押すと既読になる動線を素直に書くとリンクになるが、そうすると
+  マウスを乗せただけで既読になり、押していない通知が消える。</p>
+
+  <div class="note decide">
+    <span class="note-label">規約</span>
+    <p><strong>状態が変わる動線は、フォームの送信にする。</strong>
+    行全体を押させたいなら、行そのものを <code>&lt;button type="submit"&gt;</code> にする。
+    見た目はリンクでも、実体は POST である。</p>
+  </div>
+
+<pre><code>// 良い例：押すと既読にして、行き先はサーバが決める
+&lt;form action={openNotificationAction}&gt;
+  &lt;input type="hidden" name="id" value={row.id} /&gt;
+  &lt;button className="p-notif" type="submit"&gt;…&lt;/button&gt;
+&lt;/form&gt;
+
+// 悪い例：先読みで既読になる
+&lt;Link href={`/o/${slug}/n/${row.id}`}&gt;…&lt;/Link&gt;</code></pre>
+
+  <p>引き換えに、新しいタブで開けなくなる。
+  絞り込みや並べ替えのように、状態を変えない切り替えはリンクのままでよい。</p>
+
+  <h2 id="visibility">他人の見え方で引くときも、判定は一つ</h2>
+
+  <p>閲覧できるプロジェクトの判定は <code>#lib/db.ts</code> にしか無い。
+  ほとんどの問い合わせはログイン中の一人について引くので、
+  <code>VISIBLE_PROJECT_IDS</code>（<code>$1</code> と <code>$2</code> を埋めたもの）で足りる。</p>
+
+  <p>足りないのは通知の宛先を絞るときである。
+  ウォッチしている人ごと、指名された人ごとに、その人から見えるかを問う。
+  引数の位置ではなく、行の列（<code>w.user_id</code> など）を渡すことになる。</p>
+
+<pre><code>// 断片を組み立てる関数。埋め込む先ごとに引数の位置が変わる
+export function visibleProjectIds(orgParam: string, userParam: string): string;
+
+// いちばん多い呼ばれ方を固定したもの
+export const VISIBLE_PROJECT_IDS = visibleProjectIds('$1', '$2');
+
+// 行ごとに違う人で引く
+AND $6::uuid IN (${visibleProjectIds('$1', 'w.user_id')})</code></pre>
+
+  <p>形が違うからといって書き写さない。
+  <a href="#trust">同じ判定が二箇所にある状態</a>は、片方だけ直したときに穴が開く。
+  実際に一度開けた（<a href="../../sessions/20260907-1050-permission-tests/index.html">権限判定のテスト</a>）。</p>
+
   <h2 id="typed-routes">URL の組み立てを一枚に閉じ込める</h2>
 
   <p><code>typedRoutes</code> は、動的な区間がひとつなら
@@ -578,7 +629,7 @@ import { LoginForm } from '#features/authentication/LoginForm.tsx';</code></pre>
 
   <div class="sheet-foot">
     <span>開発と運用 / コーディング規約</span>
-    <span>最終更新 2026-09-07</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

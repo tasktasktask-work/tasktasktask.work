@@ -88,30 +88,41 @@ CREATE INDEX notifications_pending_email
   <table>
     <thead><tr><th>kind</th><th>作られるきっかけ</th><th>受け取る人</th></tr></thead>
     <tbody>
-      <tr><td><code>mention</code></td><td>コメントか本文で <code>@</code> 指名された</td><td>指名された人</td></tr>
+      <tr><td><code>mention</code></td><td>コメントで <code>@</code> 指名された</td><td>指名された人</td></tr>
       <tr><td><code>assigned</code></td><td><a href="../../glossary.html#assignee">担当者</a>に設定された</td><td>設定された人</td></tr>
       <tr><td><code>comment</code></td><td>コメントが投稿された</td><td><a href="../watches/index.html">ウォッチ</a>している人</td></tr>
     </tbody>
   </table>
   </div>
 
+  <h3>宛先は、そのとき見える人だけ</h3>
+
   <p>作成時に、受け取る人がそのプロジェクトを閲覧できるかを確認する。
   通知の本文にはスレッドのタイトルが含まれるため、
   閲覧権限のない人へ届くと、そこで<a href="../../glossary.html#private-project">非公開プロジェクト</a>の情報が漏れる。</p>
 
+  <p>判定は <code>#lib/db.ts</code> の <code>visibleProjectIds</code> を使う。
+  宛先ごとに違う人で引くことになるので、引数の位置を渡せる関数の形にしてある。
+  行を作る三つの経路は、どれも <code>src/features/notification/queries.ts</code> の
+  二つの関数を通る。この判定を書き写した場所は他に無い。</p>
+
   <h3>同じコメントで二重に作らない</h3>
   <p>ウォッチしている人がメンションもされた場合、通知が二つできる。
-  投稿時に <code>mention</code> を先に作り、<code>comment</code> の生成では既に通知を受けた人を除く。</p>
+  投稿時に <code>mention</code> を先に作り、指名した相手の一覧を
+  <code>comment</code> の生成へ渡して除く。</p>
 
-<pre><code>INSERT INTO notifications (organization_id, user_id, kind, thread_id, comment_id, actor_user_id)
-SELECT $1, w.user_id, 'comment', $2, $3, $4
-  FROM watches w
- WHERE w.thread_id = $2
-   AND w.user_id &lt;&gt; $4
-   AND NOT EXISTS (
-     SELECT 1 FROM notifications n
-      WHERE n.comment_id = $3 AND n.user_id = w.user_id
-   );</code></pre>
+<pre><code>INSERT INTO notifications
+        (organization_id, user_id, kind, thread_id, comment_id, actor_user_id)
+      SELECT $1, w.user_id, 'comment', $2, $3, $4
+        FROM watches w
+       WHERE w.thread_id = $2
+         AND w.user_id &lt;&gt; $4                    -- 書いた本人には送らない
+         AND w.user_id &lt;&gt; ALL($5::uuid[])       -- 指名で届く人は除く
+         AND $6::uuid IN (…visibleProjectIds…)  -- 見えなくなった人も除く</code></pre>
+
+  <p>作られた通知の <code>read_at</code> を埋めるのは、一覧で行を押したときと、
+  「すべて既読にする」を押したときの二つである。
+  詳しくは<a href="../../glossary.html#read-state">既読</a>を参照。</p>
 
   <h2>メール通知を止めている人</h2>
   <p><code>users.email_notifications_enabled</code> が偽の人には、
@@ -145,7 +156,7 @@ SELECT $1, w.user_id, 'comment', $2, $3, $4
 
   <div class="sheet-foot">
     <span>データベース / notifications</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

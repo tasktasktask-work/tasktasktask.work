@@ -58,11 +58,14 @@ CREATE INDEX watches_by_user ON watches (user_id);</code></pre>
   <h2>通知を作るときの問い合わせ</h2>
 
 <pre><code>-- コメント投稿時、ウォッチしている人に通知を作る
-INSERT INTO notifications (organization_id, user_id, kind, thread_id, comment_id, actor_user_id)
-SELECT $1, w.user_id, 'comment', $2, $3, $4
-  FROM watches w
- WHERE w.thread_id = $2
-   AND w.user_id  &lt;&gt; $4;          -- 書いた本人には送らない</code></pre>
+INSERT INTO notifications
+        (organization_id, user_id, kind, thread_id, comment_id, actor_user_id)
+      SELECT $1, w.user_id, 'comment', $2, $3, $4
+        FROM watches w
+       WHERE w.thread_id = $2
+         AND w.user_id &lt;&gt; $4                    -- 書いた本人には送らない
+         AND w.user_id &lt;&gt; ALL($5::uuid[])       -- 指名で届く人は除く
+         AND $6::uuid IN (…visibleProjectIds…)  -- 見えなくなった人も除く</code></pre>
 
   <p>投稿した本人を除く条件が要る。
   自分のコメントで自分に通知が来る状態は、通知一覧をすぐに無意味にする。</p>
@@ -70,10 +73,25 @@ SELECT $1, w.user_id, 'comment', $2, $3, $4
   <div class="note">
     <span class="note-label">権限が変わったウォッチャーの扱い</span>
     <p>非公開プロジェクトから外された人のウォッチ行は残る。
-    通知を作るときにプロジェクトの閲覧権限を確認し、失っている場合は作らない。</p>
-    <p>行を消す方式も取れるが、再び参加したときに以前のウォッチが失われる。
+    外れる経路は三つある。プロジェクトのメンバーから外される、
+    公開だったプロジェクトが非公開に変わる、組織から抜ける。</p>
+    <p>通知を作るときにプロジェクトの閲覧権限を確認し、失っている場合は作らない。
+    行を消す方式も取れるが、再び参加したときに以前のウォッチが失われる。
     通知の生成時に判定するほうを選んだ。</p>
+    <p>読むときにも同じ判定をかける。
+    書く側を抜けた行が過去に積まれていても、一覧には出ない。</p>
   </div>
+
+  <h2>付け外しの動線</h2>
+
+  <p>スレッド詳細の属性欄に押しボタンを一つ置く。
+  アーカイブされたスレッドでも押せる。
+  自分あての設定であって、そのスレッドへの書き込みではないからである。
+  畳んだ先に新しいコメントは付かないので通知は飛ばないが、
+  外す手立てまで消えると、開け直したときに困る。</p>
+
+  <p>誰がウォッチしているかは、他の人には見せない。人数も出さない。
+  少人数の組織では、人数だけでも誰が見張っているかが割れる。</p>
 
   <h2>関係</h2>
 <pre class="figure">threads ──&lt; watches &gt;── users
@@ -93,7 +111,7 @@ SELECT $1, w.user_id, 'comment', $2, $3, $4
 
   <div class="sheet-foot">
     <span>データベース / watches</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

@@ -9,8 +9,16 @@ import type { Route } from 'next';
  * 組み立てをこの一枚に閉じ込め、画面の側では文字列を書かない。
  */
 
-export function threadPath(slug: string, key: string, number: number): Route {
-  return `/o/${slug}/p/${key}/t/${number}` as Route;
+export function threadPath(
+  slug: string,
+  key: string,
+  number: number,
+  options: { commentId?: string } = {},
+): Route {
+  // 通知からはコメントを名指しで開く。スレッドの先頭に落とすと、
+  // コメントが50件あれば、そこから探すことになる。
+  const anchor = options.commentId ? `#c-${options.commentId}` : '';
+  return `/o/${slug}/p/${key}/t/${number}${anchor}` as Route;
 }
 
 /**

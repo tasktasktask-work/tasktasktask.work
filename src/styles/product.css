@@ -312,16 +312,26 @@
 }
 
 /* 通知 ------------------------------------------------------------------ */
+/* 行そのものが押しボタンである。リンクにすると、先読みだけで既読になる。 */
 .p-notif {
   display: flex; gap: .75rem; align-items: flex-start;
-  padding: .8rem .9rem; border-bottom: 1px solid var(--rule);
-  background: var(--card); font-size: .85rem;
+  width: 100%; text-align: left; cursor: pointer;
+  padding: .8rem .9rem;
+  border: 0; border-bottom: 1px solid var(--rule);
+  background: var(--card); color: var(--ink);
+  font-family: var(--font-body); font-size: .85rem;
 }
+.p-notif:hover { border-left: 2px solid var(--shu); padding-left: calc(.9rem - 2px); }
 .p-notif[data-unread="true"] { background: var(--shu-wash); }
 .p-notif .dot { width: .45rem; height: .45rem; border-radius: 50%; background: var(--shu); margin-top: .5rem; flex: none; }
 .p-notif[data-unread="false"] .dot { background: transparent; border: 1px solid var(--rule-strong); }
-.p-notif .n-body { min-width: 0; }
-.p-notif .n-when { font-family: var(--font-mono); font-size: .68rem; color: var(--ink-faint); }
+.p-notif .n-body { min-width: 0; display: flex; flex-direction: column; gap: .18rem; }
+.p-notif .n-what, .p-notif .n-where { display: block; }
+.p-notif .n-where { color: var(--ink-mid); font-size: .8rem; }
+.p-notif .n-when {
+  display: flex; align-items: center; gap: .4rem;
+  font-family: var(--font-mono); font-size: .68rem; color: var(--ink-faint);
+}
 
 /* ガント ----------------------------------------------------------------- */
 .p-gantt { border: 1px solid var(--rule); background: var(--card); overflow-x: auto; }

@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import { z } from 'zod';
+import { notifyUsers } from '#features/notification/queries.ts';
 import {
   nextThreadNumber,
   type OrgScope,
@@ -462,11 +463,12 @@ export async function createThread(
 
     const number = await nextThreadNumber(client, scope.organizationId);
 
-    await client.query(
+    const inserted = await client.query<{ id: string }>(
       `INSERT INTO threads
          (organization_id, project_id, number, type, title, body,
           parent_thread_id, assignee_user_id, starts_on, ends_on, created_by_user_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+       RETURNING id`,
       [
         scope.organizationId,
         projectId,
@@ -481,6 +483,18 @@ export async function createThread(
         scope.userId,
       ],
     );
+    const threadId = inserted.rows[0]?.id;
+    if (!threadId) {
+      throw new Error('スレッドの挿入が行を返しませんでした');
+    }
+
+    // 立てた時点で担当者を付けられる。ここで知らせないと、
+    // 指名されたことに気づく手立てが無い。
+    if (input.assigneeUserId !== null) {
+      await notifyUsers(client, scope, 'assigned', { threadId, projectId, commentId: null }, [
+        input.assigneeUserId,
+      ]);
+    }
 
     return { ok: true, number };
   });
@@ -600,7 +614,13 @@ export async function setProgress(
   return rowCount === 1 ? { ok: true } : { ok: false, reason: await whyNot(scope, threadId) };
 }
 
-/** 担当者を差し替える。null で外す。 */
+/**
+ * 担当者を差し替える。null で外す。
+ *
+ * 新しく指名された人へ通知を作る。外したときは誰にも作らない。
+ * 同じ人を選び直したときも作らない。行を先に読むのはそのためで、
+ * 読んでから書くあいだに他の人が差し替えないよう、行を押さえておく。
+ */
 export async function setAssignee(
   scope: OrgScope,
   threadId: string,
@@ -613,13 +633,36 @@ export async function setAssignee(
     }
   }
 
-  const { rowCount } = await pool.query(
-    `UPDATE threads t
-        SET assignee_user_id = $4, updated_at = now()
-      WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
-    [scope.organizationId, scope.userId, threadId, userId],
-  );
-  return rowCount === 1 ? { ok: true } : { ok: false, reason: await whyNot(scope, threadId) };
+  return transaction(async (client) => {
+    const found = await client.query<{ before: string | null; projectId: string }>(
+      `SELECT t.assignee_user_id AS before, t.project_id AS "projectId"
+         FROM threads t
+        WHERE t.id = $3 AND ${THREAD_WRITABLE}
+          FOR UPDATE OF t`,
+      [scope.organizationId, scope.userId, threadId],
+    );
+    const row = found.rows[0];
+    if (!row) {
+      return { ok: false, reason: await whyNot(scope, threadId) };
+    }
+
+    await client.query(
+      `UPDATE threads SET assignee_user_id = $2, updated_at = now() WHERE id = $1`,
+      [threadId, userId],
+    );
+
+    if (userId !== null && userId !== row.before) {
+      await notifyUsers(
+        client,
+        scope,
+        'assigned',
+        { threadId, projectId: row.projectId, commentId: null },
+        [userId],
+      );
+    }
+
+    return { ok: true };
+  });
 }
 
 /**

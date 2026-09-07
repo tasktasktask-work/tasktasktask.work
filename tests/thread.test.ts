@@ -46,6 +46,8 @@ const newKey = (): string => {
 after(async () => {
   const like = `${TAG}-%`;
   const inOrg = `organization_id IN (SELECT id FROM organizations WHERE slug LIKE $1)`;
+  // 担当者を設定すると通知の行が立つ。スレッドより先に消す。
+  await pool.query(`DELETE FROM notifications WHERE ${inOrg}`, [like]);
   await pool.query(`DELETE FROM threads WHERE ${inOrg}`, [like]);
   await pool.query(
     `DELETE FROM project_members WHERE project_id IN (

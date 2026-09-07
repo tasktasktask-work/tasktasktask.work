@@ -23,6 +23,8 @@
 
   <h2>この画面が必要な理由</h2>
 
+  <p>この画面を<a href="../../glossary.html#assigned-list">担当スレッド一覧</a>と呼ぶ。</p>
+
   <p>ひとりのユーザーは複数の<a href="../../glossary.html#organization">組織</a>に所属でき、
   ひとつの組織の中でも複数の<a href="../../glossary.html#project">プロジェクト</a>に関わる。</p>
 
@@ -61,6 +63,43 @@
 
   <p>行にはプロジェクトを示す<a href="../../glossary.html#project-key">プロジェクトキー</a>を必ず出す。
   複数のプロジェクトが混ざるため、どこの話かがわからないと判断できない。</p>
+
+  <p>件数は絞らない。100件担当していれば100行出る。
+  ここで打ち切ると、下のほうの担当が「無い」のと見分けが付かないまま忘れられる。</p>
+
+  <p>担当者の判子は出さない。全部が自分の担当なので、並べても読み取れるものが無い。
+  その位置には代わりに、終了日までの残り日数を置く。
+  3日を切ったものと、過ぎたものを黄色にする。
+  <a href="../../glossary.html#period">期間</a>は日付だけを持つので、残りも日数で表せる。</p>
+
+  <div class="note">
+    <span class="note-label">畳んだものは、切り替えでも出てこない</span>
+    <p>完了したものを出すかどうかの切り替えは一つだけ持つ。
+    アーカイブされたスレッドと、アーカイブされたプロジェクトの中身は、
+    切り替えても出ない。<strong>終わった仕事ではなく、片付いた場所だからである。</strong></p>
+  </div>
+
+  <h2>通知と二枚で一つの画面になる</h2>
+
+  <p>同じ画面に<a href="../notification/index.html">通知</a>の一覧が並ぶ。
+  「今日、自分は何をやるのか」への答えは二つあるからである。
+  担当している仕事と、誰かが自分に向けて言ったことである。</p>
+
+  <p>二枚を縦に積まず、タブで切り替える。
+  積むと、担当が20件あるだけで通知が画面の下へ落ちる。</p>
+
+  <div class="note decide">
+    <span class="note-label">タブに分けても、見落とさない</span>
+    <p>別々の画面に置くと片方を見落とす、というのがこの同居の理由だった。
+    タブはその分割を持ち込むように見える。</p>
+    <p>持ち込まないのは、未読の数が二か所に出るからである。
+    タブの脇と、組織の中のどの画面にも立つ上帯のベル。
+    <strong>閉じているタブの中身が何件たまっているかは、閉じたまま読める。</strong></p>
+  </div>
+
+  <p>切り替えは URL の問い合わせで持つ。
+  ベルから通知の側へ直接飛ばすので、どちらを開いているかを URL で指せる必要がある。
+  完了したものを出すかどうかも同じく問い合わせで持つ。</p>
 
   <h2>見え方</h2>
 
@@ -106,24 +145,37 @@
 
   <h2>非公開プロジェクトとの関係</h2>
 
-  <p>自分が担当者になっているスレッドしか出ないため、
-  <a href="../../glossary.html#private-project">非公開プロジェクト</a>のものが混ざっても問題は起きない。
-  担当者に設定されているということは、そのプロジェクトのメンバーだということである。</p>
+  <div class="note warn">
+    <span class="note-label">ここに書いてあったことは、間違っていた</span>
+    <p>以前この節には「担当者に設定されているということは、そのプロジェクトのメンバーだということである」
+    と書いてあった。<strong>そうではない。</strong>
+    担当者に設定できる条件は組織のメンバーであることだけで、
+    プロジェクトのメンバーであることは要らない。</p>
+    <p>加えて、設定した時点でメンバーだったとしても、
+    あとから外される経路と、プロジェクトが<a href="../../glossary.html#private-project">非公開</a>に変わる経路がある。
+    担当のまま見えなくなる状態は、普通に起きる。</p>
+  </div>
+
+  <p>だからこの一覧も、閲覧できるプロジェクトかどうかを自分で確かめる。
+  判定は <code>#lib/db.ts</code> の <code>visibleProjectIds</code> をそのまま使い、ここには書き写さない。</p>
+
+  <p>見えなくなったスレッドは、担当者のまま一覧から消える。
+  担当を外すことはしない。誰が引き受けていたかは、プロジェクトの中では残っているべき事実である。</p>
 
   <h2>関連する画面</h2>
   <div class="cards">
-    <a class="card" href="../../ui/pages/o/[slug]/dashboard/index.html"><span class="card-no">/dashboard</span><p class="card-title">担当スレッド</p><p class="card-desc">通知一覧も併せて置く</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/dashboard/index.html"><span class="card-no">/dashboard</span><p class="card-title">担当スレッド</p><p class="card-desc">通知とタブで並ぶ</p></a>
   </div>
 
   <h2>関連するテーブル</h2>
   <div class="cards">
-    <a class="card" href="../../database/threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">assignee_id で絞る</p></a>
+    <a class="card" href="../../database/threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">assignee_user_id で絞る</p></a>
     <a class="card" href="../../database/project_members/index.html"><span class="card-no">TABLE</span><p class="card-title">project_members</p><p class="card-desc">閲覧できる範囲の判定</p></a>
   </div>
 
   <div class="sheet-foot">
     <span>機能 / 担当スレッド一覧</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

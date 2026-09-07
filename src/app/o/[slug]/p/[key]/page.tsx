@@ -70,7 +70,7 @@ export default async function ProjectThreads({
       slug={slug}
       organizationName={organization.name}
       displayName={user.displayName}
-      isOrgAdmin={scope.isOrgAdmin}
+      scope={scope}
       current="project"
       currentProjectKey={project.key}
       projects={links}

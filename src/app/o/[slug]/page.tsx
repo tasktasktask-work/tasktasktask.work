@@ -49,7 +49,7 @@ export default async function OrganizationHome({
       slug={slug}
       organizationName={organization.name}
       displayName={user.displayName}
-      isOrgAdmin={scope.isOrgAdmin}
+      scope={scope}
       current="projects"
       projects={living}
     >

@@ -62,7 +62,7 @@ export default async function ProjectMembersPage({
       slug={slug}
       organizationName={organization.name}
       displayName={user.displayName}
-      isOrgAdmin={scope.isOrgAdmin}
+      scope={scope}
       current="project"
       currentProjectKey={project.key}
       projects={links}

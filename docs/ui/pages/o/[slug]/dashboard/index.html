@@ -44,10 +44,15 @@
             <div><h2>担当スレッド</h2><div class="sub">佐藤 明日香 / 4件</div></div>
           </div>
 
+          <nav class="app-tabs">
+            <a href="#" class="on">担当スレッド</a>
+            <a href="#">通知 3</a>
+          </nav>
+
           <div class="app-filters">
-            <label><input type="checkbox"> 完了したものも表示</label>
+            <span>終了日の近い順</span>
             <span class="sp"></span>
-            <span style="color:var(--ink-faint);font-family:var(--font-mono);font-size:.7rem">終了日の近い順</span>
+            <a href="#" style="color:var(--ai)">完了したものも表示</a>
           </div>
 
           <div class="p-list" style="margin-bottom:1.8rem">
@@ -85,27 +90,66 @@
             </div>
           </div>
 
-          <div class="app-head"><div><h2>通知</h2><div class="sub">未読 3件</div></div>
-            <span style="flex:1"></span>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p class="lede" style="margin-top:1.6rem">
+    ベルを押すか、タブを切り替えるとこちらになる。
+  </p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/dashboard?tab=notifications</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-top">
+        <span class="app-logo"><span class="m">3</span>TASK3</span>
+        <span class="app-org">株式会社アクメ <span class="slug">acme</span> &#9662;</span>
+        <span class="sp"></span>
+        <span class="app-bell">&#128276;<span class="n">3</span></span>
+        <span class="hanko sm">佐</span>
+      </div>
+      <div class="app-shell">
+        <nav class="app-side">
+          <h5>プロジェクト</h5>
+          <a href="#" class=""><span class="k">WEB</span>検索基盤の刷新</a>
+          <a href="#" class=""><span class="k">BILL</span>請求まわり</a>
+          <h5>わたし</h5>
+          <a href="#" class="">担当スレッド</a>
+          <a href="#" class="on">通知</a>
+        </nav>
+        <div class="app-main">
+          <div class="app-head">
+            <div><h2>通知</h2><div class="sub">佐藤 明日香</div></div>
+          </div>
+
+          <nav class="app-tabs">
+            <a href="#">担当スレッド</a>
+            <a href="#" class="on">通知 3</a>
+          </nav>
+
+          <div class="app-filters">
+            <span>未読 <strong>3件</strong></span>
+            <span class="sp"></span>
             <button class="app-btn ghost">すべて既読にする</button>
           </div>
 
           <div style="border:1px solid var(--rule)">
             <div class="p-notif" data-unread="true">
               <span class="dot"></span>
-              <div class="n-body"><div><strong>田中 亮</strong> があなたをメンションしました</div><div><span class="p-id">WEB-3</span> 検索の要件をどうするか</div><div class="n-when">9月4日 13:02</div></div>
+              <div class="n-body"><span class="n-what"><strong>田中 亮</strong> があなたをメンションしました</span><span class="n-where"><span class="p-id">WEB-3</span> 検索の要件をどうするか</span><span class="n-when">9月4日 13:02</span></div>
             </div>
             <div class="p-notif" data-unread="true">
               <span class="dot"></span>
-              <div class="n-body"><div><strong>佐藤 明日香</strong> があなたを担当者に設定しました</div><div><span class="p-id">BILL-31</span> 請求書PDFの様式変更</div><div class="n-when">9月4日 10:15</div></div>
+              <div class="n-body"><span class="n-what"><strong>佐藤 明日香</strong> があなたを担当者に設定しました</span><span class="n-where"><span class="p-id">BILL-31</span> 請求書PDFの様式変更</span><span class="n-when">9月4日 10:15</span></div>
             </div>
             <div class="p-notif" data-unread="true">
               <span class="dot"></span>
-              <div class="n-body"><div>ウォッチ中のスレッドに新しいコメントがあります</div><div><span class="p-id">WEB-9</span> 全角の正規化はどこでやっている？</div><div class="n-when">9月2日 09:15</div></div>
+              <div class="n-body"><span class="n-what">ウォッチ中のスレッドに新しいコメントがあります</span><span class="n-where"><span class="p-id">WEB-9</span> 全角の正規化はどこでやっている？</span><span class="n-when">9月2日 09:15</span></div>
             </div>
             <div class="p-notif" data-unread="false">
               <span class="dot"></span>
-              <div class="n-body"><div><strong>鈴木 一郎</strong> があなたをメンションしました</div><div><span class="p-id">WEB-5</span> 旧検索ロジックの撤去</div><div class="n-when">8月30日 16:40</div></div>
+              <div class="n-body"><span class="n-what"><strong>鈴木 一郎</strong> があなたをメンションしました</span><span class="n-where"><span class="p-id">WEB-5</span> 旧検索ロジックの撤去</span><span class="n-when">8月30日 16:40 <span class="badge mute">コメントは削除済み</span></span></div>
             </div>
           </div>
         </div>
@@ -135,6 +179,23 @@
   <a href="../../../../../glossary.html#watch">ウォッチ</a>が自動で付かない仕様のため、
   ここに出る通知はどれも誰かが意図的に自分へ向けたものになる。</p>
 
+  <p>二枚を縦に積まず、タブで切り替える。
+  積むと、担当が20件あるだけで通知が画面の下へ落ちる。
+  閉じているほうに何件たまっているかは、タブの脇と上帯のベルの二か所に出る。</p>
+
+  <h2>通知の行は、リンクではなく押しボタン</h2>
+
+  <p>見た目は行だが、実体はフォームの送信である。
+  リンクにすると、ブラウザとフレームワークがそれを先読みし、
+  <strong>マウスを乗せただけで<a href="../../../../../glossary.html#read-state">既読</a>になる</strong>。</p>
+
+  <p>押すと、その通知が指しているコメントまで飛ぶ。
+  スレッドの先頭ではなく、コメントの位置である。
+  担当者に設定された通知だけはコメントを持たないので、先頭へ送る。</p>
+
+  <p>コメントが消されていても行は残す。呼びかけが消えても、呼ばれたことは起きた出来事である。
+  そのことは行の右下に小さく添える。</p>
+
   <h2>関連するページ</h2>
   <div class="cards">
     <a class="card" href="../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
@@ -144,7 +205,7 @@
 
   <div class="sheet-foot">
     <span>UI / 担当スレッド</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

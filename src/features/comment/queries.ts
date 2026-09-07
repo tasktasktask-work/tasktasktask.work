@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import { z } from 'zod';
+import { notifyUsers, notifyWatchers } from '#features/notification/queries.ts';
 import { THREAD_WRITABLE } from '#features/thread/queries.ts';
 import {
   type OrgScope,
@@ -220,35 +221,16 @@ export async function postComment(
 
     /*
      * 通知は二種類できる。指名された人と、ウォッチしている人である。
-     * 両方に当たる人には指名のほうだけを作る。
+     * 両方に当たる人には指名のほうだけを作るので、ウォッチの側から外す。
      * 同じコメントで二度知らせても、二度目に新しい情報がない。
      *
-     * 自分で自分を指名しても行は立たない（notifications_not_self）。
-     * 条件をここにも書くのは、制約違反の例外で投稿ごと落とさないためである。
+     * 誰に届くかの判定は notification 側にある。ここには書かない。
      */
     const mentioned = [...new Set(mentions.flatMap((m) => m.userIds))];
+    const fanout = { threadId, projectId: thread.projectId, commentId };
 
-    if (mentioned.length > 0) {
-      await client.query(
-        `INSERT INTO notifications
-                (organization_id, user_id, kind, thread_id, comment_id, actor_user_id)
-              SELECT $1, m.user_id, 'mention', $2, $3, $4
-                FROM unnest($5::uuid[]) AS m(user_id)
-               WHERE m.user_id <> $4`,
-        [scope.organizationId, threadId, commentId, scope.userId, mentioned],
-      );
-    }
-
-    await client.query(
-      `INSERT INTO notifications
-              (organization_id, user_id, kind, thread_id, comment_id, actor_user_id)
-            SELECT $1, w.user_id, 'comment', $2, $3, $4
-              FROM watches w
-             WHERE w.thread_id = $2
-               AND w.user_id <> $4
-               AND w.user_id <> ALL($5::uuid[])`,
-      [scope.organizationId, threadId, commentId, scope.userId, mentioned],
-    );
+    await notifyUsers(client, scope, 'mention', fanout, mentioned);
+    await notifyWatchers(client, scope, fanout, mentioned);
 
     return { ok: true, id: commentId };
   });

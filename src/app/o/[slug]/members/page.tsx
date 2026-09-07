@@ -38,7 +38,7 @@ export default async function MembersPage({ params }: { params: Promise<{ slug: 
       slug={slug}
       organizationName={organization.name}
       displayName={user.displayName}
-      isOrgAdmin={scope.isOrgAdmin}
+      scope={scope}
       current="members"
       projects={links}
     >

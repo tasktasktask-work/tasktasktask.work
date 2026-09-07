@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>通知を読めるようにした | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-08 00:28</p>
+  <h1 class="title">通知を読めるようにした</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    行は前回から積まれていた。読む画面が無かった。
+    作りながら見つかったのは、積む側の穴のほうである。
+  </p>
+
+  <h2>ウォッチは、権限より長生きする</h2>
+
+  <p><a href="../../glossary.html#watch">ウォッチ</a>は自分で押して付ける。押した時点では、そのスレッドが見えている。
+  ところが<code>watches</code> の行は、そのあと権限が動いても残る。</p>
+
+  <p>外れる経路は三つある。
+  プロジェクトのメンバーから外される、公開だったプロジェクトが<a href="../../glossary.html#private-project">非公開</a>に変わる、組織から抜ける。
+  <strong>付けた時点で見えていたことは、いま見えることを意味しない。</strong></p>
+
+  <p>前回書いたコメント投稿の処理は、ウォッチしている人を可視性で絞らずに通知の行を作っていた。
+  行そのものにスレッドの題名は入っていないので、一覧を絞れば画面には出ない。
+  ただし行は積もり続ける。</p>
+
+  <div class="note warn">
+    <span class="note-label">メールを付けた瞬間に、そこが漏れ口になる</span>
+    <p>メールは積まれた行から文面を作る。文面にはスレッドの題名が入る。
+    読む側だけを絞っていると、画面には出ないが<strong>メールは届く</strong>、という状態になる。</p>
+    <p>書く側と読む側の両方で絞ることにした。二重だが役割が違う。
+    書く側は行を積ませないためで、読む側は最後の砦である。</p>
+  </div>
+
+  <p>判定は <code>#lib/db.ts</code> にしか無い。
+  ただし宛先を絞るときは、ログイン中の一人ではなく行ごとに違う人で引くことになる。
+  <code>VISIBLE_PROJECT_IDS</code> は <code>$1</code> と <code>$2</code> を埋め込んだ文字列だったので、
+  引数の位置を渡せる <code>visibleProjectIds()</code> の形へ直し、
+  これまでの呼び出しはその関数を <code>$1, $2</code> で呼んだものに置き換えた。
+  <code>orgMemberExists</code> がすでに取っていた形と同じである。</p>
+
+  <h2>担当スレッド一覧に書いてあったことが、間違っていた</h2>
+
+  <p><a href="../../features/dashboard/index.html">機能のドキュメント</a>には、こう書いてあった。</p>
+
+  <blockquote>自分が担当者になっているスレッドしか出ないため、非公開プロジェクトのものが混ざっても問題は起きない。
+  担当者に設定されているということは、そのプロジェクトのメンバーだということである。</blockquote>
+
+  <p>後半が違う。担当者に設定できる条件は組織のメンバーであることだけで、
+  プロジェクトのメンバーであることは要らない。
+  <strong>見えないプロジェクトのスレッドの担当者にできる。</strong></p>
+
+  <p>この画面はプロジェクトの壁を越えて行を集める唯一の場所である。
+  越えたぶん、閲覧の判定を自分でかけなければならない。かけた。
+  そのうえで、この節を書き直した。</p>
+
+  <h2>リンクにすると、押す前に既読になる</h2>
+
+  <p>通知を押したら<a href="../../glossary.html#read-state">既読</a>にして飛ばす。素直に書けばリンクになる。
+  リンクは先読みされる。マウスを乗せただけで既読になり、押していない通知が消える。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th></th><th>リンクのまま</th><th>行ごと押しボタン</th><th>押した瞬間に投げる</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">先読みで既読になる</td><td>なる</td><td>ならない</td><td>ならない</td></tr>
+      <tr><td class="nowrap">新しいタブで開ける</td><td>開ける</td><td>開けない</td><td>開ける</td></tr>
+      <tr><td class="nowrap">失敗したとき</td><td>—</td><td>その場に留まる</td><td>もう画面が変わっている</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>真ん中を採った。新しいタブで開けなくなるが、
+  取り返しがつかないのは既読の取りこぼしのほうである。</p>
+
+  <p>行き先はフォームに書かせず、通知の行から引く。
+  書かせると、他人のスレッドを指した状態で自分の通知を既読にする形が作れる。
+  引けば、行き先はその通知が指しているものだけになる。</p>
+
+  <h2>タブに分けると、同居の理由が崩れないか</h2>
+
+  <p>担当スレッドと通知を同じ画面に置く理由は、
+  「別の画面に分けると片方を見落とす」だった。タブはその分割を持ち込むように見える。</p>
+
+  <p>持ち込まないことにした。未読の数が二か所に出るからである。
+  タブの脇と、組織の中のどの画面にも立つ上帯のベル。
+  閉じているタブに何件たまっているかは、閉じたまま読める。</p>
+
+  <p>縦に積む案は採らなかった。担当が20件あるだけで、通知が画面の下へ落ちる。</p>
+
+  <h2>ベルを誰が数えるか</h2>
+
+  <p>上帯は <code>OrgShell</code> の中にあり、組織の中の8つの画面がすべてここを通る。
+  それまでの <code>OrgShell</code> は、表示に使う値だけを受け取る形だった。</p>
+
+  <p>各画面で数えて渡すと、同じ三行が8箇所に散る。
+  一つ足し忘れた画面では、ベルだけが黙る。
+  枠にスコープを渡し、自分で数えさせることにした。
+  <code>isOrgAdmin</code> を個別に渡していたのも、スコープの中にあるので消えた。</p>
+
+  <h2>同じ人を選び直したときに、通知を二度作らない</h2>
+
+  <p>担当者の設定は <code>UPDATE</code> 一発だった。
+  ここで通知を作るには、変わったかどうかを知る必要がある。</p>
+
+  <p>行を先に読み、押さえてから書く形にした。
+  <code>FOR UPDATE</code> を付けるのは、読んでから書くまでのあいだに
+  他の人が差し替えると、誰に知らせるべきかを取り違えるためである。</p>
+
+  <p>外したときは誰にも作らない。自分を担当者にしたときも作らない。
+  後者はデータベースの制約（<code>notifications_not_self</code>）も拒むが、
+  制約違反の例外で操作ごと落とすのは筋が悪いので、手前で外している。</p>
+
+  <h2>確かめたこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <tbody>
+      <tr><td class="nowrap">テスト</td><td>322件すべて通過（通知32件、担当スレッド11件を追加）</td></tr>
+      <tr><td class="nowrap">画面</td><td>66件すべて通過。サーバのエラーなし</td></tr>
+      <tr><td class="nowrap">ミューテーション</td><td>13箇所の判定を壊し、13箇所とも捕捉</td></tr>
+      <tr><td class="nowrap">スキーマ</td><td>変更なし。<code>notifications</code> も <code>watches</code> も前回のまま</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>壊した判定のうち、宛先の絞り込みは書く側と読む側で別々に壊した。
+  片方だけで守っているつもりが実は反対側が拾っていた、という取り違えを避けるためである。</p>
+
+  <h2>作ったもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><code>src/features/notification/queries.ts</code></td><td>行を作る二つの関数、一覧、既読、ウォッチ</td></tr>
+      <tr><td class="nowrap"><code>src/features/notification/actions.ts</code></td><td>開く、まとめて既読、ウォッチの付け外し</td></tr>
+      <tr><td class="nowrap"><code>src/features/notification/NotificationList.tsx</code></td><td>行そのものがフォーム</td></tr>
+      <tr><td class="nowrap"><code>src/features/notification/WatchForm.tsx</code></td><td>属性欄に立つ押しボタン</td></tr>
+      <tr><td class="nowrap"><code>src/features/dashboard/queries.ts</code></td><td>プロジェクトをまたいだ担当の取得</td></tr>
+      <tr><td class="nowrap"><code>src/app/o/[slug]/dashboard/page.tsx</code></td><td>二枚のタブ</td></tr>
+      <tr><td class="nowrap"><code>#lib/db.ts</code></td><td><code>visibleProjectIds()</code> へ切り出した</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>次にやること</h2>
+
+  <p>メールである。三つのきっかけはどれも行を積むようになったが、
+  <code>emailed_at</code> は誰も埋めていない。</p>
+
+  <p>要るものは三つある。SMTP クライアントの依存、未送信の行を拾って送る仕掛け、そしてその置き場。
+  三つめが厄介で、常駐プロセスか定期実行がデプロイ構成に無い。
+  期限が近い課題の通知を先送りにしたときと同じ壁である。</p>
+
+  <p>メール通知のオンオフも、値は <code>users</code> にあるが切り替える画面がない。
+  アカウントの設定は<a href="../../issues/account-settings/index.html">別の課題</a>に置いてある。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../features/notification/index.html"><span class="card-no">FEATURE</span><p class="card-title">通知とウォッチ</p><p class="card-desc">決めたことの本体</p></a>
+    <a class="card" href="../../features/dashboard/index.html"><span class="card-no">FEATURE</span><p class="card-title">担当スレッド一覧</p><p class="card-desc">書き直した節がある</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/dashboard/index.html"><span class="card-no">UI</span><p class="card-title">担当スレッド</p><p class="card-desc">二枚のタブ</p></a>
+    <a class="card" href="../../database/watches/index.html"><span class="card-no">TABLE</span><p class="card-title">watches</p><p class="card-desc">権限より長生きする行</p></a>
+    <a class="card" href="../../issues/notification-enhancement/index.html"><span class="card-no">ISSUE</span><p class="card-title">通知の拡張</p><p class="card-desc">先送りにしたもの</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 通知を読めるようにした</span>
+    <span>最終更新 2026-09-08</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

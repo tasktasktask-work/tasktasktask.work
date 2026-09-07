@@ -35,7 +35,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
       slug={slug}
       organizationName={organization.name}
       displayName={found.user.displayName}
-      isOrgAdmin
+      scope={found.scope}
       current="settings"
       projects={links}
     >

@@ -161,12 +161,15 @@ export function projectAdminExists(
  *
  * 振る舞いは tests/permission.test.ts で固定してある。
  *
- * $1 = organization_id, $2 = user_id
+ * 関数にしてあるのは、通知の宛先を絞るときに「行ごとに違う人」で
+ * 同じ判定が要るためである。ほとんどの呼び出しは
+ * ログイン中の一人について引くので、下の VISIBLE_PROJECT_IDS を使う。
  */
-export const VISIBLE_PROJECT_IDS = `
+export function visibleProjectIds(orgParam: string, userParam: string): string {
+  return `
   SELECT p.id
     FROM projects p
-   WHERE p.organization_id = $1
+   WHERE p.organization_id = ${orgParam}
      AND p.deleted_at IS NULL
      /*
       * 組織が境界である。所属が切れていれば、何も見えない。
@@ -176,16 +179,24 @@ export const VISIBLE_PROJECT_IDS = `
       * 非公開プロジェクトが見えてしまう。
       * 外すときに両方を消す、という規律に頼らずに済ませる。
       */
-     AND ${orgMemberExists('p.organization_id', '$2')}
+     AND ${orgMemberExists('p.organization_id', userParam)}
      AND (
        p.visibility = 'public'
        OR EXISTS (
           SELECT 1 FROM project_members pm
            WHERE pm.project_id = p.id
-             AND pm.user_id = $2
+             AND pm.user_id = ${userParam}
              AND pm.deleted_at IS NULL)
-       OR ${orgAdminExists('p.organization_id', '$2')}
+       OR ${orgAdminExists('p.organization_id', userParam)}
      )`;
+}
+
+/**
+ * 上を、いちばん多い呼ばれ方で固定したもの。
+ *
+ * $1 = organization_id, $2 = user_id
+ */
+export const VISIBLE_PROJECT_IDS = visibleProjectIds('$1', '$2');
 
 /* ==========================================================================
    スレッド番号の採番

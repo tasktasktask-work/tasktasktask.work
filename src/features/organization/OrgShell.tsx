@@ -1,7 +1,10 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { logout } from '#features/authentication/actions.ts';
+import { dashboardPath } from '#features/notification/path.ts';
+import { countUnread } from '#features/notification/queries.ts';
 import { projectPath } from '#features/project/path.ts';
+import type { OrgScope } from '#lib/db.ts';
 
 /*
  * 組織の中の画面に共通する枠。
@@ -12,16 +15,16 @@ import { projectPath } from '#features/project/path.ts';
  * ページはどのみちスコープを組み立てるので、その結果をここへ渡す。
  */
 
-export type ShellNav = 'projects' | 'members' | 'settings' | 'project';
+export type ShellNav = 'projects' | 'members' | 'settings' | 'project' | 'me' | 'notices';
 
 /** 左帯に並べるプロジェクト。畳んだものは出さない。 */
 export type ShellProject = { key: string; name: string };
 
-export function OrgShell({
+export async function OrgShell({
   slug,
   organizationName,
   displayName,
-  isOrgAdmin,
+  scope,
   current,
   projects,
   currentProjectKey,
@@ -30,12 +33,19 @@ export function OrgShell({
   slug: string;
   organizationName: string;
   displayName: string;
-  isOrgAdmin: boolean;
+  /*
+   * 未読の数をここで引くために受け取る。
+   * 各ページで数えて渡す形にすると、同じ三行が8つの画面に散る。
+   * 一つ足し忘れた画面では、ベルだけが黙る。
+   */
+  scope: OrgScope;
   current: ShellNav;
   projects: ShellProject[];
   currentProjectKey?: string;
   children: ReactNode;
 }) {
+  const unread = await countUnread(scope);
+
   return (
     <div className="app-frame">
       <div className="app-top">
@@ -46,6 +56,14 @@ export function OrgShell({
           {organizationName} <span className="slug">{slug}</span>
         </Link>
         <span className="sp" />
+        <Link
+          href={dashboardPath(slug, { tab: 'notifications' })}
+          className="app-bell"
+          aria-label={unread > 0 ? `未読の通知が${unread}件あります` : '通知'}
+          style={{ textDecoration: 'none' }}
+        >
+          🔔{unread > 0 ? <span className="n">{unread > 99 ? '99+' : unread}</span> : null}
+        </Link>
         <span className="hanko sm" aria-hidden="true">
           {[...displayName][0] ?? '?'}
         </span>
@@ -72,11 +90,22 @@ export function OrgShell({
               {project.name}
             </Link>
           ))}
+          <h5>わたし</h5>
+          <Link href={dashboardPath(slug)} className={current === 'me' ? 'on' : ''}>
+            担当スレッド
+          </Link>
+          <Link
+            href={dashboardPath(slug, { tab: 'notifications' })}
+            className={current === 'notices' ? 'on' : ''}
+          >
+            通知
+          </Link>
+
           <h5>組織</h5>
           <Link href={`/o/${slug}/members`} className={current === 'members' ? 'on' : ''}>
             メンバー
           </Link>
-          {isOrgAdmin ? (
+          {scope.isOrgAdmin ? (
             <Link href={`/o/${slug}/settings`} className={current === 'settings' ? 'on' : ''}>
               設定
             </Link>

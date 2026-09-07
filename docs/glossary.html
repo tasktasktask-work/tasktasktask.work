@@ -495,6 +495,12 @@
     自分でボタンを押して付け、押して外す。</p>
     <p>自動では付かない。
     スレッドを立てても、担当者になっても、コメントを書いても、ウォッチしたことにはならない。</p>
+    <p>押しボタンはスレッド詳細の属性欄にある。
+    アーカイブされたスレッドでも押せる。
+    畳んだ先に新しいコメントは付かないので通知は飛ばないが、
+    外す手立てまで消えると、開け直したときに困る。</p>
+    <p>誰がウォッチしているかは、他の人には見えない。人数も出さない。
+    少人数の組織では、人数だけでも誰が見張っているかが割れる。</p>
     <div class="note warn">
       <span class="note-label">運用上の前提</span>
       <p>自動で付かないため、<strong>自分が立てたスレッドに返信が来ても、ウォッチしていなければ気づけない</strong>。
@@ -515,13 +521,60 @@
       <li><a href="#assignee">担当者</a>に設定されたとき</li>
       <li><a href="#watch">ウォッチ</a>しているスレッドに新しいコメントが付いたとき</li>
     </ul>
-    <p>アプリ内の通知には既読と未読がある。
+    <p>アプリ内の通知には<a href="#read-state">既読</a>と未読がある。
     メールは送りっぱなしなので、何を見落としたかを確かめる場所としてアプリ内の一覧が要る。</p>
+    <p>並ぶ場所は<a href="#assigned-list">担当スレッド一覧</a>と同じ画面で、タブで切り替える。
+    未読の数は、組織の中のどの画面でも上帯のベルに出る。</p>
+    <div class="note">
+      <span class="note-label">閲覧できなくなった相手には届かない</span>
+      <p>ウォッチの行は、あとからそのプロジェクトが<a href="#private-project">非公開</a>に変わっても、
+      メンバーから外されても残る。
+      通知にはスレッドの題名が含まれるので、絞らなければそこが情報の漏れ口になる。
+      宛先は行を作るときに絞り、一覧に出すときにもう一度絞る。</p>
+    </div>
     <p>メール通知はユーザーごとにまとめて止められる。
     止める手段がないと、煩わしく感じた人に迷惑メールとして報告され、送信ドメインの評価が下がる。
     そうなると<a href="#magic-link">マジックリンク</a>まで届かなくなり、ログインそのものができなくなる。</p>
     <div class="rel"><span class="rel-label">関連する用語</span><a href="#watch">ウォッチ</a><a href="#mention">メンション</a><a href="#assignee">担当者</a><a href="#magic-link">マジックリンク</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/notification/index.html">通知とウォッチ</a></div>
+  </article>
+
+  <article class="term" id="read-state">
+    <h3>既読<span class="reading">read</span></h3>
+    <p>その通知をもう見た、という印を<strong>既読</strong>と呼ぶ。
+    <a href="#notification">通知</a>のうち、アプリ内の一覧だけがこれを持つ。
+    メールを読んだかどうかを、このシステムは知らない。</p>
+    <p>付き方は二つある。
+    通知の行を押して飛ぶと、その行だけが既読になる。
+    「すべて既読にする」を押すと、そのとき見えている未読がまとめて畳まれる。</p>
+    <p>一覧には未読を全部と、既読を直近の分だけ並べる。
+    未読を上に固めず、時系列一本で混ぜる。
+    固めると、消化したあとに画面の上半分が空になる。</p>
+    <div class="note">
+      <span class="note-label">先読みで既読にしない</span>
+      <p>通知の行はリンクではなく押しボタンである。
+      リンクにすると、ブラウザが先読みした時点で既読になる。
+      マウスを乗せただけで消えた通知は、二度と探せない。</p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#notification">通知</a><a href="#assigned-list">担当スレッド一覧</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/notification/index.html">通知とウォッチ</a></div>
+  </article>
+
+  <article class="term" id="assigned-list">
+    <h3>担当スレッド一覧<span class="reading">assigned threads</span></h3>
+    <p>プロジェクトをまたいで、自分が<a href="#assignee">担当者</a>になっているスレッドだけを集めた画面を
+    <strong>担当スレッド一覧</strong>と呼ぶ。</p>
+    <p><a href="#thread-list">スレッド一覧</a>も<a href="#gantt">ガントチャート</a>もプロジェクト単位である。
+    担当が5つのプロジェクトに散っていれば、5枚の画面を開くことになる。
+    この画面はその手間をなくす。</p>
+    <p>終了日の近い順に並べ、<a href="#period">期間</a>を持たないものは後ろへ置く。
+    畳んだスレッドと畳んだプロジェクトの中身は、絞り込みを切り替えても出てこない。
+    終わった仕事ではなく、片付いた場所だからである。</p>
+    <p>同じ画面に<a href="#notification">通知</a>のタブが並ぶ。
+    「今日、自分は何をやるのか」への答えは、担当している仕事と、
+    誰かが自分に向けて言ったことの二つだからである。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#assignee">担当者</a><a href="#thread-list">スレッド一覧</a><a href="#notification">通知</a><a href="#period">期間</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/dashboard/index.html">担当スレッド一覧</a></div>
   </article>
 
   <!-- ================================================================= -->

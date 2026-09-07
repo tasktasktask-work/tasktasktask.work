@@ -5,6 +5,8 @@ import { CommentForm } from '#features/comment/CommentForm.tsx';
 import { CommentList } from '#features/comment/CommentList.tsx';
 import { Markdown } from '#features/comment/Markdown.tsx';
 import { listComments, listMentionCandidates } from '#features/comment/queries.ts';
+import { isWatching } from '#features/notification/queries.ts';
+import { WatchForm } from '#features/notification/WatchForm.tsx';
 import { OrgShell } from '#features/organization/OrgShell.tsx';
 import { getOrganization, listMembers } from '#features/organization/queries.ts';
 import { currentScope } from '#features/organization/scope.ts';
@@ -81,10 +83,11 @@ export default async function ThreadPage({
     return notFound();
   }
 
-  const [children, comments, candidates] = await Promise.all([
+  const [children, comments, candidates, watching] = await Promise.all([
     listChildren(scope, thread.id),
     listComments(scope, thread.id),
     listMentionCandidates(scope, project.id),
+    isWatching(scope, thread.id),
   ]);
   const label = threadLabel(project.key, thread.number);
   const canWrite = writable(thread);
@@ -95,7 +98,7 @@ export default async function ThreadPage({
       slug={slug}
       organizationName={organization.name}
       displayName={user.displayName}
-      isOrgAdmin={scope.isOrgAdmin}
+      scope={scope}
       current="project"
       currentProjectKey={project.key}
       projects={links}
@@ -367,6 +370,14 @@ export default async function ThreadPage({
               ) : (
                 <span style={{ fontSize: '.82rem' }}>なし</span>
               )}
+            </span>
+          </div>
+
+          {/* ウォッチは自分あての設定である。畳んだスレッドでも付け外しできる */}
+          <div className="row">
+            <span className="k">ウォッチ</span>
+            <span className="v">
+              <WatchForm target={target} watching={watching} />
             </span>
           </div>
 
