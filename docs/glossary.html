@@ -390,6 +390,11 @@
     <p>ただし本文が黙って書き換わると、それを前提に書かれたコメントが宙に浮く。
     「カーソル方式でいいと思います」というコメントが、いまの本文のどこにも掛かっていない、
     という状態が起きる。この印は、その食い違いに気づくための手がかりである。</p>
+    <p>本文の<a href="#checkbox">チェックボックス</a>を押しても、この印は付かない。
+    文字としては本文が書き換わるが、課題の定義は変わっていない。
+    項目はもとから並んでいて、終わったかどうかだけが動く。
+    ここで印が付くと、チェックリストを持つスレッドが例外なく「編集済み」になり、
+    印そのものが何も伝えなくなる。</p>
     <div class="dialogue">
       <p><span class="who">PM</span><span>本文が変わってるみたいなんですが、どこが変わったか見られますか。</span></p>
       <p><span class="who">開発者</span><span>履歴は残していません。変わったことと、その時刻だけです。中身の差分が要るなら、本文ではなくコメントに書いてください。</span></p>
@@ -410,27 +415,63 @@
     コメントは「その時点で誰が何と言ったか」の記録であり、後から書き換えられると、それを前提に進んだ議論の意味が失われるためである。</p>
     <p>この扱いはスレッドの本文とは異なる。
     本文は現在の課題の定義を表すものなので、調査が進めば書き換わってよい。
-    書き換えたことは「編集済み」の印で示すが、以前の内容は残さない。</p>
+    書き換えたことは<a href="#edited-mark">「編集済み」</a>の印で示すが、以前の内容は残さない。</p>
+    <p>直せないという決まりには、ひとつだけ抜け道があるように見えるものがある。
+    <a href="#checkbox">チェックボックス</a>である。
+    こちらは押せるが、本文には触れていない。状態は別の場所に置いてある。</p>
     <div class="dialogue">
       <p><span class="who">PM</span><span>コメントの誤字を直したいんですが。</span></p>
       <p><span class="who">開発者</span><span>直せません。訂正のコメントを続けて書いてもらう形になります。</span></p>
       <p><span class="who">PM</span><span>不便ですけど、言った言わないが起きないのは助かりますね。</span></p>
     </div>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread">スレッド</a><a href="#mention">メンション</a><a href="#attachment">添付ファイル</a></div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread">スレッド</a><a href="#mention">メンション</a><a href="#checkbox">チェックボックス</a><a href="#attachment">添付ファイル</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/comment/index.html">コメント</a></div>
   </article>
 
   <article class="term" id="mention">
     <h3>メンション<span class="reading">mention</span></h3>
-    <p>コメントや本文の中で <code>@</code> に続けて人を指名する書き方を<strong>メンション</strong>と呼ぶ。
+    <p><a href="#comment">コメント</a>の中で <code>@</code> に続けて人を指名する書き方を<strong>メンション</strong>と呼ぶ。
     指名された人には<a href="#notification">通知</a>が飛ぶ。</p>
+    <p>使えるのはコメントの中だけである。スレッドの本文に <code>@</code> と書いても、ただの文字として出る。
+    通知はコメントに紐づく形でしか作れないためである。
+    本文は編集できるので、仮に飛ばすとすると、保存のたびに飛ぶのか、消したら取り消すのかまで決めることになる。
+    色だけ付けて通知を飛ばさない形にすると、指名したつもりの人が気づかれないまま残る。</p>
     <p>候補に出るのは、そのプロジェクトを閲覧できる人だけである。
     <a href="#private-project">非公開プロジェクト</a>のメンバーでない人を指名できてしまうと、閲覧権限のないスレッドの内容を含む通知が届く。
     それは非公開という設定の意味を失わせる。</p>
+    <p>誰を指したかは、投稿した時点で決まる。
+    表示名は変更でき、しかも一意ではない。
+    表示のたびに現在の名前と突き合わせる形にすると、別人が同じ表示名に改名した瞬間、
+    過去のコメントがその人を指しているように見える。通知はもとの人に届いているのに、である。</p>
+    <p>同じ表示名の人が複数いれば、その全員に通知が飛ぶ。
+    書き手はそのうちの一人を思って書いているが、どちらなのかを機械が決める手立てがない。
+    候補はもともとそのプロジェクトを閲覧できる人に限られているので、
+    余分に届いても、見せてはいけないものは見えない。</p>
     <p><a href="#watch">ウォッチ</a>が自動では付かない仕様のため、メンションは相手に気づいてもらうための主要な手段になる。
     誰かに宛てて書くときは、その人を指名する運用が前提になる。</p>
     <div class="rel"><span class="rel-label">関連する用語</span><a href="#comment">コメント</a><a href="#notification">通知</a><a href="#watch">ウォッチ</a><a href="#private-project">非公開プロジェクト</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/comment/index.html">コメント</a>／<a href="features/notification/index.html">通知とウォッチ</a></div>
+  </article>
+
+  <article class="term" id="checkbox">
+    <h3>チェックボックス<span class="reading">checkbox</span></h3>
+    <p><a href="#comment">コメント</a>と<a href="#thread">スレッド</a>の本文に <code>- [ ] やること</code> と書くと出る、
+    押して入れたり外したりできる箱を<strong>チェックボックス</strong>と呼ぶ。</p>
+    <p>子スレッドを立てるほどでもない小さな作業を並べるために置いた。
+    これがないと、そういう項目のために子スレッドが乱立する。</p>
+    <p>押せるのは、そのプロジェクトを閲覧できる人なら誰でもである。
+    書いた本人に限ると、担当が変わった作業に永遠にチェックが入らない。</p>
+    <p>状態の置き場所は、コメントと本文で違う。
+    本文は編集できるので、状態も本文そのものに書く（<code>[ ]</code> が <code>[x]</code> になる）。
+    コメントは編集できないので、押された箱の番号を別に持つ。
+    誰がいつ入れたかも、そちらに残る。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>コメントは直せないはずですよね。チェックは押せるんですか。</span></p>
+      <p><span class="who">開発者</span><span>押せます。本文には触っていません。何番目の箱が入っているかを別に持っているだけです。</span></p>
+      <p><span class="who">PM</span><span>じゃあ、あとから読み返しても発言はそのままなんですね。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#comment">コメント</a><a href="#thread">スレッド</a><a href="#edited-mark">編集済み</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/comment/index.html">コメント</a>／<a href="features/thread/index.html">スレッド</a></div>
   </article>
 
   <!-- ================================================================= -->

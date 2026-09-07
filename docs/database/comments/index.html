@@ -65,32 +65,52 @@ CREATE INDEX comments_by_thread
   <p>本人による削除はできないが、<a href="../../glossary.html#org-admin">組織管理者</a>による論理削除は残す。
   誤って機密情報を書き込んだ場合など、消さざるを得ない場面があるためである。</p>
 
-  <h2>メンションをどう保持するか</h2>
+  <h2>本文の外に出した二つのもの</h2>
 
-  <p>本文中の <code>@表示名</code> を構造化して別テーブルに持つことはしない。
-  <code>body</code> をそのまま保存し、投稿時に解析して <code>notifications</code> を作る。</p>
+  <p>コメントの本文は、投稿されたときのまま動かない。
+  その代わりに、本文の中の位置を指す表が二枚ぶら下がっている。</p>
 
-  <div class="note">
-    <span class="note-label">この方式の帰結</span>
-    <p>ユーザーが<a href="../users/index.html">表示名</a>を変えても、過去のコメントの <code>@</code> 表記は古いままになる。
-    通知は投稿時点で作られているので機能には影響しないが、表示は食い違う。</p>
-    <p>構造化して保持すれば解決するが、Markdown の本文と構造化データの二重管理になる。
-    表示の食い違いを受け入れるほうを選んだ。</p>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>テーブル</th><th>持っているもの</th></tr></thead>
+    <tbody>
+      <tr><td><a href="../comment_checks/index.html">comment_checks</a></td><td>入っているチェックボックスの番号と、入れた人</td></tr>
+      <tr><td><a href="../comment_mentions/index.html">comment_mentions</a></td><td>指名の位置と、指した相手</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>どちらも <code>body</code> が動かないことに乗っている。
+  番号も文字数も、本文が一文字ずれれば別のものを指す。</p>
+
+  <div class="note decide">
+    <span class="note-label">2026-09-07 に方針を変えた</span>
+    <p>ここには以前、<strong>「本文中の <code>@表示名</code> を構造化して別テーブルに持つことはしない」</strong>と書いてあった。
+    Markdown の本文と構造化データの二重管理を避け、表示の食い違いを受け入れる、という判断だった。</p>
+    <p>受け入れる先が想定より広かった。<code>display_name</code> は変更でき、しかも一意ではない。
+    表示のたびに現在の名前と突き合わせると、
+    <strong>別人が同じ表示名に改名した瞬間、過去のコメントがその人を指しているように見える。</strong>
+    通知はもとの人に届いているので、画面と通知の指す先が食い違ったまま残る。</p>
+    <p>二重管理にはならなかった。本文が動かないので、片方だけが古くなることが起きない。</p>
   </div>
 
   <h2>アーカイブとの関係</h2>
   <p>スレッドまたはプロジェクトがアーカイブされていると、新しいコメントを作れない。
   この判定は <code>threads</code> と <code>projects</code> の <code>archived_at</code> を見て行う。
-  <code>comments</code> 自身はアーカイブの状態を持たない。</p>
+  <code>comments</code> 自身はアーカイブの状態を持たない。
+  チェックボックスの付け外しも、同じ判定で止まる。</p>
 
   <h2>関係</h2>
 <pre class="figure">threads ──&lt; comments ──&lt; attachments
-                │
+                │   └──&lt; comment_checks
+                │   └──&lt; comment_mentions
 users ──────────┘（author_user_id）</pre>
 
   <h2>関連するテーブル</h2>
   <div class="cards">
     <a class="card" href="../threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">親。アーカイブ判定もここを見る</p></a>
+    <a class="card" href="../comment_checks/index.html"><span class="card-no">TABLE</span><p class="card-title">comment_checks</p><p class="card-desc">チェックボックスの状態</p></a>
+    <a class="card" href="../comment_mentions/index.html"><span class="card-no">TABLE</span><p class="card-title">comment_mentions</p><p class="card-desc">指名の位置</p></a>
     <a class="card" href="../attachments/index.html"><span class="card-no">TABLE</span><p class="card-title">attachments</p><p class="card-desc">コメントに付く添付</p></a>
     <a class="card" href="../notifications/index.html"><span class="card-no">TABLE</span><p class="card-title">notifications</p><p class="card-desc">投稿時に作られる</p></a>
   </div>
@@ -101,7 +121,7 @@ users ──────────┘（author_user_id）</pre>
 
   <div class="sheet-foot">
     <span>データベース / comments</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

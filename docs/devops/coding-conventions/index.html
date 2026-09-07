@@ -423,6 +423,36 @@ pg.types.setTypeParser(pg.types.builtins.TIMESTAMP, (v) =&gt; {
   <code>timestamp</code> の列が現れることは設計の誤りなので、
   黙って動くよりも止まったほうがよい。</p>
 
+  <h2 id="markdown">利用者が書いた文章を画面に出す</h2>
+
+  <p>スレッドの本文とコメントは、利用者が書いた文字列である。
+  これを HTML にして出すので、書いた人が仕込んだ <code>&lt;script&gt;</code> が
+  他人のブラウザで動かないことを、こちらが保証しなければならない。</p>
+
+  <p>保証しているのは <a href="https://github.com/vercel/streamdown">streamdown</a> である。
+  自前で無害化を書かない。書き足す形にもしない。</p>
+
+  <div class="note decide">
+    <span class="note-label">守ること</span>
+    <p><strong>描画は必ず <code>#features/comment/Markdown.tsx</code> を通す。</strong>
+    <code>dangerouslySetInnerHTML</code> を新しく書かない。
+    無害化を通っていない経路が一本できると、そこだけが穴になる。</p>
+
+    <p><strong>本文を渡す前に <code>#lib/markdown.ts</code> の <code>prepare</code> を通す。</strong>
+    チェックボックスと指名を、こちらのタグに置き換えるのがこの関数である。
+    同時に、利用者が書いた <code>&lt;task&gt;</code> と <code>&lt;mention&gt;</code> を無効にする。
+    通さずに渡すと、他人を指名したように見せかける文章が書けてしまう。</p>
+
+    <p><strong>本文の走査は <code>#lib/markdown.ts</code> にだけ置く。</strong>
+    コードブロックとインラインコードの中を避ける判定が入っている。
+    書き写すと、数え方が食い違ったときに別のチェックボックスへ印が入る。</p>
+  </div>
+
+  <p>streamdown が出す <code>class</code> は Tailwind のユーティリティで、このプロジェクトには効かない。
+  体裁は <code>data-streamdown</code> 属性を手がかりに <code>docs/theme.css</code> で当てている。
+  表とコードブロックに付いてくる操作ボタンは <code>controls={false}</code> で消してある。
+  あれらの見た目は Tailwind でしか組まれていない。</p>
+
   <h2 id="blocks">制御構文のブロックを省略しない</h2>
 
   <p><code>if</code> や <code>for</code> の本体が一文でも、必ず波括弧で囲む。</p>

@@ -69,6 +69,10 @@
                   <li>ページングはカーソル方式</li>
                 </ul>
                 <p>正規化については <a href="#" style="color:var(--ai)">WEB-9</a> で確認中。</p>
+                <ul style="list-style:none;padding-left:.2rem">
+                  <li><input type="checkbox" checked> ページングの方式を決める</li>
+                  <li><input type="checkbox"> エンドポイントの名前を決める</li>
+                </ul>
               </div>
 
               <p class="app-hint">このスレッドを親にして
@@ -86,7 +90,7 @@
                 </div>
               </div>
 
-              <h3 class="app-section">コメント &#160;<span style="color:var(--ink-faint);font-weight:400">3件</span></h3>
+              <h3 class="app-section">コメント &#160;<span style="color:var(--ink-faint);font-weight:400">4件</span></h3>
               <div style="border-top:1px solid var(--rule)">
                 <div class="p-comment">
                   <span class="hanko">佐</span>
@@ -107,9 +111,20 @@
                   <div class="body">
                     <div class="head"><span class="who">佐藤 明日香</span><span class="when">2026-09-04 14:10</span></div>
                     <div class="text">
-                      <p>本文に反映しました。設計メモも貼っておきます。</p>
+                      <p>本文に反映しました。残りはこれだけです。</p>
+                      <ul style="list-style:none;padding-left:.2rem;margin:0 0 .6rem">
+                        <li><input type="checkbox" checked> 仕様を書く</li>
+                        <li><input type="checkbox"> 実装する</li>
+                      </ul>
                       <p style="font-size:.8rem"><a href="#" style="color:var(--ai)">&#128206; search-api-design.pdf</a> <span style="color:var(--ink-faint)">240 KB</span></p>
                     </div>
+                  </div>
+                </div>
+                <div class="p-comment">
+                  <span class="hanko">&#215;</span>
+                  <div class="body">
+                    <div class="head"><span class="who">田中 亮</span><span class="when">2026-09-04 15:02</span></div>
+                    <p class="p-deleted">このコメントは削除されました。</p>
                   </div>
                 </div>
               </div>
@@ -221,12 +236,27 @@
   自動では付かない仕様のため「誰が見ているか」が自明でないからである。
   ここに自分がいなければ、コメントが付いても通知は来ない。</p>
 
+  <h2>チェックボックス</h2>
+
+  <p>本文にもコメントにも <code>- [ ] やること</code> と書ける。
+  押せるのは、そのプロジェクトを閲覧できる人なら誰でもである。</p>
+
+  <p>本文の箱を押すと、本文そのものが書き換わる。
+  それでも「編集済み」の印は付かない。
+  項目はもとから並んでいて、終わったかどうかだけが動くからである。</p>
+
+  <p>コメントの箱を押しても、コメントの本文は一字も変わらない。
+  <a href="../../../../../../../../database/comment_checks/index.html">状態は別のテーブル</a>にあり、
+  誰がいつ入れたかもそちらに残る。</p>
+
   <div class="note warn">
     <span class="note-label">この見本にはまだ動かない部分がある</span>
-    <p>コメント、タグ、ウォッチ、添付は、それぞれ別の機能として作っていない。
-    実際の画面には、いまその欄が出ない。</p>
-    <p>本文の箇条書きとコードも、いまは<a href="../../../../../../../../issues/markdown-rendering/index.html">解釈していない</a>。
-    改行だけが残る。</p>
+    <p>タグ、ウォッチ、添付は、それぞれ別の機能として作っていない。
+    実際の画面には、いまその欄が出ない。
+    上に描いてある <strong>&#128206; のリンクと「ファイルを添付」の押しボタンも出ない。</strong></p>
+    <p>コメントを消す動線も出していない。
+    <a href="../../../../../../../../features/comment/index.html">組織管理者だけが消せる</a>と決めてあるが、
+    押す前に何を確かめさせるかを決めていない。</p>
   </div>
 
   <h2>アーカイブされている場合</h2>

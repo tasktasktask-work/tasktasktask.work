@@ -42,14 +42,73 @@
 
   <h2>書き方</h2>
 
-  <p>GitHub Flavored Markdown 相当の記法を使う。
-  見出し、強調、リスト、リンク、コードブロック、引用、表、チェックボックスまで。
-  生のHTMLは受け付けない。</p>
+  <p>GitHub Flavored Markdown を使う。
+  見出し、強調、リスト、リンク、コードブロック、引用、表、
+  <a href="../../glossary.html#checkbox">チェックボックス</a>まで通る。
+  解釈と無害化は <a href="https://github.com/vercel/streamdown">streamdown</a> が行う。</p>
 
-  <p>チェックボックスを入れたのは、課題の中の小さな作業を表す手段が要るからである。
-  これがないと、子課題を立てるほどでもない項目のために子課題が乱立する。</p>
+  <p>生の HTML も通す。<code>&lt;b&gt;太字&lt;/b&gt;</code> は太字として出る。
+  かつては受け付けない方針だった。禁じた理由は
+  「サニタイズの実装と検証にかかるコストが、得られる表現力に見合わない」ことである。
+  そのコストを streamdown が引き受けたので、禁じる理由のほうが先に消えた。</p>
 
-  <p>生HTMLを禁じたのは、サニタイズの実装と検証にかかるコストが、得られる表現力に見合わないためである。</p>
+  <div class="note decide">
+    <span class="note-label">危ないものが落ちることは、実際に投げて確かめている</span>
+    <p><code>&lt;script&gt;</code> は消える。<code>onerror</code> の付いた画像は差し止められる。
+    <code>javascript:</code> のリンクは無効になる。
+    描画の経路には <code>rehype-sanitize</code> と <code>rehype-harden</code> が入っている。</p>
+    <p>ただし、ここから先の安全は外部のライブラリが握っている。
+    自前で書いていれば「HTML の文字列を一度も作らない」という形にでき、
+    無害化の失敗という状態そのものを消せた。そちらは選ばなかった。</p>
+  </div>
+
+  <p>二つだけ、書いても効かない書き方がある。<code>&lt;task&gt;</code> と <code>&lt;mention&gt;</code> である。
+  この二つは、描画の直前にこちらが本文へ埋め込むタグで、
+  利用者が書いたものと見分けが付かない。
+  他人を指名したように見せかける文章を作れてしまうので、開き括弧を潰してから渡す。
+  コードブロックとインラインコードの中は、書いたとおりに出る。</p>
+
+  <h2>チェックボックスだけは押せる</h2>
+
+  <p><code>- [ ] やること</code> と書くと、押せる箱が出る。
+  コメントは直せないのに、ここだけ動く。</p>
+
+  <p>本文には触れていないからである。
+  <strong>押された箱の番号を、別のテーブルが持っている。</strong>
+  コメントの本文は投稿されたときのまま一字も変わらず、
+  「何番目の箱に、誰が、いつチェックを入れたか」がその隣に並ぶ。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th></th><th>コメント</th><th>スレッドの本文</th></tr></thead>
+    <tbody>
+      <tr><td>状態の置き場所</td><td><code>comment_checks</code> の行</td><td>本文の <code>[x]</code> という文字</td></tr>
+      <tr><td>本文は変わるか</td><td>変わらない</td><td>変わる</td></tr>
+      <tr><td>誰が入れたか</td><td>残る</td><td>残らない</td></tr>
+      <tr><td>編集済みの印</td><td>そもそも無い</td><td>付かない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>置き場所が違うのは、直せるかどうかが違うからである。
+  本文は編集できるので、状態を本文に書いても約束を破らない。
+  コメントに同じことをすると、<code>updated_at</code> を持たないという
+  <code>comments</code> の作りごと崩れる。</p>
+
+  <p>本文のほうで「編集済み」の印を付けないのは、別の理由による。
+  印は<a href="../../glossary.html#edited-mark">課題の定義が書き換わった</a>ことを知らせるものである。
+  項目はもとから並んでいて、終わったかどうかだけが動く。
+  ここで印が付けば、チェックリストを持つスレッドが例外なく「編集済み」になり、
+  印が何も伝えなくなる。</p>
+
+  <div class="note warn">
+    <span class="note-label">番号で指すことの弱み</span>
+    <p>本文の中で何番目か、という数え方をしている。
+    コメントの本文は変わらないので、この番号は永久に同じ箱を指す。</p>
+    <p>スレッドの本文は編集できるので、そうはいかない。
+    箱を押している最中に本文から項目が消えると、その操作は断られる。
+    こちらは本文そのものを書き換える形なので、番号がずれたまま別の箱に入ることはない。</p>
+  </div>
 
   <h2>メンション</h2>
 
@@ -65,6 +124,81 @@
 
   <p><a href="../../glossary.html#watch">ウォッチ</a>が自動で付かない仕様のため、メンションは相手に気づいてもらう主要な手段になる。
   誰かに宛てて書くときは指名する、という運用がこの設計の前提である。</p>
+
+  <h3>どこまでが名前か</h3>
+
+  <p><code>@佐藤 明日香 賛成です</code> という文字列から、名前の終わりを見つける手立てが要る。
+  表示名には空白が入るうえ、一意でもない。ハンドルの列も持っていない。</p>
+
+  <p>閲覧できる人の表示名を全部持ってきて、<strong>最も長く一致したものを採る</strong>。
+  書き手は何も覚えなくてよい。<code>@</code> を打つと候補が出るので、そこから選べば確実に入る。</p>
+
+  <p>同じ表示名の人が複数いたら、その全員に通知が飛ぶ。
+  書き手はそのうちの一人を思って書いているが、どちらなのかを機械が決める手立てがない。
+  候補はもともとそのプロジェクトを閲覧できる人に限られているので、
+  余分に届いても、見せてはいけないものは見えない。
+  指名されなかったほうが気づけないより、害が小さいと判断した。</p>
+
+  <p>コードの中は拾わない。<code>`@example`</code> は指名ではない。
+  メールアドレスの途中も拾わない。<code>sato@…</code> の <code>@</code> は直前が英数字である。</p>
+
+  <h3>誰を指したかは、投稿した時点で決まる</h3>
+
+  <p>本文の何文字目から何文字目が誰なのかを、投稿と同じトランザクションで書き留める。
+  表示のたびに現在の表示名と突き合わせる形は採らない。</p>
+
+  <p>表示名は変更できる。突き合わせ方式だと、指名された人が改名した瞬間に過去のコメントの色が消える。
+  それより悪いのは逆のほうで、<strong>別人が「佐藤 明日香」に改名すると、
+  過去のコメントがその人を指しているように見える。</strong>
+  通知はもとの人に届いているのに、画面上の指名先だけが入れ替わる。</p>
+
+  <p>コメントの本文は書き換わらないので、記録した位置は永久に正しい。</p>
+
+  <h2>誰が何をできるか</h2>
+
+  <p>スレッドと同じ線を引いた。見えている人は書ける。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>操作</th><th>閲覧できる人</th><th><a href="../../glossary.html#org-admin">組織管理者</a></th></tr></thead>
+    <tbody>
+      <tr><td>読む</td><td>●</td><td>●</td></tr>
+      <tr><td>投稿する</td><td>●</td><td>●</td></tr>
+      <tr><td>チェックボックスを押す</td><td>●</td><td>●</td></tr>
+      <tr><td>直す</td><td colspan="2" style="text-align:center">誰にもできない</td></tr>
+      <tr><td>消す</td><td></td><td>●</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>チェックボックスを書いた本人に限らないのは、担当が変わるからである。
+  書いた人が離れた作業に、永遠にチェックが入らなくなる。</p>
+
+  <p>消せるのを組織管理者だけにしたのは、消す場面が限られているためである。
+  機密情報を貼ってしまった、というような場面で使う。
+  <strong>押す動線はまだ画面に出していない。</strong>
+  そのとき何を確かめさせるかを決めてから出す。</p>
+
+  <h2>通知</h2>
+
+  <p>コメントを投稿すると、二種類の通知が立つ。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>誰に</th><th>種類</th></tr></thead>
+    <tbody>
+      <tr><td>指名された人</td><td><code>mention</code></td></tr>
+      <tr><td>そのスレッドを<a href="../../glossary.html#watch">ウォッチ</a>している人</td><td><code>comment</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>両方に当たる人には、指名のほうだけを作る。同じコメントで二度知らせても、二度目に新しい情報がない。
+  自分の投稿で自分に通知は来ない。</p>
+
+  <p>作るのは行だけである。
+  <strong><a href="../notification/index.html">通知の一覧とメールの送信は、まだ動いていない。</a></strong>
+  行を先に正しく積んでおけば、一覧を出した時点で過去の指名がそのまま並ぶ。</p>
 
   <h2>見え方</h2>
 
@@ -89,7 +223,20 @@
         <span class="hanko">佐</span>
         <div class="body">
           <div class="head"><span class="who">佐藤 明日香</span><span class="when">2026-09-04 13:40</span></div>
-          <div class="text"><p>WEB-7 を立てました。この議論を親にしてあります。</p></div>
+          <div class="text">
+            <p>WEB-7 を立てました。この議論を親にしてあります。残りはこれだけです。</p>
+            <ul style="list-style:none;padding-left:.2rem;margin:0">
+              <li><input type="checkbox" checked disabled> エンドポイントを決める</li>
+              <li><input type="checkbox" disabled> ページングの方式を決める</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="p-comment">
+        <span class="hanko">×</span>
+        <div class="body">
+          <div class="head"><span class="who">田中 亮</span><span class="when">2026-09-04 15:02</span></div>
+          <p class="p-deleted">このコメントは削除されました。</p>
         </div>
       </div>
     </div>
@@ -100,10 +247,31 @@
   <p>コメントには<a href="../attachment/index.html">添付ファイル</a>を付けられる。
   画像はコメント本文の中に表示され、それ以外はダウンロードのリンクとして並ぶ。</p>
 
+  <div class="note warn">
+    <span class="note-label">まだ作っていない</span>
+    <p>投稿欄に「ファイルを添付」の押しボタンは出していない。
+    押しても何も起きない札を先に置くと、動かないのか壊れたのかが区別できない。</p>
+  </div>
+
   <h2>アーカイブされたスレッドでは書けない</h2>
 
   <p><a href="../../glossary.html#archive">アーカイブ</a>されたスレッド、およびアーカイブされたプロジェクトの配下では、新しいコメントを投稿できない。
-  既存のコメントは読める。</p>
+  既存のコメントは読める。チェックボックスも押せなくなる。</p>
+
+  <h2>まだ無いもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>まだ無いもの</th><th>いつ入るか</th></tr></thead>
+    <tbody>
+      <tr><td>通知の一覧とメールの送信</td><td><a href="../notification/index.html">通知とウォッチ</a>を作るとき</td></tr>
+      <tr><td>ウォッチの押しボタン（行を作る側は動いている）</td><td>同上</td></tr>
+      <tr><td>添付ファイル</td><td><a href="../attachment/index.html">添付</a>を作るとき</td></tr>
+      <tr><td>コメントを消す動線</td><td>確認の出し方を決めてから</td></tr>
+      <tr><td>コメントの多いスレッドでの分割表示</td><td>実際に重くなってから</td></tr>
+    </tbody>
+  </table>
+  </div>
 
   <h2>関連する画面</h2>
   <div class="cards">
@@ -113,13 +281,15 @@
   <h2>関連するテーブル</h2>
   <div class="cards">
     <a class="card" href="../../database/comments/index.html"><span class="card-no">TABLE</span><p class="card-title">comments</p><p class="card-desc">コメント本体</p></a>
+    <a class="card" href="../../database/comment_checks/index.html"><span class="card-no">TABLE</span><p class="card-title">comment_checks</p><p class="card-desc">チェックボックスの状態</p></a>
+    <a class="card" href="../../database/comment_mentions/index.html"><span class="card-no">TABLE</span><p class="card-title">comment_mentions</p><p class="card-desc">解決した指名の位置</p></a>
     <a class="card" href="../../database/attachments/index.html"><span class="card-no">TABLE</span><p class="card-title">attachments</p><p class="card-desc">添付ファイル</p></a>
     <a class="card" href="../../database/notifications/index.html"><span class="card-no">TABLE</span><p class="card-title">notifications</p><p class="card-desc">メンションによる通知</p></a>
   </div>
 
   <div class="sheet-foot">
     <span>機能 / コメント</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

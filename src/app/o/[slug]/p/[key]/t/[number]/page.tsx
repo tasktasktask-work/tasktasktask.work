@@ -1,6 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { LoginScreen } from '#features/authentication/LoginScreen.tsx';
+import { CommentForm } from '#features/comment/CommentForm.tsx';
+import { CommentList } from '#features/comment/CommentList.tsx';
+import { Markdown } from '#features/comment/Markdown.tsx';
+import { listComments, listMentionCandidates } from '#features/comment/queries.ts';
 import { OrgShell } from '#features/organization/OrgShell.tsx';
 import { getOrganization, listMembers } from '#features/organization/queries.ts';
 import { currentScope } from '#features/organization/scope.ts';
@@ -26,6 +30,7 @@ import {
 } from '#features/thread/ThreadProps.tsx';
 import { ThreadRows } from '#features/thread/ThreadRows.tsx';
 import { formatDateTime, formatDay } from '#lib/datetime.ts';
+import { prepare } from '#lib/markdown.ts';
 
 const TYPE_LABEL: Record<ThreadType, string> = {
   kadai: '課題',
@@ -76,7 +81,11 @@ export default async function ThreadPage({
     return notFound();
   }
 
-  const children = await listChildren(scope, thread.id);
+  const [children, comments, candidates] = await Promise.all([
+    listChildren(scope, thread.id),
+    listComments(scope, thread.id),
+    listMentionCandidates(scope, project.id),
+  ]);
   const label = threadLabel(project.key, thread.number);
   const canWrite = writable(thread);
   const target = { slug, projectKey: project.key, number: thread.number };
@@ -157,8 +166,17 @@ export default async function ThreadPage({
           {thread.body.trim() === '' ? (
             <p className="app-empty">本文はまだありません。</p>
           ) : (
-            <div className="app-body-md" style={{ whiteSpace: 'pre-wrap' }}>
-              {thread.body}
+            <div className="app-body-md">
+              {/* 本文のチェックボックスは本文そのものに書かれている。
+                  コメントとは違い、押すと本文が書き換わる */}
+              <Markdown
+                source={prepare(thread.body, { checked: (item) => item.checked })}
+                target={
+                  canWrite
+                    ? { kind: 'body', slug, key: project.key, number: thread.number }
+                    : undefined
+                }
+              />
             </div>
           )}
 
@@ -211,6 +229,33 @@ export default async function ThreadPage({
               timezone={scope.timezone}
               showMeta={false}
             />
+          )}
+
+          <h3 className="app-section">
+            コメント{' '}
+            <span style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>
+              {comments.length}件
+            </span>
+          </h3>
+
+          {comments.length === 0 ? (
+            <p className="app-empty">まだありません。</p>
+          ) : (
+            <CommentList
+              comments={comments}
+              target={target}
+              canWrite={canWrite}
+              timezone={scope.timezone}
+            />
+          )}
+
+          {canWrite ? (
+            <CommentForm target={target} candidates={candidates} />
+          ) : (
+            <p className="app-hint">
+              アーカイブされているので、新しいコメントは書けません。
+              すでにあるコメントは読めます。
+            </p>
           )}
 
           {canWrite ? (

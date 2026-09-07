@@ -14,6 +14,7 @@ import {
   editThreadText,
   resolveThread,
   setAssignee,
+  setBodyCheck,
   setParent,
   setPeriod,
   setProgress,
@@ -51,6 +52,7 @@ const PROBLEM: Record<ThreadProblem, string> = {
   'parent-cycle': 'その親を選ぶと、親子が輪になります',
   'parent-archived': 'アーカイブ済みのスレッドは親にできません',
   'not-org-member': 'その人はこの組織のメンバーではありません',
+  'no-such-check': 'そのチェックボックスは見つかりません',
 };
 
 const say = (reason: ThreadProblem): string => PROBLEM[reason] ?? '操作できませんでした';
@@ -353,4 +355,43 @@ export async function deleteThreadAction(
 
   revalidatePath(`/o/${parsed.data.slug}/p/${parsed.data.key}`);
   redirect(projectPath(parsed.data.slug, parsed.data.key));
+}
+
+/* --------------------------------------------------------------------------
+   本文のチェックボックス
+   -------------------------------------------------------------------------- */
+
+const bodyCheck = target.extend({
+  position: z.number().int().min(0),
+  checked: z.boolean(),
+});
+
+export type BodyCheckInput = z.infer<typeof bodyCheck>;
+
+/**
+ * 本文の中のチェックボックスを入れる、あるいは外す。
+ *
+ * 本文の編集とは別の入口にしてある。
+ * 編集の欄を開かせると、チェックを一つ入れるために本文全体が
+ * 上書きの対象になる。押した瞬間に、その箱だけを差し替える。
+ */
+export async function setBodyCheckAction(input: BodyCheckInput): Promise<ThreadActionState> {
+  const parsed = bodyCheck.safeParse(input);
+  if (!parsed.success) {
+    return { error: 'チェックの指定が不正です' };
+  }
+  const { slug, key, number, position, checked } = parsed.data;
+
+  const here = await locate(slug, key, number);
+  if (!here) {
+    return { error: '操作する権限がありません' };
+  }
+
+  const result = await setBodyCheck(here.scope, here.thread.id, position, checked);
+  if (!result.ok) {
+    return { error: say(result.reason) };
+  }
+
+  refresh(slug, key, number);
+  return {};
 }

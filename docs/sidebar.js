@@ -62,6 +62,8 @@
         { path: "database/project_members/index.html",     label: "project_members", d: 2 },
         { path: "database/threads/index.html",             label: "threads", d: 2 },
         { path: "database/comments/index.html",            label: "comments", d: 2 },
+        { path: "database/comment_checks/index.html",      label: "comment_checks", d: 2 },
+        { path: "database/comment_mentions/index.html",    label: "comment_mentions", d: 2 },
         { path: "database/attachments/index.html",         label: "attachments", d: 2 },
         { path: "database/tags/index.html",                label: "tags", d: 2 },
         { path: "database/thread_tags/index.html",         label: "thread_tags", d: 2 },
@@ -116,7 +118,6 @@
         { path: "issues/rejection-representation/index.html",  label: "却下の表現", d: 2 },
         { path: "issues/custom-workflow/index.html",           label: "状態のカスタマイズ", d: 2 },
         { path: "issues/thread-mutability/index.html",         label: "スレッドの可変性", d: 2 },
-        { path: "issues/markdown-rendering/index.html",         label: "本文の書式", d: 2 },
         { path: "issues/gantt-enhancement/index.html",         label: "ガントの拡張", d: 2 },
         { path: "issues/notification-enhancement/index.html",  label: "通知の拡張", d: 2 },
         { path: "issues/full-text-search/index.html",          label: "全文検索", d: 2 },
@@ -130,14 +131,14 @@
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 10,
+      sessionTotal: 11,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260907-2320-comments/index.html", label: "2026-09-07 コメント", d: 2 },
         { path: "sessions/20260907-1920-threads/index.html", label: "2026-09-07 スレッド", d: 2 },
         { path: "sessions/20260907-1825-projects/index.html", label: "2026-09-07 プロジェクト", d: 2 },
         { path: "sessions/20260907-1137-organization-members/index.html", label: "2026-09-07 組織とメンバー", d: 2 },
-        { path: "sessions/20260907-1050-permission-tests/index.html", label: "2026-09-07 権限判定のテスト", d: 2 },
-        { path: "sessions/20260907-0148-deploy-incident/index.html", label: "2026-09-07 デプロイ障害", d: 2 }
+        { path: "sessions/20260907-1050-permission-tests/index.html", label: "2026-09-07 権限判定のテスト", d: 2 }
       ]
     }
   ];

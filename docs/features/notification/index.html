@@ -33,6 +33,18 @@
   </table>
   </div>
 
+  <div class="note warn">
+    <span class="note-label">いま動いているのは、行を作るところまで</span>
+    <p><a href="../comment/index.html">コメント</a>を投稿すると、指名された人とウォッチしている人の行が
+    <code>notifications</code> に積まれる。ここは動いている。</p>
+    <p><strong>その行を読む画面と、メールの送信は、まだ無い。</strong>
+    通知の一覧（<code>/dashboard</code>）を作っていないし、
+    <code>SmtpMailSender.send</code> は呼ぶと例外を投げる。
+    担当者に設定されたときの行も、まだ作っていない。</p>
+    <p>行を先に正しく積むことにしたのは、一覧を出した時点で過去の指名がそのまま並ぶからである。
+    逆にすると、一覧を作るときにコメントの投稿処理へ手を入れ直すことになる。</p>
+  </div>
+
   <h2>ウォッチは自動では付かない</h2>
 
   <p>スレッドを立てても、担当者になっても、コメントを書いても、ウォッチしたことにはならない。
@@ -143,7 +155,7 @@
 
   <div class="sheet-foot">
     <span>機能 / 通知とウォッチ</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

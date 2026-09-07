@@ -8,6 +8,7 @@ import {
   transaction,
   VISIBLE_PROJECT_IDS,
 } from '#lib/db.ts';
+import { toggleTask } from '#lib/markdown.ts';
 import { dateColumn, many, one } from '#lib/row.ts';
 
 /* ==========================================================================
@@ -51,7 +52,8 @@ export type ThreadProblem =
   | 'parent-not-found'
   | 'parent-cycle'
   | 'parent-archived'
-  | 'not-org-member';
+  | 'not-org-member'
+  | 'no-such-check';
 
 export type ThreadChange = { ok: true } | { ok: false; reason: ThreadProblem };
 
@@ -62,9 +64,13 @@ export type ThreadChange = { ok: true } | { ok: false; reason: ThreadProblem };
  * プロジェクトを畳んでも個々の archived_at は書き換えないので、
  * ここで両方を見なければ、畳んだプロジェクトの中身が書き換えられる。
  *
+ * コメントの投稿とチェックの付け外しも、この条件をそのまま使う。
+ * 書き写さずに輸出しているのは、片方だけ直したときに穴が開くためである。
+ * threads を t と呼ぶこと、$1 と $2 がこの位置であることが前提になる。
+ *
  * $1 = organization_id, $2 = user_id
  */
-const WRITABLE = `t.organization_id = $1
+export const THREAD_WRITABLE = `t.organization_id = $1
         AND t.deleted_at IS NULL
         AND t.archived_at IS NULL
         AND t.project_id IN (${VISIBLE_PROJECT_IDS})
@@ -506,10 +512,57 @@ export async function editThreadText(
   const { rowCount } = await pool.query(
     `UPDATE threads t
         SET title = $4, body = $5, body_edited_at = now(), updated_at = now()
-      WHERE t.id = $3 AND ${WRITABLE}`,
+      WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
     [scope.organizationId, scope.userId, threadId, trimmed, body],
   );
   return rowCount === 1 ? { ok: true } : { ok: false, reason: await whyNot(scope, threadId) };
+}
+
+/**
+ * 本文の中のチェックボックスを、一つだけ入れ替える。
+ *
+ * コメントとは置き場所が違う。本文は編集できるので、状態も本文に書く。
+ * かわりに「編集済み」の印は付けない（body_edited_at に触らない）。
+ * 印は「本文が書き換わって、それを前提に書かれたコメントが宙に浮いた」ことに
+ * 気づくためのものである。箱に印を入れても、課題の定義は変わっていない。
+ * ここで印を付けると、チェックリストを持つスレッドが全部「編集済み」になり、
+ * 印そのものが意味を失う。
+ *
+ * 読むのと書くのを同じトランザクションに入れ、行を押さえてから差し替える。
+ * 本文を丸ごと組み立て直さないので、二人が別々の箱を押しても互いを消さない。
+ */
+export async function setBodyCheck(
+  scope: OrgScope,
+  threadId: string,
+  position: number,
+  checked: boolean,
+): Promise<ThreadChange> {
+  if (!Number.isInteger(position) || position < 0) {
+    return { ok: false, reason: 'no-such-check' };
+  }
+
+  return transaction(async (client) => {
+    const { rows } = await client.query<{ body: string }>(
+      `SELECT t.body
+         FROM threads t
+        WHERE t.id = $3 AND ${THREAD_WRITABLE}
+          FOR UPDATE OF t`,
+      [scope.organizationId, scope.userId, threadId],
+    );
+    const row = rows[0];
+    if (!row) {
+      return { ok: false, reason: await whyNot(scope, threadId) };
+    }
+
+    const next = toggleTask(row.body, position, checked);
+    if (next === null) {
+      // 押している間に本文が編集され、その箱が消えた
+      return { ok: false, reason: 'no-such-check' };
+    }
+
+    await client.query(`UPDATE threads SET body = $2 WHERE id = $1`, [threadId, next]);
+    return { ok: true };
+  });
 }
 
 /**
@@ -525,7 +578,7 @@ export async function setProgress(
   progress: number,
 ): Promise<ThreadChange> {
   const { rows } = await pool.query<{ type: ThreadType }>(
-    `SELECT t.type FROM threads t WHERE t.id = $3 AND ${WRITABLE}`,
+    `SELECT t.type FROM threads t WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
     [scope.organizationId, scope.userId, threadId],
   );
   const row = rows[0];
@@ -541,7 +594,7 @@ export async function setProgress(
   const { rowCount } = await pool.query(
     `UPDATE threads t
         SET progress = $4, updated_at = now()
-      WHERE t.id = $3 AND ${WRITABLE}`,
+      WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
     [scope.organizationId, scope.userId, threadId, progress],
   );
   return rowCount === 1 ? { ok: true } : { ok: false, reason: await whyNot(scope, threadId) };
@@ -563,7 +616,7 @@ export async function setAssignee(
   const { rowCount } = await pool.query(
     `UPDATE threads t
         SET assignee_user_id = $4, updated_at = now()
-      WHERE t.id = $3 AND ${WRITABLE}`,
+      WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
     [scope.organizationId, scope.userId, threadId, userId],
   );
   return rowCount === 1 ? { ok: true } : { ok: false, reason: await whyNot(scope, threadId) };
@@ -582,7 +635,7 @@ export async function setPeriod(
   period: Period,
 ): Promise<ThreadChange> {
   const { rows } = await pool.query<{ type: ThreadType }>(
-    `SELECT t.type FROM threads t WHERE t.id = $3 AND ${WRITABLE}`,
+    `SELECT t.type FROM threads t WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
     [scope.organizationId, scope.userId, threadId],
   );
   const row = rows[0];
@@ -598,7 +651,7 @@ export async function setPeriod(
   const { rowCount } = await pool.query(
     `UPDATE threads t
         SET starts_on = $4, ends_on = $5, updated_at = now()
-      WHERE t.id = $3 AND ${WRITABLE}`,
+      WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
     [scope.organizationId, scope.userId, threadId, period.startsOn, period.endsOn],
   );
   return rowCount === 1 ? { ok: true } : { ok: false, reason: await whyNot(scope, threadId) };
@@ -619,7 +672,7 @@ export async function setParent(
 ): Promise<ThreadChange> {
   return transaction(async (client) => {
     const self = await client.query<{ projectId: string }>(
-      `SELECT t.project_id AS "projectId" FROM threads t WHERE t.id = $3 AND ${WRITABLE}`,
+      `SELECT t.project_id AS "projectId" FROM threads t WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
       [scope.organizationId, scope.userId, threadId],
     );
     const here = self.rows[0];

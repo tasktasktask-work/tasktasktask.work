@@ -15,6 +15,9 @@
 - `ThreadFilters.tsx` 絞り込みの帯。JavaScript を使わない GET のフォーム
 - `NewThreadForm.tsx` / `ThreadProps.tsx` / `ThreadEditForms.tsx` 入力の欄
 
+本文の描画は `#features/comment/Markdown.tsx` を使う。
+Markdown の仕組みはコメントと共通で、二つ作らない。
+
 ## 誰が書けるか
 
 **見えている人は書ける。** 立てる、直す、進捗率と担当者と期間と親を変える、畳む。
@@ -30,5 +33,8 @@
   **両方**のアーカイブを見る。片方だけだと、畳んだプロジェクトの中身が書き換わる
 - 親の付け替えは輪を作りうる。`setParent` の中で祖先を辿って断る。
   辿るところと書くところは同じトランザクションに入れる
+- 本文のチェックボックス（`setBodyCheck`）は `body_edited_at` に触らない。
+  印は「課題の定義が変わった」ことを知らせるもので、箱が入ったことではない
+- `THREAD_WRITABLE` はコメント側からも使う。書き写さない
 - 時刻の表示は `#lib/datetime.ts` を通し、組織のタイムゾーンを渡す
 - import には必ず拡張子を書く（[規約](../../../docs/devops/coding-conventions/index.html#imports)）

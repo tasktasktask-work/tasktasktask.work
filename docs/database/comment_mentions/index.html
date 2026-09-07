@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>comment_mentions | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">comment_mentions</h1>
+  <p class="lede">
+    コメントの本文の、何文字目から何文字目が誰なのか。
+    投稿した時点で決めて、あとから読み直さない。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+
+  <p><a href="../../glossary.html#mention">メンション</a>は <code>@佐藤 明日香</code> と書く。
+  表示名には空白が入るので、どこまでが名前かは、閲覧できる人の一覧と突き合わせて決めている。</p>
+
+  <p>その突き合わせを表示のたびに行うと、名前が変わったときに答えも変わる。
+  指名された人が改名すれば、過去のコメントの色が消える。
+  それより悪いのは逆で、<strong>別人が「佐藤 明日香」に改名した瞬間、
+  過去のコメントがその人を指しているように見える。</strong>
+  通知はもとの人に届いているのに、画面上の指名先だけが入れ替わる。</p>
+
+  <p>誰に通知を飛ばしたかは <code>notifications</code> にも残る。
+  ただしあちらは、自分を指名したときの行を持たない
+  （<code>notifications_not_self</code> が拒む）。
+  画面に色を付ける根拠としては使えない。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE comment_mentions (
+  comment_id   uuid NOT NULL REFERENCES comments(id),
+  start_offset int  NOT NULL,
+  end_offset   int  NOT NULL,
+  user_id      uuid NOT NULL REFERENCES users(id),
+
+  PRIMARY KEY (comment_id, start_offset, user_id),
+
+  CONSTRAINT comment_mentions_span
+    CHECK (start_offset &gt;= 0 AND end_offset &gt; start_offset)
+);</code></pre>
+
+  <h2>各カラム</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td><code>comment_id</code></td><td>どのコメントの中か</td></tr>
+      <tr><td><code>start_offset</code></td><td><code>@</code> の位置</td></tr>
+      <tr><td><code>end_offset</code></td><td>名前の直後。半開区間 <code>[start, end)</code> である</td></tr>
+      <tr><td><code>user_id</code></td><td>指した相手</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>主キーに user_id が入っている理由</h2>
+
+  <p>同じ表示名の人が組織に複数いることがある。
+  <code>display_name</code> に一意の制約は無い。</p>
+
+  <p>その場合、一つの <code>@佐藤 明日香</code> が二人を指す。
+  どちらなのかを機械が決める手立てが無いので、両方に通知を飛ばす。
+  <strong>同じ位置に複数の行が立つ。</strong></p>
+
+  <p>表示のときは位置だけを見るので、<code>DISTINCT start_offset, end_offset</code> で畳んでから使う。</p>
+
+  <h2>位置が動かない理由</h2>
+
+  <p>文字数で指しているので、本文が書き換わると全部ずれる。</p>
+
+  <p><a href="../comments/index.html">コメントの本文は書き換わらない</a>。
+  <code>comments</code> が <code>updated_at</code> を持たず、更新する関数も存在しない。
+  <strong>このテーブルは、その約束の上に乗っている。</strong></p>
+
+  <p>スレッドの本文にメンションが無いのは、これと逆の事情による。
+  あちらは編集できるので、位置を記録しても保たない。
+  加えて <code>notifications</code> の制約が、指名の通知をコメントに紐づくものに限っている。</p>
+
+  <h2>関係</h2>
+<pre class="figure">comments ──&lt; comment_mentions &gt;── users</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../comments/index.html"><span class="card-no">TABLE</span><p class="card-title">comments</p><p class="card-desc">指名が書かれている本文</p></a>
+    <a class="card" href="../comment_checks/index.html"><span class="card-no">TABLE</span><p class="card-title">comment_checks</p><p class="card-desc">同じく本文の外に出した情報</p></a>
+    <a class="card" href="../notifications/index.html"><span class="card-no">TABLE</span><p class="card-title">notifications</p><p class="card-desc">指名から作られる通知</p></a>
+    <a class="card" href="../users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">変わりうる表示名</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/comment/index.html"><span class="card-no">FEATURE</span><p class="card-title">コメント</p><p class="card-desc">名前の切り出し方</p></a>
+    <a class="card" href="../../features/notification/index.html"><span class="card-no">FEATURE</span><p class="card-title">通知とウォッチ</p><p class="card-desc">飛ばす先</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / comment_mentions</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

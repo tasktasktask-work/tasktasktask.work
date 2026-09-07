@@ -391,3 +391,9 @@
   font-family: var(--font-mono); font-size: .63rem; letter-spacing: .08em;
   color: var(--ink-faint);
 }
+
+/* 消されたコメントの跡。誰がいつ書いたかだけが残る */
+.p-deleted { font-size: .84rem; color: var(--ink-faint); font-style: italic; }
+
+/* チェックを入れそこねたときに、その箱の横に出す */
+.p-check-error { font-size: .74rem; color: var(--shu); margin-left: .4rem; }

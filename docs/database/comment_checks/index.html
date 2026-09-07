@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>comment_checks | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">comment_checks</h1>
+  <p class="lede">
+    コメントの中のチェックボックスが入っているかどうか。
+    この一枚があるおかげで、コメントの本文は投稿されたときのまま動かない。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+
+  <p><a href="../../glossary.html#comment">コメント</a>は投稿したら直せない。
+  <code>comments</code> が <code>updated_at</code> を持たないのは、その表明である。</p>
+
+  <p>ところが<a href="../../glossary.html#checkbox">チェックボックス</a>は押せる必要がある。
+  子スレッドを立てるほどでもない作業を並べる手段として置いたものなので、
+  終わったかどうかを表せなければ、置いた意味がない。</p>
+
+  <p>本文の <code>[ ]</code> を <code>[x]</code> に書き換えれば済む、というのが素直な作りである。
+  そうすると <code>comments</code> に更新の経路ができ、
+  「一度書いたら直せない」という約束が、そこから崩れる。
+  加えて、本文まるごとの更新になるので、二人が別々の箱をほぼ同時に押すと、
+  あとから書いたほうが相手の変更を消す。</p>
+
+  <p><strong>状態を本文の外に出すと、その二つが同時に消える。</strong>
+  そして「誰がいつ終わらせたか」という、本文には書かれない事実も残る。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE comment_checks (
+  comment_id         uuid        NOT NULL REFERENCES comments(id),
+  position           smallint    NOT NULL,
+  checked_by_user_id uuid        NOT NULL REFERENCES users(id),
+  checked_at         timestamptz NOT NULL DEFAULT now(),
+
+  PRIMARY KEY (comment_id, position),
+
+  CONSTRAINT comment_checks_position_range
+    CHECK (position &gt;= 0)
+);</code></pre>
+
+  <h2>各カラム</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>意味</th></tr></thead>
+    <tbody>
+      <tr><td><code>comment_id</code></td><td>どのコメントの箱か</td></tr>
+      <tr><td><code>position</code></td><td>本文の中で何番目のチェックボックスか。0 始まり</td></tr>
+      <tr><td><code>checked_by_user_id</code></td><td>入れた人。本文には残らない事実なので、ここが唯一の記録になる</td></tr>
+      <tr><td><code>checked_at</code></td><td>入れた時刻</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><code>organization_id</code> を持たない。
+  <code>thread_tags</code> や <code>watches</code> と同じく、親を辿れば必ず組織に行き着くためである。
+  読み書きはすべて <code>comments</code> と <code>threads</code> を経由する。</p>
+
+  <h2>番号で指してよい理由</h2>
+
+  <p>本文の何番目か、という数え方は、本文が動くなら壊れる。
+  項目が一つ挿入されただけで、以降の番号がすべてずれる。</p>
+
+  <p>コメントの本文は動かない。
+  だから <code>position</code> は、書かれた瞬間から永久に同じ箱を指す。
+  <strong>このテーブルが成立しているのは、コメントが不変であることの帰結である。</strong></p>
+
+  <p>数える側は <code>src/lib/markdown.ts</code> にある。
+  コードブロックとインラインコードの中は数えない。
+  ここが本文の描画と食い違うと、別の箱にチェックが入る。</p>
+
+  <h2>行が無ければ入っていない</h2>
+
+  <p>外すときは行を消す。<code>deleted_at</code> は置かない。</p>
+
+  <div class="note ok">
+    <span class="note-label">例外として承認済み</span>
+    <p>「基本的にすべてのレコードは論理削除」という方針からの逸脱である。
+    <a href="../thread_tags/index.html">thread_tags</a> と <a href="../watches/index.html">watches</a> に続く三枚目にあたる。</p>
+    <p>理由も同じで、付け外しが日常的に起きる。
+    <code>deleted_at</code> を置くと、押すたびに同じ箱の行が積み上がり、
+    主キーを条件付きの一意インデックスに置き換えることになる。
+    そして「いつチェックを外したか」を読む場面が想定しにくい。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">comments ──&lt; comment_checks &gt;── users</pre>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../comments/index.html"><span class="card-no">TABLE</span><p class="card-title">comments</p><p class="card-desc">箱が書かれている本文</p></a>
+    <a class="card" href="../comment_mentions/index.html"><span class="card-no">TABLE</span><p class="card-title">comment_mentions</p><p class="card-desc">同じく本文の外に出した情報</p></a>
+    <a class="card" href="../threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">本文側の箱はこちらに書かれる</p></a>
+    <a class="card" href="../thread_tags/index.html"><span class="card-no">TABLE</span><p class="card-title">thread_tags</p><p class="card-desc">同じ例外を適用したテーブル</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/comment/index.html"><span class="card-no">FEATURE</span><p class="card-title">コメント</p><p class="card-desc">押せる理由と置き場所</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / comment_checks</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

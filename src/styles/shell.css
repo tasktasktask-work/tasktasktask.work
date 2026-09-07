@@ -322,3 +322,78 @@
   background: var(--card); color: var(--ink); resize: vertical;
 }
 .app-form textarea:focus { outline: 2px solid var(--ai); outline-offset: -2px; }
+
+
+/* Markdown の描画 -----------------------------------------------------------
+   streamdown が吐く class は Tailwind のユーティリティで、
+   このプロジェクトには Tailwind が無い。効くのは data-streamdown 属性と
+   素の要素名だけなので、体裁はここで当てる。
+   -------------------------------------------------------------------------- */
+.app-md { font-size: .88rem; line-height: 1.85; }
+.app-md > :first-child { margin-top: 0; }
+.app-md > :last-child { margin-bottom: 0; }
+.app-md p { max-width: none; margin: 0 0 .8rem; }
+.app-md h1, .app-md h2, .app-md h3, .app-md h4 {
+  font-family: var(--font-display); font-weight: 700; line-height: 1.5;
+  margin: 1.4rem 0 .6rem;
+}
+.app-md h1 { font-size: 1.15rem; }
+.app-md h2 { font-size: 1.05rem; }
+.app-md h3 { font-size: .95rem; }
+.app-md h4 { font-size: .9rem; color: var(--ink-mid); }
+.app-md ul, .app-md ol { max-width: none; margin: 0 0 .8rem; padding-left: 1.4rem; }
+.app-md ul { list-style: disc; }
+.app-md ol { list-style: decimal; }
+.app-md li { margin: .15rem 0; }
+.app-md li > p { display: inline; }
+.app-md a { color: var(--ai); }
+.app-md strong { font-weight: 700; }
+.app-md em { font-style: italic; }
+.app-md del { color: var(--ink-faint); }
+.app-md hr { border: 0; border-top: 1px solid var(--rule); margin: 1.2rem 0; }
+.app-md blockquote {
+  margin: 0 0 .8rem; padding: .1rem 0 .1rem .9rem;
+  border-left: 3px solid var(--rule-strong); color: var(--ink-mid);
+}
+.app-md code {
+  font-family: var(--font-mono); font-size: .82em;
+  background: var(--paper-deep); padding: .1em .35em; border-radius: 2px;
+}
+.app-md [data-streamdown="code-block"] { margin: 0 0 .9rem; }
+.app-md [data-streamdown="code-block-header"] { display: none; }
+.app-md [data-streamdown="code-block-body"] {
+  border: 1px solid var(--rule); background: var(--paper-deep);
+  padding: .7rem .8rem; overflow-x: auto;
+}
+.app-md pre { margin: 0; }
+.app-md pre code {
+  background: none; padding: 0; font-size: .78rem; line-height: 1.7; display: block;
+}
+.app-md [data-streamdown="table-wrapper"] { margin: 0 0 .9rem; overflow-x: auto; }
+.app-md table { border-collapse: collapse; font-size: .82rem; }
+.app-md th, .app-md td {
+  border: 1px solid var(--rule); padding: .35rem .6rem; text-align: left; vertical-align: top;
+}
+.app-md th { background: var(--paper-deep); font-weight: 700; white-space: nowrap; }
+.app-md img { max-width: 100%; height: auto; }
+.app-md input[type="checkbox"] { margin-right: .35rem; vertical-align: baseline; }
+.app-md .contains-task-list, .app-md ul:has(> li > input[type="checkbox"]) {
+  list-style: none; padding-left: .2rem;
+}
+
+/* 指名の候補。@ を打っている間だけ出る ------------------------------------- */
+.app-compose { position: relative; }
+.app-mentions {
+  position: absolute; z-index: 5; left: .7rem; right: .7rem; max-width: 20rem;
+  max-height: 12rem; overflow-y: auto;
+  border: 1px solid var(--rule-strong); background: var(--card);
+  box-shadow: 0 6px 18px rgba(23, 27, 34, .12);
+}
+.app-mentions button {
+  display: block; width: 100%; text-align: left; border: 0; background: none;
+  font-family: var(--font-body); font-size: .84rem; color: var(--ink);
+  padding: .4rem .7rem; cursor: pointer;
+}
+.app-mentions button[aria-selected="true"], .app-mentions button:hover {
+  background: var(--ai-wash); color: var(--ai);
+}

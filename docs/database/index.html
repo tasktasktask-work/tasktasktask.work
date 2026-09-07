@@ -180,8 +180,15 @@ $$;</code></pre>
   <div class="cards">
     <a class="card" href="threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">課題も議論も質問もこの一つに入る</p></a>
     <a class="card" href="comments/index.html"><span class="card-no">TABLE</span><p class="card-title">comments</p><p class="card-desc">時系列で一本。更新列を持たない</p></a>
+    <a class="card" href="comment_checks/index.html"><span class="card-no">TABLE</span><p class="card-title">comment_checks</p><p class="card-desc">チェックボックスの状態。本文の外に置く</p></a>
+    <a class="card" href="comment_mentions/index.html"><span class="card-no">TABLE</span><p class="card-title">comment_mentions</p><p class="card-desc">投稿時に固定した指名の位置</p></a>
     <a class="card" href="attachments/index.html"><span class="card-no">TABLE</span><p class="card-title">attachments</p><p class="card-desc">スレッドかコメントのどちらかに付く</p></a>
   </div>
+
+  <p>コメントを直す経路が無いことは、その周りの二枚に効いている。
+  <code>comment_checks</code> は本文の中の位置を番号で指し、
+  <code>comment_mentions</code> は文字数で指す。
+  どちらも、本文が動かないという前提の上で成り立っている。</p>
 
   <h2>分類</h2>
   <div class="cards">
@@ -231,7 +238,7 @@ COMMIT;</code></pre>
 
   <div class="sheet-foot">
     <span>データベース</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

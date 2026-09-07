@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>コメントを実装した | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-07 23:20</p>
+  <h1 class="title">コメントを実装した</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    仕様はほとんど書いてあった。書いてあったとおりに作ると成立しない箇所が、二つあった。
+    ひとつはチェックボックス、もうひとつは本文のメンションである。
+  </p>
+
+  <h2>チェックボックスが機能しない</h2>
+
+  <p><a href="../../features/comment/index.html">機能のドキュメント</a>は、
+  チェックボックスを入れる理由をこう書いていた。
+  「課題の中の小さな作業を表す手段が要る。これがないと、子課題を立てるほどでもない項目のために子課題が乱立する」。</p>
+
+  <p>ところがコメントは編集できない。
+  チェックを入れる操作は本文の書き換えなので、投稿したコメントの中の箱は、永遠に空のままになる。
+  <strong>作業を管理する道具として置いたものが、作業を管理できない。</strong></p>
+
+  <p>押せるようにする、という答えだった。
+  そこから、状態をどこに置くかが決まる。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th></th><th>本文を書き換える</th><th>別のテーブルに置く</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">コメントの不変性</td><td>崩れる</td><td>保たれる</td></tr>
+      <tr><td class="nowrap">同時に押されたとき</td><td>あとから押したほうが相手を消す</td><td>衝突しない</td></tr>
+      <tr><td class="nowrap">誰が入れたか</td><td>残らない</td><td>残る</td></tr>
+      <tr><td class="nowrap">増えるもの</td><td>なし</td><td>テーブルが一枚</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>後者を選んだ。<code>comments</code> の冒頭にはこう書いてある。
+  「投稿後に更新される経路が存在しないため、<code>updated_at</code> を持たない。
+  列がないこと自体が『編集できない』という仕様の表明である」。
+  チェックボックスを入れるためにこれを崩すのは、釣り合わない。</p>
+
+  <p><a href="../../database/comment_checks/index.html">comment_checks</a> を足した。
+  持っているのは、コメントの id と、本文の中で何番目の箱か、誰がいつ入れたか。
+  本文が動かないので、この番号は永久に同じ箱を指す。</p>
+
+  <h2>本文のメンションが、スキーマ上ありえない</h2>
+
+  <p><a href="../../glossary.html#mention">用語集</a>は「コメントや本文の中で <code>@</code> に続けて人を指名する」と書いていた。
+  しかし <code>notifications</code> の制約はこうである。</p>
+
+<pre><code>CONSTRAINT notifications_comment_required
+  CHECK (kind = 'assigned' OR comment_id IS NOT NULL),</code></pre>
+
+  <p><code>kind = 'mention'</code> の行は、必ずコメントに紐づかなければならない。
+  本文のメンションは、通知の行を作れない。</p>
+
+  <p>メンションをコメントだけの機能にし、用語集を直した。
+  色だけ付けて通知を飛ばさない形も考えたが、
+  見た目が同じで挙動が違うものが並ぶことになる。
+  指名したつもりの人が、気づかれないまま残る。</p>
+
+  <h2>どこまでが名前か</h2>
+
+  <p><code>@佐藤 明日香 賛成です</code> から名前の終わりを見つける手立てが要る。
+  表示名には空白が入るうえ、一意でもない。ハンドルの列も持っていない。</p>
+
+  <p>閲覧できる人の表示名を全部持ってきて、最も長く一致したものを採ることにした。
+  <code>@</code> を打つと候補が出るので、選べば確実に入る。</p>
+
+  <p>同姓同名がいたら、その全員に通知が飛ぶ。
+  どちらなのかを機械が決める手立てがない。
+  候補はもともとそのプロジェクトを閲覧できる人に限られているので、
+  余分に届いても見せてはいけないものは見えない。</p>
+
+  <h2>誰を指したかを、いつ決めるか</h2>
+
+  <p>表示のたびに現在の名前と突き合わせる形も採れた。保存するものが増えない。</p>
+
+  <p>採らなかったのは、改名が起きるからである。
+  指名された人が改名すれば、過去のコメントの色が消える。
+  それより悪いのは逆で、<strong>別人が「佐藤 明日香」に改名した瞬間、
+  過去のコメントがその人を指しているように見える。</strong>
+  通知はもとの人に届いているので、画面と通知の指す先が食い違ったまま残る。</p>
+
+  <p><a href="../../database/comment_mentions/index.html">comment_mentions</a> に、
+  本文の何文字目から何文字目が誰なのかを書き留める。
+  本文が動かないので、この位置も永久に正しい。</p>
+
+  <div class="note decide">
+    <span class="note-label">テーブルのドキュメントは、これと逆のことを書いていた</span>
+    <p><a href="../../database/comments/index.html">comments</a> には
+    「本文中の <code>@表示名</code> を構造化して別テーブルに持つことはしない」とあった。
+    二重管理を避けて、表示の食い違いを受け入れる、という判断である。</p>
+    <p>受け入れる先が想定より広かった。そちらを書き換えた。
+    二重管理にはならない。本文が動かないので、片方だけが古くなることが起きない。</p>
+  </div>
+
+  <h2>Markdown をどう描くか</h2>
+
+  <p>依存を入れずに済ませる案を出した。記法を絞り、HTML の文字列を一度も作らず
+  React の要素へ直接組み立てる。そうすれば無害化の失敗という状態が起こらない。</p>
+
+  <p>答えは <a href="https://github.com/vercel/streamdown">streamdown</a> だった。</p>
+
+  <p>落として中を見た。分かったことが四つある。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>分かったこと</th><th>どうしたか</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">無害化は効いている</td><td>そのまま使う。生の HTML を通す方針に変えた</td></tr>
+      <tr><td class="nowrap">Tailwind が要る</td><td><code>data-streamdown</code> 属性に自前の CSS を当てた</td></tr>
+      <tr><td class="nowrap">依存が118個増える</td><td>受け入れた</td></tr>
+      <tr><td class="nowrap">位置情報が取れない</td><td>本文を前処理して、独自のタグを埋め込む</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>最後の一点が、チェックボックスの作り方を決めた。
+  カスタムコンポーネントに渡ってくるのは <code>type</code> <code>checked</code> <code>disabled</code> と
+  hast のノードだけで、位置は落とされている。
+  描画された側から「何番目の箱か」を知る手段がない。</p>
+
+  <p>そこで <code>- [ ] やること</code> を <code>- &lt;task i="0" state="off"&gt;&lt;/task&gt; やること</code> に書き換えてから渡す。
+  <code>allowedTags</code> と <code>literalTagContent</code> という、まさにこの用途の仕組みが streamdown にある。
+  指名も同じ経路で <code>&lt;mention&gt;</code> に包む。</p>
+
+  <div class="note warn">
+    <span class="note-label">埋め込むタグは、利用者にも書ける</span>
+    <p><code>&lt;mention&gt;</code> を許した以上、利用者が自分で書いたものと区別が付かない。
+    他人を指名したように見せかける文章が書けてしまう。</p>
+    <p>下ごしらえの段階で、この二つのタグの開き括弧だけを潰している。
+    コードブロックとインラインコードの中は、書いたとおりに出す。</p>
+  </div>
+
+  <h2>生の HTML を通すことにした</h2>
+
+  <p>機能のドキュメントは「生のHTMLは受け付けない」と書き、
+  理由を「サニタイズの実装と検証にかかるコストが、得られる表現力に見合わない」としていた。</p>
+
+  <p>そのコストを streamdown が引き受けた。禁じる理由のほうが先に消えている。</p>
+
+  <p>安全の根拠が外部のライブラリに移ったことは、
+  <a href="../../issues/markdown-rendering/index.html">課題のページ</a>に残した。
+  自前で書いていれば「HTML の文字列を一度も作らない」形にでき、
+  無害化の失敗という状態そのものを消せた。そちらは選んでいない。</p>
+
+  <h2>本文のチェックだけでは「編集済み」にしない</h2>
+
+  <p>スレッドの本文にもチェックボックスを出す。
+  こちらは編集できるので、押すと本文そのものが書き換わる。</p>
+
+  <p>それでも<a href="../../glossary.html#edited-mark">編集済み</a>の印は付けない。
+  印は「課題の定義が書き換わって、それを前提に書かれたコメントが宙に浮いた」ことを知らせるものである。
+  項目はもとから並んでいて、終わったかどうかだけが動く。
+  ここで印が付けば、チェックリストを持つスレッドが例外なく「編集済み」になり、
+  印が何も伝えなくなる。</p>
+
+  <p>同時に押されたときに片方が消える問題は、実装で消した。
+  本文を丸ごと組み立て直すのではなく、
+  トランザクションの中で行を押さえて読み、その箱の三文字だけを差し替える。</p>
+
+  <h2>今回は出さなかったもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>出さなかったもの</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">通知の一覧とメール</td><td>行は積んでいる。読む画面は次に作る</td></tr>
+      <tr><td class="nowrap">ウォッチの押しボタン</td><td>同上。行を作る側は動いている</td></tr>
+      <tr><td class="nowrap">添付ファイル</td><td>別の機能である</td></tr>
+      <tr><td class="nowrap">コメントを消す動線</td><td>押す前に何を確かめさせるかを決めていない</td></tr>
+      <tr><td class="nowrap">表とコードのコピーボタン</td><td>Tailwind でしか組まれておらず、そのままでは崩れる</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>どれも欄ごと出していない。
+  押しても何も起きない札を先に置くと、動かないのか壊れたのかが区別できない。</p>
+
+  <h2>確かめたこと</h2>
+
+<pre><code>テスト 278 件（うちコメント 40 件、下ごしらえ 39 件）すべて通過
+pnpm check 全項目通過
+ビルド 13 経路
+画面確認 28 件すべて通過、サーバのエラーなし</code></pre>
+
+  <p>判定を十か所壊した。すべて捕まった。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>壊した判定</th><th class="nowrap">落ちたテスト</th></tr></thead>
+    <tbody>
+      <tr><td>投稿時の書き込み判定</td><td>28</td></tr>
+      <tr><td>指名の候補の閲覧判定</td><td>29</td></tr>
+      <tr><td>ウォッチと指名の重なりを除く条件</td><td>25</td></tr>
+      <tr><td>指名の候補の非公開判定</td><td>3</td></tr>
+      <tr><td>メンションがコードを避ける判定</td><td>2</td></tr>
+      <tr><td>チェックの番号の検査</td><td>1</td></tr>
+      <tr><td>コメント削除の組織管理者判定</td><td>1</td></tr>
+      <tr><td>本文のチェックで編集済みを付けない</td><td>1</td></tr>
+      <tr><td>本文のチェックの行ロック</td><td>1</td></tr>
+      <tr><td>チェックボックスがコードを避ける判定</td><td>1</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>最初は二つ捕まらなかった。片方は、同じ仕事をする判定が二重にあり、
+  片方を壊してももう片方が拾っていた。重複を削って一つにした。
+  もう片方は、行をまたぐインラインコードに覆われたチェックボックスで、
+  そこを通るテストが無かった。足した。</p>
+
+  <div class="note warn">
+    <span class="note-label">走査は GFM より広く覆っている</span>
+    <p>段落の途中で開いたバッククォートが、次の箇条書きまで届くことはない。
+    それが本来の解釈である。こちらはそこまで区別していない。</p>
+    <p>広すぎたときに起きるのは「押せないチェックボックスが出る」ことで、
+    狭すぎたときに起きるのは「コードの中の記法が押せてしまう」ことである。
+    後者のほうが害が大きいので、広いほうへ倒してある。</p>
+  </div>
+
+  <h2>作ったもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><code>src/lib/markdown.ts</code></td><td>本文の走査と下ごしらえ。データベースを触らない</td></tr>
+      <tr><td class="nowrap"><code>src/features/comment/queries.ts</code></td><td>投稿、一覧、チェック、削除、指名の候補</td></tr>
+      <tr><td class="nowrap"><code>src/features/comment/Markdown.tsx</code></td><td>streamdown を包む。本文もコメントもここを通る</td></tr>
+      <tr><td class="nowrap"><code>src/features/comment/CommentForm.tsx</code></td><td>投稿欄と、<code>@</code> の候補</td></tr>
+      <tr><td class="nowrap"><code>comment_checks</code></td><td>チェックボックスの状態</td></tr>
+      <tr><td class="nowrap"><code>comment_mentions</code></td><td>解決した指名の位置</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>次にやること</h2>
+
+  <p>通知である。行はもう積まれている。読む画面がない。</p>
+
+  <p>ウォッチの押しボタン、通知の一覧、既読、そしてメールの送信。
+  <code>SmtpMailSender.send</code> はいま呼ぶと例外を投げる。
+  担当者に設定されたときの行も、まだ作っていない。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../features/comment/index.html"><span class="card-no">FEATURE</span><p class="card-title">コメント</p><p class="card-desc">決めたことの本体</p></a>
+    <a class="card" href="../../database/comment_checks/index.html"><span class="card-no">TABLE</span><p class="card-title">comment_checks</p><p class="card-desc">本文を書き換えないための一枚</p></a>
+    <a class="card" href="../../database/comment_mentions/index.html"><span class="card-no">TABLE</span><p class="card-title">comment_mentions</p><p class="card-desc">位置で指す理由</p></a>
+    <a class="card" href="../../issues/markdown-rendering/index.html"><span class="card-no">ISSUE</span><p class="card-title">本文の書式</p><p class="card-desc">対応済みにした</p></a>
+    <a class="card" href="../../devops/coding-conventions/index.html#markdown"><span class="card-no">DEVOPS</span><p class="card-title">コーディング規約</p><p class="card-desc">利用者が書いた文章の出し方</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / コメントを実装した</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>
