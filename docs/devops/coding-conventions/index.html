@@ -54,15 +54,22 @@ export async function listThreads(projectId: string) { ... }</code></pre>
   公開設定、プロジェクトメンバー、組織管理者の三つを見る必要がある。
   この論理を各所に散らすと、必ずどこかで漏れる。</p>
 
-<pre><code>// 一箇所にだけ書く
-export function visibleProjectsSubquery(userId: string): string {
-  return `
-    SELECT p.id FROM projects p
-     WHERE p.deleted_at IS NULL
-       AND (p.visibility = 'public' AND EXISTS (...組織メンバー...)
-            OR EXISTS (...project_members...)
-            OR EXISTS (...組織管理者...))`;
-}</code></pre>
+<pre><code>// #lib/db.ts に一箇所だけ書く
+export const VISIBLE_PROJECT_IDS = `
+  SELECT p.id FROM projects p
+   WHERE p.organization_id = $1
+     AND p.deleted_at IS NULL
+     AND EXISTS (...組織のメンバーであること...)
+     AND (p.visibility = 'public'
+          OR EXISTS (...project_members...)
+          OR EXISTS (...組織管理者...))`;</code></pre>
+
+  <div class="note decide">
+    <span class="note-label">組織の所属は、いちばん外側で見る</span>
+    <p>枝の中に入れると、<code>project_members</code> の枝だけが所属を見ないことになる。
+    組織から外された人でも、プロジェクトのメンバー行が残っていれば非公開が見えてしまう。</p>
+    <p>実際にこの形で書いていた。<code>tests/permission.test.ts</code> で振る舞いを固定してある。</p>
+  </div>
 
   <p>スレッドの一覧も、<a href="../../features/dashboard/index.html">担当スレッド一覧</a>も、
   <a href="../../issues/full-text-search/index.html">将来の検索</a>も、この副問い合わせを使う。</p>

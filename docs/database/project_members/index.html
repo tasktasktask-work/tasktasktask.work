@@ -59,28 +59,40 @@ CREATE INDEX project_members_by_user
 
   <h2>閲覧できるかの判定</h2>
 <pre><code>-- あるユーザーがあるプロジェクトを閲覧できるか
-SELECT EXISTS (
-  SELECT 1 FROM projects p
-   WHERE p.id = $1
-     AND p.deleted_at IS NULL
-     AND (
-       -- 公開なら組織メンバーであればよい
-       (p.visibility = 'public' AND EXISTS (
-          SELECT 1 FROM organization_members om
-           WHERE om.organization_id = p.organization_id
-             AND om.user_id = $2 AND om.deleted_at IS NULL))
-       -- 非公開ならプロジェクトメンバーか組織管理者
-       OR EXISTS (
-          SELECT 1 FROM project_members pm
-           WHERE pm.project_id = p.id
-             AND pm.user_id = $2 AND pm.deleted_at IS NULL)
-       OR EXISTS (
-          SELECT 1 FROM organization_members om
-           WHERE om.organization_id = p.organization_id
-             AND om.user_id = $2 AND om.role = 'admin'
-             AND om.deleted_at IS NULL)
-     )
-);</code></pre>
+--   $1 = organization_id, $2 = user_id
+SELECT p.id
+  FROM projects p
+ WHERE p.organization_id = $1
+   AND p.deleted_at IS NULL
+   -- 組織が境界である。所属が切れていれば、何も見えない
+   AND EXISTS (
+      SELECT 1 FROM organization_members om
+       WHERE om.organization_id = p.organization_id
+         AND om.user_id = $2 AND om.deleted_at IS NULL)
+   AND (
+     p.visibility = 'public'
+     OR EXISTS (   -- プロジェクトのメンバー
+        SELECT 1 FROM project_members pm
+         WHERE pm.project_id = p.id
+           AND pm.user_id = $2 AND pm.deleted_at IS NULL)
+     OR EXISTS (   -- 組織管理者
+        SELECT 1 FROM organization_members om
+         WHERE om.organization_id = p.organization_id
+           AND om.user_id = $2 AND om.role = 'admin'
+           AND om.deleted_at IS NULL)
+   )</code></pre>
+
+  <div class="note warn">
+    <span class="note-label">所属の確認を、枝の中に入れない</span>
+    <p>組織のメンバーであることの確認は、<strong>いちばん外側に置く</strong>。
+    枝の中に入れると、<code>project_members</code> の枝だけが所属を見ないことになる。</p>
+    <p>その形だと、<strong>組織から外された人でも、プロジェクトのメンバー行が残っていれば
+    非公開プロジェクトが見える</strong>。
+    「外すときに両方を消す」という規律に頼ることになり、
+    どこか一つの経路で消し忘れれば漏れる。</p>
+    <p>実際にこの形で書いていたものを直した。
+    振る舞いは <code>tests/permission.test.ts</code> で固定してある。</p>
+  </div>
 
   <div class="note">
     <span class="note-label">組織管理者は行を持たなくても管理者として扱う</span>

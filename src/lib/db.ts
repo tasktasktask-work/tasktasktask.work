@@ -102,8 +102,11 @@ export type OrgScope = {
 /**
  * 閲覧できるプロジェクトの id を返す副問い合わせ。
  *
- * 公開設定、プロジェクトメンバー、組織管理者の三つを見る必要がある。
+ * 組織の所属、公開設定、プロジェクトメンバー、組織管理者。
+ * 四つを見る必要がある。
  * この論理を各所に散らすと必ずどこかで漏れるため、ここにだけ書く。
+ *
+ * 振る舞いは tests/permission.test.ts で固定してある。
  *
  * $1 = organization_id, $2 = user_id
  */
@@ -112,12 +115,21 @@ export const VISIBLE_PROJECT_IDS = `
     FROM projects p
    WHERE p.organization_id = $1
      AND p.deleted_at IS NULL
+     /*
+      * 組織が境界である。所属が切れていれば、何も見えない。
+      *
+      * この条件を下の枝の中に入れてはいけない。
+      * 入れると、組織から外れた人の project_members が残っているだけで
+      * 非公開プロジェクトが見えてしまう。
+      * 外すときに両方を消す、という規律に頼らずに済ませる。
+      */
+     AND EXISTS (
+        SELECT 1 FROM organization_members om
+         WHERE om.organization_id = p.organization_id
+           AND om.user_id = $2
+           AND om.deleted_at IS NULL)
      AND (
-       (p.visibility = 'public' AND EXISTS (
-          SELECT 1 FROM organization_members om
-           WHERE om.organization_id = p.organization_id
-             AND om.user_id = $2
-             AND om.deleted_at IS NULL))
+       p.visibility = 'public'
        OR EXISTS (
           SELECT 1 FROM project_members pm
            WHERE pm.project_id = p.id
