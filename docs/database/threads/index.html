@@ -152,6 +152,10 @@ REFERENCES threads (id, project_id)</code></pre>
     階層の深さに制限がないため、なおさら難しい。</p>
     <p>親を設定するときにアプリケーション側で祖先を辿り、自分自身が現れないことを確認する。
     再帰CTEで祖先を取得し、その中に対象のIDが含まれていれば拒否する。</p>
+    <p>確かめてから書くまでには隙間がある。
+    その間に別の付け替えが通れば、二つとも単独では輪を作らないのに、
+    合わせると輪になる。そこで<strong>辿るところと書くところを同じトランザクションに入れ、
+    親の行を <code>FOR UPDATE</code> で掴んでから辿る</strong>。</p>
   </div>
 
   <h3>種別ごとの列の使い分け</h3>
@@ -166,6 +170,19 @@ REFERENCES threads (id, project_id)</code></pre>
   <h3>アーカイブを経ないと削除できない</h3>
 
   <p><code>projects</code> と同じく、<code>deleted_at</code> は <code>archived_at</code> が埋まっていなければ設定できない。</p>
+
+  <h3>畳んだプロジェクトの中身は、この列では止まらない</h3>
+
+  <p>プロジェクトを<a href="../../glossary.html#archive">アーカイブ</a>しても、
+  中のスレッドの <code>archived_at</code> は埋めない。
+  埋めると、プロジェクトを戻したときに、元から畳んであったスレッドまで開いてしまう。</p>
+
+  <p>そのため<strong>書き込みの条件は、この行の <code>archived_at</code> と、
+  <code>projects.archived_at</code> の両方を見なければならない</strong>。
+  片方だけを見ると、畳んだプロジェクトの中身が書き換えられる。</p>
+
+  <p>誰が書けるかは<a href="../../features/thread/index.html">スレッド</a>にまとめてある。
+  短く言えば、閲覧できる人は書ける。削除だけが組織管理者に残っている。</p>
 
   <h2>祖先と子孫を辿る</h2>
 
@@ -237,7 +254,7 @@ users ──┬─→ threads.created_by_user_id
 
   <div class="sheet-foot">
     <span>データベース / threads</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

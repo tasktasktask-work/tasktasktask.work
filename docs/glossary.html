@@ -363,15 +363,39 @@
 
   <article class="term" id="overflow-warning">
     <h3>はみ出し警告<span class="reading">overflow warning</span></h3>
-    <p>子スレッドの<a href="#period">期間</a>が親スレッドの期間の外に出ているとき、親に表示する印を<strong>はみ出し警告</strong>と呼ぶ。</p>
+    <p>子スレッドの<a href="#period">期間</a>が親スレッドの期間の外に出ているとき、その食い違いを知らせる印を<strong>はみ出し警告</strong>と呼ぶ。</p>
+    <p>印は子の側に出る。一覧では親の行にも子の行にも出しうるが、親に出しても、
+    ぶら下がっている十件のうちどれがはみ出しているのかは分からない。
+    詳細画面では親にも出す。こちらは子が数件ずつ並んでいるので、探す手間にならない。</p>
+    <p>判定は、親と子の両方に期間があるときだけ行う。
+    親が<a href="#no-period">期間未設定</a>なら、外側の枠そのものが無いので、はみ出しようがない。</p>
     <p><a href="#parent-child">親子関係</a>には集計の意味を持たせていないため、システムは日付を書き換えない。
-    警告は「計画と実態が合っていない」という事実を伝えるだけで、どう直すかは人が決める。</p>
+    警告は「計画と実態が合っていない」という事実を伝えるだけで、どう直すかは人が決める。
+    はみ出す期間を入力すること自体は止めない。止めると、親の締切を延ばすまで子の日付を入れられなくなる。</p>
     <div class="dialogue">
-      <p><span class="who">PM</span><span>親に警告マークが出てます。直さないとまずいですか。</span></p>
+      <p><span class="who">PM</span><span>警告マークが出てます。直さないとまずいですか。</span></p>
       <p><span class="who">開発者</span><span>システムは何もしません。親の締切を延ばすのか、子を前倒しするのかは、こちらで決める話です。</span></p>
     </div>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#parent-child">親子関係</a><a href="#period">期間</a><a href="#gantt">ガントチャート</a></div>
-    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/gantt/index.html">ガントチャート</a></div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#parent-child">親子関係</a><a href="#period">期間</a><a href="#no-period">期間未設定</a><a href="#gantt">ガントチャート</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a>／<a href="features/gantt/index.html">ガントチャート</a></div>
+  </article>
+
+  <article class="term" id="edited-mark">
+    <h3>編集済み<span class="reading">edited mark</span></h3>
+    <p><a href="#thread">スレッド</a>のタイトルか本文が書き換えられたことを示す印を<strong>編集済み</strong>と呼ぶ。
+    印と、最後に書き換えた時刻だけが残る。前の文章は残らない。</p>
+    <p><a href="#comment">コメント</a>とは扱いが逆になっている。
+    コメントは「その時点の発言」なので直せない。
+    本文は「現在の課題の定義」なので、調査が進めば書き換わってよい。</p>
+    <p>ただし本文が黙って書き換わると、それを前提に書かれたコメントが宙に浮く。
+    「カーソル方式でいいと思います」というコメントが、いまの本文のどこにも掛かっていない、
+    という状態が起きる。この印は、その食い違いに気づくための手がかりである。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>本文が変わってるみたいなんですが、どこが変わったか見られますか。</span></p>
+      <p><span class="who">開発者</span><span>履歴は残していません。変わったことと、その時刻だけです。中身の差分が要るなら、本文ではなくコメントに書いてください。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread">スレッド</a><a href="#comment">コメント</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a>／<a href="features/comment/index.html">コメント</a></div>
   </article>
 
 

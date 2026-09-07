@@ -48,17 +48,16 @@
 
           <div class="app-tabs">
             <a href="#" class="on">スレッド</a>
-            <a href="#">ガント</a>
             <a href="#">メンバー</a>
             <a href="#">設定</a>
           </div>
 
           <div class="app-filters">
             <select><option>種別 すべて</option><option>課題</option><option>議論</option><option>質問</option></select>
-            <select><option>担当者 すべて</option><option>佐藤 明日香</option><option>田中 亮</option><option>未設定</option></select>
-            <select><option>タグ すべて</option><option>backend</option><option>設計</option><option>要相談</option></select>
-            <label><input type="checkbox" checked> 完了を隠す</label>
-            <label><input type="checkbox"> アーカイブ済みを表示</label>
+            <select><option>担当者 すべて</option><option>未設定</option><option>佐藤 明日香</option><option>田中 亮</option></select>
+            <label><input type="checkbox"> 完了も表示</label>
+            <label><input type="checkbox"> アーカイブ済みも表示</label>
+            <button class="app-btn ghost">絞り込む</button>
             <span class="sp"></span>
             <span style="color:var(--ink-faint);font-family:var(--font-mono);font-size:.7rem">更新の新しい順</span>
           </div>
@@ -145,13 +144,23 @@
   <table>
     <thead><tr><th>絞り込み</th><th>既定</th><th>理由</th></tr></thead>
     <tbody>
-      <tr><td class="nowrap">完了を隠す</td><td>オン</td><td>進捗率100のものは、通常の作業では見る必要がない</td></tr>
-      <tr><td class="nowrap">アーカイブ済みを表示</td><td>オフ</td><td>畳んだものを既定で出すと、畳んだ意味がなくなる</td></tr>
-      <tr><td class="nowrap">種別 / 担当者 / タグ</td><td>すべて</td><td>最初は全体を見せ、絞るのは利用者に任せる</td></tr>
+      <tr><td class="nowrap">完了も表示</td><td>オフ</td><td>進捗率100のものは、通常の作業では見る必要がない</td></tr>
+      <tr><td class="nowrap">アーカイブ済みも表示</td><td>オフ</td><td>畳んだものを既定で出すと、畳んだ意味がなくなる</td></tr>
+      <tr><td class="nowrap">種別 / 担当者</td><td>すべて</td><td>最初は全体を見せ、絞るのは利用者に任せる</td></tr>
       <tr><td class="nowrap">並び順</td><td>更新の新しい順</td><td>動いているものが上に来る</td></tr>
     </tbody>
   </table>
   </div>
+
+  <p>二つの札はどちらも「増やす」向きに揃えてある。
+  片方が「隠す」で片方が「表示」だと、チェックを入れたときに何が起きるのかを毎回読み直すことになる。</p>
+
+  <p>選んだ状態は URL に残る。
+  絞り込んだ結果をそのまま人に渡せる。
+  JavaScript は使っていないので、選んで押せば画面が引き直る。</p>
+
+  <p>タグの欄と<a href="gantt/index.html">ガント</a>の札は、それぞれの機能ができたときに並ぶ。
+  押しても何も起きない札を先に置くと、動かないのか壊れたのかが利用者に区別できない。</p>
 
   <h2>最後の行について</h2>
 
@@ -166,6 +175,7 @@
   <div class="cards">
     <a class="card" href="../../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
     <a class="card" href="t/[number]/index.html"><span class="card-no">PAGE</span><p class="card-title">スレッド詳細</p><p class="card-desc">行をクリックした先</p></a>
+    <a class="card" href="new/index.html"><span class="card-no">PAGE</span><p class="card-title">スレッドを立てる</p><p class="card-desc">右上の押しボタンの先</p></a>
     <a class="card" href="gantt/index.html"><span class="card-no">PAGE</span><p class="card-title">ガント</p><p class="card-desc">同じデータの階層表示</p></a>
     <a class="card" href="settings/index.html"><span class="card-no">PAGE</span><p class="card-title">プロジェクトの設定</p><p class="card-desc">公開設定、アーカイブ、削除</p></a>
     <a class="card" href="members/index.html"><span class="card-no">PAGE</span><p class="card-title">プロジェクトのメンバー</p><p class="card-desc">非公開の顔ぶれ</p></a>
@@ -173,7 +183,7 @@
 
   <div class="sheet-foot">
     <span>UI / スレッド一覧</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

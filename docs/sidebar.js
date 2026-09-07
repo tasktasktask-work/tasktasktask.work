@@ -86,6 +86,7 @@
         { path: "ui/pages/o/[slug]/settings/index.html",     label: "組織の設定", d: 2 },
         { path: "ui/pages/o/[slug]/dashboard/index.html",    label: "担当スレッド", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/index.html",      label: "スレッド一覧", d: 2 },
+        { path: "ui/pages/o/[slug]/p/[key]/new/index.html",   label: "スレッドを立てる", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/members/index.html",  label: "プロジェクトのメンバー", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/settings/index.html", label: "プロジェクトの設定", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/t/[number]/index.html", label: "スレッド詳細", d: 2 },
@@ -115,6 +116,7 @@
         { path: "issues/rejection-representation/index.html",  label: "却下の表現", d: 2 },
         { path: "issues/custom-workflow/index.html",           label: "状態のカスタマイズ", d: 2 },
         { path: "issues/thread-mutability/index.html",         label: "スレッドの可変性", d: 2 },
+        { path: "issues/markdown-rendering/index.html",         label: "本文の書式", d: 2 },
         { path: "issues/gantt-enhancement/index.html",         label: "ガントの拡張", d: 2 },
         { path: "issues/notification-enhancement/index.html",  label: "通知の拡張", d: 2 },
         { path: "issues/full-text-search/index.html",          label: "全文検索", d: 2 },
@@ -128,14 +130,14 @@
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 9,
+      sessionTotal: 10,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260907-1920-threads/index.html", label: "2026-09-07 スレッド", d: 2 },
         { path: "sessions/20260907-1825-projects/index.html", label: "2026-09-07 プロジェクト", d: 2 },
         { path: "sessions/20260907-1137-organization-members/index.html", label: "2026-09-07 組織とメンバー", d: 2 },
         { path: "sessions/20260907-1050-permission-tests/index.html", label: "2026-09-07 権限判定のテスト", d: 2 },
-        { path: "sessions/20260907-0148-deploy-incident/index.html", label: "2026-09-07 デプロイ障害", d: 2 },
-        { path: "sessions/20260906-1428-toolchain/index.html", label: "2026-09-06 道具立て", d: 2 }
+        { path: "sessions/20260907-0148-deploy-incident/index.html", label: "2026-09-07 デプロイ障害", d: 2 }
       ]
     }
   ];

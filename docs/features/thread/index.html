@@ -137,6 +137,17 @@
   子がそこからはみ出したときは<a href="../../glossary.html#overflow-warning">はみ出し警告</a>を出すが、値の書き換えはしない。
   どう直すかは人が決める。</p>
 
+  <p>印は子の行に出る。
+  親の行にも出せるが、一覧で親に警告が付いていても、ぶら下がった十件のうちどれがはみ出しているのかは分からない。
+  詳細画面では親の側にも出す。こちらは子が数件ずつ並んでいるので、そこから探せる。</p>
+
+  <p>判定は親と子の両方に期間があるときだけ行う。
+  親が<a href="../../glossary.html#no-period">期間未設定</a>なら、外側の枠そのものが無い。</p>
+
+  <p>はみ出す日付を入力すること自体は止めない。
+  止めると、親の締切を延ばすまで子の日付を入れられなくなる。
+  順番を強いるほどの話ではない。</p>
+
   <h2>識別子</h2>
 
   <p><a href="../../glossary.html#thread-number">スレッド番号</a>は組織の中で通し番号になっている。
@@ -218,6 +229,11 @@
   全文検索を持たないため、この絞り込みが探すための唯一の手段になる。
   既定の並び順は更新の新しい順とする。</p>
 
+  <p>担当者では「未設定」だけを選べる。
+  誰も持っていない課題を集めるのは、割り振りを決める会議で毎回やることになる。</p>
+
+  <p>タグでの絞り込みは<a href="../tag/index.html">タグ</a>と一緒に入れるので、いまは欄が出ない。</p>
+
   <h2>アーカイブと削除</h2>
 
   <p><a href="../../glossary.html#archive">アーカイブ</a>したスレッドは読み取り専用になる。
@@ -232,6 +248,45 @@
   <p>削除は<a href="../../glossary.html#soft-delete">論理削除</a>で、<a href="../../glossary.html#org-admin">組織管理者</a>だけが行える。
   アーカイブを経ていないスレッドは削除できない。レコードは残るので番号は欠番のまま保たれる。</p>
 
+  <h2>誰が何をできるか</h2>
+
+  <p>スレッドについては、<strong>見えている人は書ける</strong>。
+  立てることも、本文を直すことも、進捗率や担当者や期間を変えることも、畳むことも、
+  そのプロジェクトを閲覧できる人なら誰でも行える。</p>
+
+  <p>作成者や担当者だけに絞る案もあった。
+  絞らなかったのは、履歴を残さない設計と噛み合わないからである。
+  担当者が休んでいるあいだに締切だけ動かしたい、という場面で手が止まる。
+  そして荒れることへの備えは、権限ではなく<a href="../../glossary.html#edited-mark">編集済み</a>の印と<a href="../notification/index.html">通知</a>の側に置いた。</p>
+
+  <p>質問という<a href="../../glossary.html#thread-type">種別</a>を用意しておきながら、
+  質問を立てられない人が組織にいる、という状態も避けたかった。</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>操作</th><th class="nowrap">閲覧できる人</th><th class="nowrap">組織管理者</th></tr></thead>
+      <tbody>
+        <tr><td>立てる</td><td>●</td><td>●</td></tr>
+        <tr><td>タイトルと本文</td><td>●</td><td>●</td></tr>
+        <tr><td>進捗率、担当者、期間、親</td><td>●</td><td>●</td></tr>
+        <tr><td>アーカイブと解除</td><td>●</td><td>●</td></tr>
+        <tr><td><a href="../../glossary.html#soft-delete">論理削除</a></td><td></td><td>●</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>削除だけ線が違う。
+  論理削除はどのテーブルでも組織管理者に寄せてあり、
+  辿れるものが消える操作を、この機能でだけ広げる理由がない。</p>
+
+  <div class="note warn">
+    <span class="note-label">閲覧の判定を書けるかの判定に使っている</span>
+    <p>「見えている人は書ける」は実装の手抜きではなく、そう決めた線である。
+    ただし判定そのものは画面に置いていない。
+    書き込みの SQL は毎回、閲覧できるプロジェクトかどうかを条件に含めている。
+    畳んだスレッドと、畳んだプロジェクトの中身も同じ条件で止める。</p>
+  </div>
+
   <h2>本文の編集</h2>
 
   <p>タイトルと本文は編集できる。履歴は残さず、「編集済み」の印と最終更新日時だけを出す。</p>
@@ -241,12 +296,21 @@
   本文は「現在の課題の定義」なので、調査が進めば書き換わってよい。</p>
 
   <p>ただし本文が黙って書き換わると、それを前提に書かれたコメントが宙に浮く。
-  編集済みの印は、その食い違いに気づくための最低限の手がかりとして置いている。</p>
+  <a href="../../glossary.html#edited-mark">編集済み</a>の印は、その食い違いに気づくための最低限の手がかりとして置いている。</p>
+
+  <div class="note warn">
+    <span class="note-label">本文はいま素のテキストである</span>
+    <p>見本の画面では本文に箇条書きや <code>コード</code> が出ているが、
+    いま動いているのは改行を保つだけの表示である。
+    Markdown の解釈は、同じ仕組みを使う<a href="../comment/index.html">コメント</a>と一緒に入れることにして、
+    <a href="../../issues/markdown-rendering/index.html">先送りにしてある</a>。</p>
+  </div>
 
   <h2>関連する画面</h2>
   <div class="cards">
     <a class="card" href="../../ui/pages/o/[slug]/p/[key]/index.html"><span class="card-no">/p/{key}</span><p class="card-title">スレッド一覧</p><p class="card-desc">平らに並べて絞り込む</p></a>
     <a class="card" href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html"><span class="card-no">/t/{number}</span><p class="card-title">スレッド詳細</p><p class="card-desc">本文、属性、親子、コメント</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/new/index.html"><span class="card-no">/p/{key}/new</span><p class="card-title">スレッドを立てる</p><p class="card-desc">種別と親を決めて書き始める</p></a>
   </div>
 
   <h2>関連するコンポーネント</h2>

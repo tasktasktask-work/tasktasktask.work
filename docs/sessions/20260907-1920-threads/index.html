@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>スレッドを実装した | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-07 19:20</p>
+  <h1 class="title">スレッドを実装した</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    種別も進捗率も親子も番号の振り方も、仕様は前から書いてあった。
+    書いていなかったのは、誰が触れるのかである。
+    <a href="../../features/thread/index.html">機能のドキュメント</a>が名指しで断っていたのは
+    「削除は組織管理者だけ」の一点だけだった。
+  </p>
+
+  <h2>見えている人は書ける</h2>
+
+  <p>三つの案があった。閲覧できる人全員、作成者と担当者だけ、それに管理者を足したもの。
+  聞いた答えは一つめだった。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>操作</th><th class="nowrap">閲覧できる人</th><th class="nowrap">組織管理者</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">立てる</td><td>&#9679;</td><td>&#9679;</td></tr>
+      <tr><td class="nowrap">タイトルと本文</td><td>&#9679;</td><td>&#9679;</td></tr>
+      <tr><td class="nowrap">進捗率、担当者、期間、親</td><td>&#9679;</td><td>&#9679;</td></tr>
+      <tr><td class="nowrap">アーカイブと解除</td><td>&#9679;</td><td>&#9679;</td></tr>
+      <tr><td class="nowrap">削除</td><td></td><td>&#9679;</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>絞らなかった理由は、履歴を残さない設計と噛み合わないからである。
+  本文もタイトルも上書きで、残るのは<a href="../../glossary.html#edited-mark">編集済み</a>の印だけにしてある。
+  そこへ「作成者と担当者だけが直せる」を重ねると、
+  担当者が休んでいるあいだ、締切ひとつ動かせない。</p>
+
+  <p>質問という<a href="../../glossary.html#thread-type">種別</a>を用意しておきながら、
+  質問を立てられない人が組織にいる、という形も避けたかった。</p>
+
+  <p>プロジェクトのときと線の引き方が違う。
+  あちらは<a href="../../glossary.html#project-admin">プロジェクト管理者</a>を作った。
+  こちらは作らない。プロジェクトの設定は「枠を決める」操作で、
+  スレッドの書き換えは「中で作業する」操作である。同じ段に置く必要がなかった。</p>
+
+  <h2>はみ出し警告を、どちらの行に出すか</h2>
+
+  <p><a href="../../glossary.html#overflow-warning">用語集</a>には「親に表示する印」と書いてあった。
+  実装しようとして、その通りにはできないことに気づいた。</p>
+
+  <p>一覧で親の行に警告が付いていても、ぶら下がった十件のうち<strong>どれ</strong>がはみ出しているのかが分からない。
+  親を開いて、子を一件ずつ日付で見比べることになる。それでは印の意味がない。</p>
+
+  <p>そこで、一覧では子の行に出し、詳細画面では親の側にも出すことにした。
+  詳細画面なら子が数件ずつ並んでいるので、そこから探せる。用語集もこれに合わせて直した。</p>
+
+  <p>判定は親と子の両方に期間があるときだけ行う。
+  親が<a href="../../glossary.html#no-period">期間未設定</a>なら、外側の枠そのものが無い。</p>
+
+  <div class="note warn">
+    <span class="note-label">はみ出す日付は、入力の時点では止めない</span>
+    <p>止めると、親の締切を延ばすまで子の日付を入れられなくなる。
+    どちらを先に直すかまで決めてしまうのは、警告の役目を越えている。</p>
+  </div>
+
+  <h2>親は番号で打ち込む</h2>
+
+  <p>プロジェクトのスレッドが数百件になると、選択肢の一覧からは選べない。
+  <code>WEB-3</code> でも <code>3</code> でも受ける入力欄にした。</p>
+
+  <p>ただ、番号を打ち込ませる形は、打ち込まない人を生む。
+  <a href="../../glossary.html#parent-child">親子関係</a>は、議論とそこから出てきた課題を結ぶ唯一の手段である。
+  付け忘れると、両者の関係は失われる。</p>
+
+  <p>そこで各スレッドに「関連する課題を作成する」を置いた。
+  ここから立てると、そのスレッドが親に入った状態で
+  <a href="../../ui/pages/o/[slug]/p/[key]/new/index.html">立てる画面</a>が開く。
+  議論を読んでいる最中に課題を立てる、というのがいちばん多い流れになるはずで、
+  そのときに番号を書き写させない。</p>
+
+  <p>問い合わせに書かれた番号は、画面を出す前に一度引く。
+  引けなければ空の欄で開く。入力欄に入れて開くと、
+  本文を書き終えてから「その番号はありません」と断ることになる。</p>
+
+  <h2>輪を作らせない</h2>
+
+  <p>A の親が B、B の親が A。この状態は CHECK 制約では書けない。
+  親から上へ辿り、自分が現れたら断る。</p>
+
+<pre><code>WITH RECURSIVE up(id, parent_id, depth) AS (
+  SELECT id, parent_thread_id, 1 FROM threads WHERE id = $1
+  UNION ALL
+  SELECT t.id, t.parent_thread_id, up.depth + 1
+    FROM threads t JOIN up ON t.id = up.parent_id
+   WHERE up.depth &lt; 50
+)
+SELECT 1 FROM up WHERE id = $2</code></pre>
+
+  <p>確かめてから書くまでには隙間がある。
+  そこに別の付け替えが通ると、二つとも単独では輪を作らないのに、
+  合わせると輪になる。
+  辿るところと書くところを同じトランザクションに入れ、
+  親の行を <code>FOR UPDATE</code> で掴んでから辿ることにした。</p>
+
+  <h2>畳んだプロジェクトの中身を、どこで止めるか</h2>
+
+  <p>プロジェクトを畳んでも、中のスレッドの <code>archived_at</code> は埋めない。
+  埋めると、プロジェクトを戻したときに、元から畳んであったスレッドまで開いてしまう。
+  これは前のセッションで決めたことである。</p>
+
+  <p>その帰結として、<strong>書き込みの条件は二つの列を見なければならない</strong>。
+  スレッド自身の <code>archived_at</code> と、<code>projects.archived_at</code> の両方である。
+  片方だけを見ると、畳んだプロジェクトの中身が書き換えられる。</p>
+
+  <p>この条件を関数ごとに書き写すと、どれか一つで片方が抜ける。
+  一つの断片にまとめ、書き込む問い合わせはすべてそれを埋め込む形にした。</p>
+
+<pre><code>const WRITABLE = `t.organization_id = $1
+        AND t.deleted_at IS NULL
+        AND t.archived_at IS NULL
+        AND t.project_id IN (${VISIBLE_PROJECT_IDS})
+        AND EXISTS (SELECT 1 FROM projects wp
+                     WHERE wp.id = t.project_id AND wp.archived_at IS NULL)`;</code></pre>
+
+  <h2>通らなかった理由を返す</h2>
+
+  <p>更新が0行だったとき、それだけでは何が起きたのか分からない。
+  見えていないのか、畳んであるのか、プロジェクトごと凍っているのか。
+  画面に出す言葉が変わる。</p>
+
+  <p>0行だったときにだけ、もう一度読んで理由を確かめている。
+  通る経路では余分な問い合わせが増えない。</p>
+
+  <h2>時刻を、組織の時計で書き出す</h2>
+
+  <p>スレッドは、時刻を画面に出す最初の機能だった。</p>
+
+  <p><code>toLocaleString()</code> をそのまま呼ぶと、サーバの時計で書き出される。
+  一台のサーバが複数の組織を捌くので、全員に同じ壁掛け時計を見せることになる。
+  <code>src/lib/datetime.ts</code> を足し、
+  <a href="../../glossary.html#org-scope">組織のスコープ</a>が運んでくるタイムゾーンを渡す形にした。
+  <a href="../../devops/coding-conventions/index.html#datetime">規約</a>にも書き足した。</p>
+
+  <p><code>date</code> 列はこの変換を通さない。
+  <code>'2026-09-08'</code> という文字列のまま来ており、一度 <code>Date</code> にした時点でずれる。</p>
+
+  <h2>絞り込みの札を、同じ向きに揃えた</h2>
+
+  <p>見本の画面では「完了を隠す」がチェック済み、「アーカイブ済みを表示」がチェックなしだった。
+  既定の見え方は正しいが、二つの札が逆を向いている。
+  チェックを入れたときに何が起きるのかを、毎回読み直すことになる。</p>
+
+  <p>「完了も表示」「アーカイブ済みも表示」に揃え、どちらもチェックなしを既定にした。
+  見本の側も直した。</p>
+
+  <p>絞り込みは JavaScript を使っていない。選んで押せば画面が引き直り、状態は URL に残る。
+  絞り込んだ結果をそのまま人に渡せる。</p>
+
+  <h2>今回は出さなかったもの</h2>
+
+  <p>コメント、タグ、ウォッチ、添付。どれも別の機能として作っていない。
+  見本の画面には並んでいるが、実際の画面には欄ごと出していない。
+  押しても何も起きない札を先に置くと、動かないのか壊れたのかが区別できない。</p>
+
+  <p>本文の書式も出していない。
+  Markdown を解釈すると文字列が HTML になり、無害化の責任がこちらに移る。
+  同じ仕組みをコメントでも使うので、
+  <a href="../../issues/markdown-rendering/index.html">そちらと一緒に入れる</a>ことにした。
+  いまは改行だけが残る。</p>
+
+  <h2>作った画面</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>URL</th><th>画面</th><th>誰が開けるか</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>/o/{slug}/p/{key}</code></td><td>スレッド一覧</td><td>閲覧できる人</td></tr>
+      <tr><td class="nowrap"><code>/o/{slug}/p/{key}/new</code></td><td>スレッドを立てる</td><td>閲覧できる人</td></tr>
+      <tr><td class="nowrap"><code>/o/{slug}/p/{key}/t/{number}</code></td><td>スレッド詳細</td><td>閲覧できる人</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>詳細では、畳んであるときに書き換えの欄そのものを消している。
+  灰色にして残すのではなく、消す。読めるが書けない状態を、画面の構造で示す。
+  削除の欄も、組織管理者以外には出さない。</p>
+
+  <h2>確かめたこと</h2>
+
+  <p>スレッドのテストを52件足して、全体で200件。
+  判定を六か所壊して、どれも落ちることを確かめた。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>壊した判定</th><th class="nowrap">落ちた件数</th></tr></thead>
+    <tbody>
+      <tr><td>書き込み時の閲覧判定</td><td>17</td></tr>
+      <tr><td>スレッドのアーカイブ判定</td><td>1</td></tr>
+      <tr><td>プロジェクトのアーカイブ判定</td><td>1</td></tr>
+      <tr><td>循環参照の検査</td><td>1</td></tr>
+      <tr><td>削除の組織管理者判定</td><td>1</td></tr>
+      <tr><td>親のプロジェクト一致</td><td>2</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>ビルドしたイメージに対しても、立場の違う三人でログインして44件確かめた。
+  組織管理者に削除の押しボタンが出ること、そうでない人には出ないこと、
+  非公開プロジェクトのスレッドが404になること、
+  畳んだプロジェクトでは書き換えの欄が消えること。
+  サーバのログにエラーは出ていない。残ったデータも無い。</p>
+
+  <h2>次にやること</h2>
+
+  <p>コメントである。
+  スレッドの下に時系列で一本に連なる。投稿すると直せない。
+  <a href="../../glossary.html#mention">メンション</a>と<a href="../../glossary.html#notification">通知</a>がそこにぶら下がり、
+  本文の書式もそのときに一緒に入る。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">SESSIONS</span><p class="card-title">セッション履歴</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../features/thread/index.html"><span class="card-no">FEATURE</span><p class="card-title">スレッド</p><p class="card-desc">決めたことの全体</p></a>
+    <a class="card" href="../../database/threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">制約が守っていること</p></a>
+    <a class="card" href="../20260907-1825-projects/index.html"><span class="card-no">SESSION</span><p class="card-title">プロジェクト</p><p class="card-desc">この上に載っている</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-07 スレッド</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

@@ -301,3 +301,24 @@
   margin: 1.6rem 0 .6rem; padding-bottom: .3rem;
   border-bottom: 1px solid var(--rule);
 }
+
+/* 属性欄の中の小さなフォーム ------------------------------------------------
+   スレッド詳細の右側。欄ごとにフォームが分かれているため、
+   ひとつの行に入力欄と押しボタンが並ぶ。 */
+.app-props form {
+  display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; margin: 0;
+}
+.app-props input, .app-props select {
+  font: inherit; font-size: .78rem; padding: .2rem .3rem;
+  border: 1px solid var(--rule-strong); background: var(--card); color: var(--ink);
+}
+.app-props .app-btn { padding: .22rem .5rem; font-size: .7rem; }
+.app-props .err { flex-basis: 100%; font-size: .72rem; color: var(--ki); }
+
+/* 本文の入力欄 -------------------------------------------------------------- */
+.app-form textarea {
+  width: 100%; font: inherit; font-size: .86rem; line-height: 1.8;
+  padding: .55rem .6rem; border: 1px solid var(--rule-strong);
+  background: var(--card); color: var(--ink); resize: vertical;
+}
+.app-form textarea:focus { outline: 2px solid var(--ai); outline-offset: -2px; }

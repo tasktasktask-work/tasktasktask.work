@@ -71,7 +71,11 @@
                 <p>正規化については <a href="#" style="color:var(--ai)">WEB-9</a> で確認中。</p>
               </div>
 
-              <h4 style="margin-top:0">子スレッド &#160;<span style="color:var(--ink-faint);font-weight:400">1件</span></h4>
+              <p class="app-hint">このスレッドを親にして
+                <a href="#">関連する課題を作成する</a> / <a href="#">議論</a> / <a href="#">質問</a>
+              </p>
+
+              <h3 class="app-section">子スレッド &#160;<span style="color:var(--ink-faint);font-weight:400">1件</span></h3>
               <div class="p-list" style="margin-bottom:1.6rem">
                 <div class="p-row">
                   <span class="p-type" data-type="shitsumon">質問</span>
@@ -82,7 +86,7 @@
                 </div>
               </div>
 
-              <h4>コメント &#160;<span style="color:var(--ink-faint);font-weight:400">3件</span></h4>
+              <h3 class="app-section">コメント &#160;<span style="color:var(--ink-faint);font-weight:400">3件</span></h3>
               <div style="border-top:1px solid var(--rule)">
                 <div class="p-comment">
                   <span class="hanko">佐</span>
@@ -119,24 +123,41 @@
                   <span class="warn-inline">&#9888; 投稿したコメントは編集も削除もできません</span>
                 </div>
               </div>
+
+              <h3 class="app-section">書き換える</h3>
+              <details class="app-disclosure">
+                <summary>タイトルと本文を書き換える</summary>
+              </details>
+
+              <h3 class="app-section">アーカイブ</h3>
+              <form class="app-form"><div class="line">
+                <p style="margin:0;font-size:.85rem">アーカイブすると読み取り専用になります。子スレッドが 1 件ありますが、そちらは畳まれません。</p>
+                <button class="app-btn ghost">アーカイブする</button>
+              </div></form>
+
+              <h3 class="app-section">削除</h3>
+              <form class="app-form"><div class="line">
+                <p style="margin:0;font-size:.85rem">アーカイブしたスレッドだけを削除できます。</p>
+                <button class="app-btn ghost" disabled>削除する</button>
+              </div></form>
             </div>
 
             <aside class="app-props">
               <div class="row"><span class="k">進捗率</span><span class="v">
-                <span class="p-progress"><span class="bar"><span class="fill" style="width:40%"></span></span><span class="num">40%</span></span>
+                <form><input type="number" value="40" style="width:4.5rem"><span style="font-size:.78rem;color:var(--ink-soft)">%</span><button class="app-btn ghost">保存</button></form>
               </span></div>
               <div class="row"><span class="k">担当者</span><span class="v">
-                <span class="hanko sm">佐</span><span style="font-size:.82rem">佐藤 明日香</span>
+                <form><select><option>未設定</option><option selected>佐藤 明日香</option><option>田中 亮</option></select><button class="app-btn ghost">変更</button></form>
               </span></div>
               <div class="row"><span class="k">期間</span><span class="v">
-                <span style="font-family:var(--font-mono);font-size:.78rem">2026-09-08 – 09-19</span>
+                <form><input type="date" value="2026-09-08" style="width:8.2rem"><input type="date" value="2026-09-19" style="width:8.2rem"><button class="app-btn ghost">保存</button></form>
               </span></div>
               <div class="row"><span class="k">タグ</span><span class="v">
                 <span class="p-tag" style="--tag-color:#c8402c">backend</span>
                 <span class="p-tag" style="--tag-color:#8f6410">要相談</span>
               </span></div>
               <div class="row"><span class="k">親</span><span class="v">
-                <a href="#" style="font-size:.8rem;color:var(--ai);text-decoration:none">WEB-3 検索の要件を…</a>
+                <form><input type="text" value="WEB-3" style="width:7rem"><button class="app-btn ghost">保存</button></form>
               </span></div>
               <div class="row"><span class="k">ウォッチ</span><span class="v">
                 <span class="hanko sm">佐</span>
@@ -171,6 +192,26 @@
   そのあと佐藤が本文に反映している。
   編集済みの印は、この順序を追うための手がかりになる。</p>
 
+  <h2>関連するスレッドを作る導線</h2>
+
+  <p>本文のすぐ下に「関連する課題を作成する」を置いてある。
+  ここから立てると、このスレッドが親に入った状態で
+  <a href="../../new/index.html">立てる画面</a>が開く。</p>
+
+  <p><a href="../../../../../../../../glossary.html#thread-type">種別</a>は後から変えられない。
+  議論として立てたものを課題に作り変えることはできないので、
+  <strong>議論を読んでいる最中に課題を立てる</strong>のがいちばん自然な流れになる。
+  そのとき番号を書き写させると、書き写さない人が出て、親子が切れる。</p>
+
+  <h2>誰がこの画面で書き換えられるか</h2>
+
+  <p>このプロジェクトを閲覧できる人なら誰でも書き換えられる。
+  進捗率も担当者も期間も親も、そしてアーカイブも同じである。</p>
+
+  <p><a href="../../../../../../../../glossary.html#soft-delete">削除</a>だけが違う。
+  <a href="../../../../../../../../glossary.html#org-admin">組織管理者</a>以外には、削除の欄そのものが出ない。
+  押せない押しボタンを見せて断るより、出さないほうがいい。</p>
+
   <h2>右の属性欄</h2>
 
   <p>この画面でだけ、進捗率と期間と担当者を変更できる。
@@ -179,6 +220,14 @@
   <p>ウォッチしている人を出しているのは、
   自動では付かない仕様のため「誰が見ているか」が自明でないからである。
   ここに自分がいなければ、コメントが付いても通知は来ない。</p>
+
+  <div class="note warn">
+    <span class="note-label">この見本にはまだ動かない部分がある</span>
+    <p>コメント、タグ、ウォッチ、添付は、それぞれ別の機能として作っていない。
+    実際の画面には、いまその欄が出ない。</p>
+    <p>本文の箇条書きとコードも、いまは<a href="../../../../../../../../issues/markdown-rendering/index.html">解釈していない</a>。
+    改行だけが残る。</p>
+  </div>
 
   <h2>アーカイブされている場合</h2>
 
@@ -195,7 +244,7 @@
 
   <div class="sheet-foot">
     <span>UI / スレッド詳細</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

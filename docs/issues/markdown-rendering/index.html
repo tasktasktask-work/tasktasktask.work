@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>本文の書式 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 中</p>
+  <h1 class="title">本文の書式</h1>
+
+  <h2>概要</h2>
+
+  <p><a href="../../features/thread/index.html">スレッド</a>の本文は、いま改行を保つだけで表示している。
+  <a href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html">見本の画面</a>には箇条書きと
+  <code>インラインコード</code>とリンクが出ているが、そこまでは動いていない。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>いま出るもの</th><th>まだ出ないもの</th></tr></thead>
+    <tbody>
+      <tr><td>改行、空行</td><td>見出し、箇条書き、コードブロック、リンク、強調</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>先送りとした理由</h2>
+
+  <p>Markdown を解釈すると、文字列が HTML になる。
+  そこから先は、書いた人が入れた <code>&lt;script&gt;</code> が他人のブラウザで動かない、という保証を
+  こちらが持たなければならない。解釈するライブラリと、無害化するライブラリと、
+  その二つの噛み合わせ方の三つを選ぶ話になる。</p>
+
+  <p>そして同じ仕組みを<a href="../../features/comment/index.html">コメント</a>でも使う。
+  コメントには<a href="../../glossary.html#mention">メンション</a>があり、
+  <code>@佐藤 明日香</code> という書き方を本文の解釈と噛み合わせる必要がある。
+  先にスレッドだけで組むと、コメントを作るときに作り直すことになる。</p>
+
+  <p>本文が素のテキストのままでも、スレッドは使える。
+  読めない本文にはならない。改行が残れば、箇条書きは <code>-</code> のまま読める。</p>
+
+  <div class="note warn">
+    <span class="note-label">この判断の弱点</span>
+    <p>見本の画面と、実際の画面が食い違ったままになる。
+    設計ドキュメントを読んで「書式が使える」と受け取った人が、
+    書いてみて初めて出ないことに気づく。</p>
+    <p><strong>食い違いは、見本の側ではなく機能ドキュメントの断り書きで示している。</strong>
+    見本を素のテキストに描き直すと、これから作るものの姿が消えるためである。</p>
+  </div>
+
+  <h2>再検討のきっかけ</h2>
+  <ul>
+    <li>コメントを実装するとき。そのときに一緒に入れる</li>
+    <li>本文に手順や表を書く使われ方が出てきたとき</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+
+  <p>解釈と無害化を分け、無害化を最後に通す。
+  解釈するライブラリが安全な出力を約束していても、それに寄りかからない。</p>
+
+  <p>受け付ける記法は絞る。
+  見出し、箇条書き、コードブロック、インラインコード、強調、リンク、引用。
+  生の HTML は通さない。表を入れるかどうかは、使われ方を見てから決める。</p>
+
+  <p>リンクは <code>http</code> と <code>https</code> だけに限る。
+  <code>javascript:</code> が通ると、無害化を一段抜けられる。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/thread/index.html"><span class="card-no">FEATURE</span><p class="card-title">スレッド</p><p class="card-desc">本文の編集</p></a>
+    <a class="card" href="../../features/comment/index.html"><span class="card-no">FEATURE</span><p class="card-title">コメント</p><p class="card-desc">同じ仕組みを使う</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html"><span class="card-no">PAGE</span><p class="card-title">スレッド詳細</p><p class="card-desc">食い違っている見本</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / 本文の書式</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

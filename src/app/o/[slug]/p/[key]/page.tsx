@@ -1,21 +1,32 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { LoginScreen } from '#features/authentication/LoginScreen.tsx';
 import { OrgShell } from '#features/organization/OrgShell.tsx';
-import { getOrganization } from '#features/organization/queries.ts';
+import { getOrganization, listMembers } from '#features/organization/queries.ts';
 import { currentScope } from '#features/organization/scope.ts';
 import { ProjectTabs } from '#features/project/ProjectTabs.tsx';
 import { listProjectLinks, resolveProject } from '#features/project/queries.ts';
+import { newThreadPath } from '#features/thread/path.ts';
+import { listThreads, type ThreadType } from '#features/thread/queries.ts';
+import { ThreadFilters, type ThreadQuery } from '#features/thread/ThreadFilters.tsx';
+import { ThreadRows } from '#features/thread/ThreadRows.tsx';
 
 /**
- * プロジェクトの中身。
+ * プロジェクトの中のスレッド一覧。
  *
- * ここにスレッドの一覧が並ぶ。
- * スレッドの機能を実装するまでは、プロジェクトの姿だけを出す。
+ * 階層を作らず平らに並べる。
+ * 木にすると、絞り込んだときに「親は条件に合わないが子は合う」行の
+ * 置き場所が無くなる。親と子へは行のリンクから辿る。
+ *
+ * 既定では完了とアーカイブ済みを隠す。
+ * ただしアーカイブ済みでも、活動中の子を持つものは残す（listThreads）。
  */
-export default async function ProjectHome({
+export default async function ProjectThreads({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string; key: string }>;
+  searchParams: Promise<ThreadQuery>;
 }) {
   const { slug, key } = await params;
   const found = await currentScope(slug);
@@ -24,10 +35,13 @@ export default async function ProjectHome({
   }
 
   const { scope, user } = found;
-  const [organization, project, links] = await Promise.all([
+  const query = await searchParams;
+
+  const [organization, project, links, members] = await Promise.all([
     getOrganization(scope),
     resolveProject(scope, key),
     listProjectLinks(scope),
+    listMembers(scope),
   ]);
 
   // 存在しないキーと、見えないプロジェクトを区別しない。
@@ -35,6 +49,21 @@ export default async function ProjectHome({
   if (!project) {
     return notFound();
   }
+
+  const type = ['kadai', 'giron', 'shitsumon'].includes(query.type ?? '')
+    ? (query.type as ThreadType)
+    : undefined;
+
+  const threads = await listThreads(scope, project.id, {
+    ...(type ? { type } : {}),
+    ...(query.assignee === 'none'
+      ? { unassigned: true }
+      : query.assignee
+        ? { assigneeUserId: query.assignee }
+        : {}),
+    includeCompleted: query.completed === '1',
+    includeArchived: query.archived === '1',
+  });
 
   return (
     <OrgShell
@@ -55,6 +84,13 @@ export default async function ProjectHome({
             {project.kadai + project.giron + project.shitsumon}件
           </div>
         </div>
+        <span style={{ flex: 1 }} />
+        {/* 畳んだプロジェクトには足せない。押せない札を出しても仕方がない */}
+        {project.archived ? null : (
+          <Link className="app-btn" href={newThreadPath(slug, project.key)}>
+            スレッドを立てる
+          </Link>
+        )}
       </div>
 
       <ProjectTabs
@@ -72,7 +108,21 @@ export default async function ProjectHome({
         </p>
       ) : null}
 
-      <p className="app-empty">スレッドの画面はこれから作ります。</p>
+      <ThreadFilters members={members} query={query} />
+
+      {threads.length === 0 ? (
+        <p className="app-empty">
+          {query.type || query.assignee
+            ? 'この条件に合うスレッドはありません。'
+            : 'まだスレッドがありません。決まっていない相談も、議論として立てられます。'}
+        </p>
+      ) : (
+        <ThreadRows slug={slug} threads={threads} timezone={scope.timezone} />
+      )}
+
+      {threads.length === 200 ? (
+        <p className="app-hint">200件までしか出していません。絞り込んでください。</p>
+      ) : null}
     </OrgShell>
   );
 }

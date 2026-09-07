@@ -334,6 +334,30 @@ SELECT id, body, created_at AT TIME ZONE $2 AS created_local
   読むときに向きを取り違えやすいので、
   <strong>この演算子は表示のための変換にだけ使い、保存する値には使わない</strong>。</p>
 
+  <h3>画面に出すときの変換</h3>
+
+  <p><code>timestamptz</code> はドライバが <code>Date</code> にして返す。
+  <code>Date</code> は UTC の一点なので、この値は正しい。
+  ずれるのは、それを文字にするときである。</p>
+
+  <p><code>toLocaleString()</code> をそのまま呼ぶと、
+  サーバのタイムゾーンで書き出される。
+  複数の組織を捌く一台のサーバが、全員に同じ壁掛け時計を見せることになる。</p>
+
+<pre><code>// 悪い例：サーバの時計で書き出される
+row.updatedAt.toLocaleString('ja-JP');
+
+// 良い例：組織のタイムゾーンを渡す
+import { formatDateTime } from '#lib/datetime.ts';
+formatDateTime(row.updatedAt, scope.timezone);</code></pre>
+
+  <p>変換は <code>src/lib/datetime.ts</code> に集めてある。
+  組織のタイムゾーンは<a href="../../glossary.html#org-scope">組織のスコープ</a>が運んでくるので、
+  画面はそれを渡すだけでよい。</p>
+
+  <p><code>date</code> 列はこの変換を通さない。
+  <code>'2026-09-08'</code> という文字列のまま来ており、一度 <code>Date</code> にした時点でずれる。</p>
+
   <h3>インデックスに使える式と使えない式</h3>
 
   <p><code>timestamptz</code> から日付を取り出す式は、
