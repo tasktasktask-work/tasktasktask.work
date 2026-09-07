@@ -5,6 +5,7 @@ import { OrgShell } from '#features/organization/OrgShell.tsx';
 import { getOrganization } from '#features/organization/queries.ts';
 import { SettingsForm } from '#features/organization/SettingsForm.tsx';
 import { currentScope } from '#features/organization/scope.ts';
+import { listProjectLinks } from '#features/project/queries.ts';
 
 export const metadata: Metadata = { title: '組織の設定' };
 
@@ -24,7 +25,10 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
     notFound();
   }
 
-  const organization = await getOrganization(found.scope);
+  const [organization, links] = await Promise.all([
+    getOrganization(found.scope),
+    listProjectLinks(found.scope),
+  ]);
 
   return (
     <OrgShell
@@ -33,6 +37,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
       displayName={found.user.displayName}
       isOrgAdmin
       current="settings"
+      projects={links}
     >
       <div className="app-head">
         <div>

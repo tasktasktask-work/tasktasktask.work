@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プロジェクトを実装した | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-07 18:25</p>
+  <h1 class="title">プロジェクトを実装した</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    閲覧の判定は前のセッションで固めてあった。
+    残っていたのは、それを使う側である。
+    作る、名前を変える、公開設定を切り替える、畳む、消す、非公開の顔ぶれを決める。
+    誰がどれを行えるのかを決めるのが、この回のほとんどだった。
+  </p>
+
+  <h2>誰が何を変えられるか</h2>
+
+  <p>役割は三つある。組織管理者、プロジェクト管理者、ただのメンバー。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>操作</th><th>組織管理者</th><th>プロジェクト管理者</th><th>メンバー</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">作る</td><td>&#9679;</td><td></td><td></td></tr>
+      <tr><td class="nowrap">名前と説明文を変える</td><td>&#9679;</td><td>&#9679;</td><td></td></tr>
+      <tr><td class="nowrap">公開設定を切り替える</td><td>&#9679;</td><td>&#9679;</td><td></td></tr>
+      <tr><td class="nowrap">アーカイブ</td><td>&#9679;</td><td>&#9679;</td><td></td></tr>
+      <tr><td class="nowrap">メンバーを足す、外す</td><td>&#9679;</td><td>&#9679;</td><td></td></tr>
+      <tr><td class="nowrap">削除</td><td>&#9679;</td><td></td><td></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h3>一度、線を引き間違えた</h3>
+
+  <p>最初はメンバーの出し入れだけをプロジェクト管理者に残し、
+  設定の四つを組織管理者に寄せていた。
+  理由は「閲覧の範囲を決める人が二段になると、誰がこの線を引いたのかを追えなくなる」である。</p>
+
+  <p>この理由は、公開設定にしか掛かっていなかった。
+  名前と説明文は見た目の話で、アーカイブは戻せる。
+  <strong>プロジェクトを回している人が、終わったものを自分で畳めず、
+  名前の誤りも直せない。</strong>
+  それでは、この役を置いた意味がない。</p>
+
+  <p>公開設定についても、理由のほうが弱い。
+  プロジェクト管理者はすでに非公開の顔ぶれを決められる。
+  組織のメンバーを一人ずつ足していけば、公開に切り替えたのとほぼ同じ状態になる。
+  <strong>そこを任せておいて切り替えだけを止めても、守りにはならない。</strong>
+  手間が増えるだけである。</p>
+
+  <p>組織管理者がその人をプロジェクト管理者にした時点で、この判断はもう委ねられている。</p>
+
+  <h3>削除だけを残した理由</h3>
+
+  <p><a href="../../glossary.html#soft-delete">論理削除</a>は、どのテーブルでも組織管理者に寄せてある。
+  スレッドも、組織そのものも同じである。
+  プロジェクトだけを例外にする理由が無い。</p>
+
+  <p>設定の画面はプロジェクト管理者にも開くが、削除の一枚だけは押しボタンを出さない。
+  出さないだけでは守りにならないので、判定は SQL の中にもある。</p>
+
+  <h3>最後のプロジェクト管理者は、守らなくてよい</h3>
+
+  <p>組織管理者のほうには下限がある。
+  全員降ろせてしまうと、その組織は中の誰にも触れなくなるからで、
+  行を掴んでから数える仕掛けを前のセッションで入れた。</p>
+
+  <p>プロジェクトには同じ仕掛けを置いていない。
+  組織管理者が行を持たなくても管理者として扱われるので、
+  <strong>行が一本も無くなっても、外側に受け皿がある</strong>。
+  同じ形の問題に見えて、成り立ちが違う。</p>
+
+  <h2>フォームから届く id を信じない</h2>
+
+  <p>プロジェクトを操作する画面は、どれも組織の slug とプロジェクトキーだけを送る。
+  プロジェクトの id はサーバ側で引き直す。</p>
+
+  <p>引き直しは、閲覧できるプロジェクトを絞る副問い合わせを通る。
+  つまり<strong>見えないプロジェクトは、id を知っていても掴めない</strong>。
+  フォームに id を置いて受け取ると、この一段が丸ごと抜ける。</p>
+
+  <div class="note">
+    <span class="note-label">スコープに書いてある役割は、やはり信用しない</span>
+    <p><code>isOrgAdmin</code> は画面の出し分けにしか使わない。
+    書き込みの可否は、すべて SQL の側で確かめている。</p>
+    <p>偽のスコープ（権限のない人の id に <code>isOrgAdmin: true</code> を付けたもの）を
+    作成、名前の変更、公開設定、アーカイブ、削除、メンバーの追加と削除の
+    すべてに渡すテストを置いた。どれも通らない。</p>
+  </div>
+
+  <h2>テストが素通りした穴</h2>
+
+  <p>権限の断片をひとつ増やした。
+  組織管理者か、あるいはそのプロジェクトの管理者か、を確かめるものである。</p>
+
+<pre><code>export function projectAdminExists(projectParam, orgParam, userParam) {
+  return `(${orgMemberExists(orgParam, userParam)}
+       AND (${orgAdminExists(orgParam, userParam)}
+            OR EXISTS (
+                 SELECT 1 FROM project_members pm
+                  WHERE pm.project_id = ${projectParam}
+                    AND pm.user_id = ${userParam}
+                    AND pm.is_admin
+                    AND pm.deleted_at IS NULL)))</code></pre>
+
+  <p>いちばん外の <code>orgMemberExists</code> は、
+  組織から外れた人の <code>project_members</code> が残っているだけで
+  管理者に戻ってしまうのを防いでいる。
+  <a href="../20260907-1050-permission-tests/index.html">前のセッションで開いた穴</a>と同じ形である。</p>
+
+  <p>書いたあと、この行を <code>(true)</code> に置き換えてテストを流した。
+  <strong>47件すべてが通った。</strong></p>
+
+  <p>「組織から外れたら管理できない」という筋のテストは、書いてあった。
+  ただしそれは<em>プロジェクトを引く</em>経路を通っていて、
+  そこでは閲覧の判定が先に効く。
+  外れた人にはプロジェクト自体が見えないので、
+  その先の権限の判定まで到達していなかった。</p>
+
+  <p>足りなかったのは、メンバーを足す経路と外す経路である。
+  こちらはプロジェクトの行を直接引くので、閲覧の判定を通らない。
+  組織から外し、<code>project_members</code> の行はわざと残したうえで、
+  もう誰も足せず外せないことを固定した。
+  置き換えると、今度は落ちる。</p>
+
+  <div class="note warn">
+    <span class="note-label">通ることと、届いていることは違う</span>
+    <p>意図した条件を、テストが本当に踏んでいるかどうかは、
+    通過した件数からは読めない。
+    条件を壊して落ちることを確かめるまで、分からない。</p>
+  </div>
+
+  <h2>作った画面</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>URL</th><th>誰が開けるか</th><th>中身</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>/o/{slug}</code></td><td>組織のメンバー</td><td>閲覧できるプロジェクトの一覧。作成の入口は組織管理者にだけ出す</td></tr>
+      <tr><td class="nowrap"><code>/o/{slug}/p/{key}</code></td><td>閲覧できる人</td><td>プロジェクトの中身。スレッド一覧はこれから</td></tr>
+      <tr><td class="nowrap"><code>&#8230;/p/{key}/members</code></td><td>組織管理者、プロジェクト管理者</td><td>非公開の顔ぶれ</td></tr>
+      <tr><td class="nowrap"><code>&#8230;/p/{key}/settings</code></td><td>組織管理者、プロジェクト管理者</td><td>名前、公開設定、アーカイブ。削除は組織管理者にだけ出す</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>左帯には、閲覧できるプロジェクトが並ぶようになった。
+  畳んだものは出さない。左帯は行き先を選ぶ場所で、
+  終わったものが常に並んでいると、動いているものが埋もれる。</p>
+
+  <p>一覧のほうには畳んだものも既定で出す。
+  <a href="../../ui/pages/o/[slug]/index.html">スレッド一覧との違い</a>は、桁である。
+  数万件に混ぜると読めなくなるが、数個なら並んでいたほうが早い。</p>
+
+  <h2>公開プロジェクトのメンバー一覧</h2>
+
+  <p>公開プロジェクトでも、メンバーの一覧は開けるようにした。
+  公開のあいだ、そこに誰を入れても閲覧の範囲は変わらない。</p>
+
+  <p>閉じておくほうが筋は通る。効かない設定を触れるのは紛らわしい。
+  ただ、そうすると<strong>非公開に切り替えてから人を入れる</strong>順にしかならず、
+  誰も入っていない非公開プロジェクトができる時間が生まれる。</p>
+
+  <p>先に揃えられるようにして、公開のあいだは効いていないことを画面の上で断った。</p>
+
+  <h2>型が通らなかったこと</h2>
+
+  <p>Next.js の <code>typedRoutes</code> は、URL を文字列のまま検査してくれる。
+  ところが <code>/o/{slug}/p/{key}</code> のように動的な区間が二つ並ぶと、
+  推論が通らず <code>Link</code> に渡せない。</p>
+
+  <p>型を当て直すしかないが、当て直した箇所では綴りの誤りも検査されなくなる。
+  そこで組み立てを一枚のファイルに閉じ込め、画面の側では URL の文字列を書かない形にした。
+  当て直しは三箇所に収まっている。</p>
+
+  <h2>確かめたこと</h2>
+
+<pre><code>テスト 148件（うちプロジェクト 53件）すべて通過
+pnpm check 全項目通過
+ビルドしたイメージへの画面確認 30件すべて通過</code></pre>
+
+  <p>画面の確認は、実際に立てたサーバへ三人ぶんのログインで通した。
+  組織管理者、プロジェクト管理者、ただのメンバー。
+  ただのメンバーに非公開が出ないこと、
+  設定の画面がただのメンバーには開かないこと、
+  存在しないキーが 404 になること。
+  残ったデータは無い。</p>
+
+  <h2>次にやること</h2>
+
+  <p>スレッドである。
+  <code>/o/{slug}/p/{key}</code> はいま空の枠を出しているだけで、そこに一覧が並ぶ。
+  課題と議論と質問、親子関係、進捗率、担当者、絞り込み。
+  この機能でいちばん量があるところになる。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">SESSIONS</span><p class="card-title">セッション履歴</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../features/project/index.html"><span class="card-no">FEATURE</span><p class="card-title">プロジェクト</p><p class="card-desc">決めたことの全体</p></a>
+    <a class="card" href="../20260907-1137-organization-members/index.html"><span class="card-no">SESSION</span><p class="card-title">組織とメンバー</p><p class="card-desc">この上に載っている</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-07 プロジェクト</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

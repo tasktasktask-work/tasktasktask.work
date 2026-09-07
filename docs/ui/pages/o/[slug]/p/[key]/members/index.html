@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プロジェクトのメンバー画面 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock</p>
+  <h1 class="title">プロジェクトのメンバー</h1>
+  <p class="lede">
+    非公開プロジェクトを誰が見られるかは、この画面で決まる。
+    組織管理者と、プロジェクト管理者だけが開ける。
+  </p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/p/BILL/members</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-top">
+        <span class="app-logo"><span class="m">3</span>TASK3</span>
+        <span class="app-org">株式会社アクメ <span class="slug">acme</span></span>
+        <span class="sp"></span>
+        <span class="hanko sm">鈴</span>
+      </div>
+      <div class="app-shell">
+        <nav class="app-side">
+          <h5>プロジェクト</h5>
+          <a href="#">一覧</a>
+          <a href="#" class="on"><span class="k">BILL</span>請求まわり</a>
+          <h5>組織</h5>
+          <a href="#">メンバー</a>
+        </nav>
+        <div class="app-main">
+          <div class="app-head">
+            <div><h2>請求まわり</h2><div class="sub">BILL / メンバー 3 人</div></div>
+          </div>
+
+          <div class="app-tabs">
+            <a href="#">スレッド</a>
+            <a href="#">ガント</a>
+            <a href="#" class="on">メンバー</a>
+          </div>
+
+          <div class="app-note">
+            ここに並んでいる人と、<strong>組織管理者</strong>だけがこのプロジェクトを見られます。
+            組織管理者は一覧に出ません。行を持たなくても管理者として扱われるためです。
+          </div>
+
+          <div class="app-form">
+            <div class="line">
+              <div class="auth-field" style="margin-bottom:0"><label>組織のメンバーから選ぶ</label><select><option>選んでください</option><option>山田 花子</option><option>高橋 修</option></select></div>
+              <div class="auth-field" style="margin-bottom:0;flex:0 1 12rem"><label>権限</label><select><option>メンバー</option><option>プロジェクト管理者</option></select></div>
+              <button class="app-btn">追加</button>
+            </div>
+          </div>
+
+          <div class="app-people">
+            <div class="app-person">
+              <span class="hanko sm">鈴</span>
+              <span class="who"><span class="nm">鈴木 圭</span></span>
+              <form><select><option>メンバー</option><option selected>プロジェクト管理者</option></select><button class="app-btn ghost">変更</button></form>
+              <form><button class="app-btn ghost">外す</button></form>
+            </div>
+            <div class="app-person">
+              <span class="hanko sm">田</span>
+              <span class="who"><span class="nm">田中 亮</span></span>
+              <form><select><option selected>メンバー</option><option>プロジェクト管理者</option></select><button class="app-btn ghost">変更</button></form>
+              <form><button class="app-btn ghost">外す</button></form>
+            </div>
+            <div class="app-person">
+              <span class="hanko sm">佐</span>
+              <span class="who"><span class="nm">佐藤 明日香</span></span>
+              <form><select><option>メンバー</option><option selected>プロジェクト管理者</option></select><button class="app-btn ghost">変更</button></form>
+              <form><button class="app-btn ghost">外す</button></form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>メールアドレスを出さない</h2>
+
+  <p>組織のメンバー一覧では、組織管理者にだけメールアドレスを見せている。
+  招待が重複していないか、誰を外すのかを確かめるのに要るためである。</p>
+
+  <p>この画面では誰にも出さない。
+  選ぶ相手はすでに組織に居る人で、表示名で足りる。
+  <strong>プロジェクト管理者は組織管理者とは限らない。</strong></p>
+
+  <div class="note">
+    <span class="note-label">組織管理者がこの一覧に並ばない</span>
+    <p>組織管理者は行を持たなくても全プロジェクトの管理者として扱われる。
+    そのため、ここに名前が無い人にも中身が見えている。</p>
+    <p>黙っていると「一覧に居ないのに見えている人が居る」と読めてしまうので、
+    画面の上で先に断っている。</p>
+  </div>
+
+  <h2>公開プロジェクトでも開ける</h2>
+
+  <p>公開のあいだ、この一覧は閲覧の範囲を変えない。
+  それでも足したり外したりできる。</p>
+
+  <p>非公開に切り替えてから人を入れる順にすると、
+  誰も入っていない非公開プロジェクトができる時間が生まれる。
+  その時間を作らずに済むよう、先に揃えられるようにしてある。
+  公開のときは、効いていないことを画面の上で断る。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../settings/index.html"><span class="card-no">PAGE</span><p class="card-title">プロジェクトの設定</p><p class="card-desc">公開設定を切り替える</p></a>
+    <a class="card" href="../../../../../../../glossary.html#project-admin"><span class="card-no">用語</span><p class="card-title">プロジェクト管理者</p><p class="card-desc">できることの範囲</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / プロジェクトのメンバー</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../../../../../sidebar.js" defer></script>
+</body>
+</html>

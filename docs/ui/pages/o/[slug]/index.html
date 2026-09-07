@@ -33,11 +33,12 @@
       <div class="app-shell">
         <nav class="app-side">
           <h5>プロジェクト</h5>
-          <a href="#" class=""><span class="k">WEB</span>検索基盤の刷新</a>
-          <a href="#" class=""><span class="k">BILL</span>請求まわり</a>
-          <h5>わたし</h5>
-          <a href="#" class="">担当スレッド</a>
-          <a href="#" class="">通知</a>
+          <a href="#" class="on">一覧</a>
+          <a href="#"><span class="k">WEB</span>検索基盤の刷新</a>
+          <a href="#"><span class="k">BILL</span>請求まわり</a>
+          <h5>組織</h5>
+          <a href="#">メンバー</a>
+          <a href="#">設定</a>
         </nav>
         <div class="app-main">
           <div class="app-head">
@@ -46,30 +47,44 @@
             <button class="app-btn">新しいプロジェクト</button>
           </div>
 
-          <div class="cards" style="margin-bottom:1.6rem">
-            <a class="card" href="#">
-              <span class="card-no">WEB</span>
-              <p class="card-title">検索基盤の刷新</p>
-              <p class="card-desc">検索機能を作り直す。全文検索は次フェーズ。</p>
-              <p style="margin:.6rem 0 0;font-size:.74rem;color:var(--ink-soft)">課題 12 / 議論 3 / 質問 4</p>
+          <details class="app-disclosure">
+            <summary>新しいプロジェクト</summary>
+            <div class="app-form">
+              <div class="line">
+                <div class="auth-field" style="margin-bottom:0;flex:0 1 10rem"><label>キー</label><input type="text" placeholder="WEB"></div>
+                <div class="auth-field" style="margin-bottom:0"><label>プロジェクト名</label><input type="text"></div>
+              </div>
+              <p class="app-hint">キーはスレッド識別子の前半になります（<code>WEB-128</code>）。あとから変えられません。</p>
+              <div class="line" style="margin-top:.7rem">
+                <div class="auth-field" style="margin-bottom:0"><label>説明</label><input type="text"></div>
+                <div class="auth-field" style="margin-bottom:0;flex:0 1 12rem"><label>公開設定</label><select><option>公開（組織の全員）</option><option>非公開（メンバーだけ）</option></select></div>
+                <button class="app-btn">作成</button>
+              </div>
+            </div>
+          </details>
+
+          <div class="app-projects">
+            <a class="app-project" href="#" data-archived="false">
+              <span class="k">WEB</span>
+              <p class="nm">検索基盤の刷新</p>
+              <p class="ds">検索機能を作り直す。全文検索は次フェーズ。</p>
+              <p class="ct">課題 12 / 議論 3 / 質問 4</p>
             </a>
-            <a class="card" href="#">
-              <span class="card-no">BILL &#160;<span style="color:var(--ai)">非公開</span></span>
-              <p class="card-title">請求まわり</p>
-              <p class="card-desc">請求書の様式変更と、締め処理の見直し。</p>
-              <p style="margin:.6rem 0 0;font-size:.74rem;color:var(--ink-soft)">課題 8 / 議論 1 / 質問 0</p>
+            <a class="app-project" href="#" data-archived="false">
+              <span class="k">BILL<span class="flag pv">非公開</span></span>
+              <p class="nm">請求まわり</p>
+              <p class="ds">請求書の様式変更と、締め処理の見直し。</p>
+              <p class="ct">課題 8 / 議論 1 / 質問 0</p>
             </a>
-            <a class="card" href="#" style="opacity:.55">
-              <span class="card-no">OLD &#160;<span style="color:var(--ink-faint)">アーカイブ済み</span></span>
-              <p class="card-title">旧管理画面の保守</p>
-              <p class="card-desc">読み取り専用。2026年3月に終了。</p>
-              <p style="margin:.6rem 0 0;font-size:.74rem;color:var(--ink-soft)">課題 41 / 議論 6 / 質問 9</p>
+            <a class="app-project" href="#" data-archived="true">
+              <span class="k">OLD<span class="flag">アーカイブ済み</span></span>
+              <p class="nm">旧管理画面の保守</p>
+              <p class="ds">読み取り専用。2026年3月に終了。</p>
+              <p class="ct">課題 41 / 議論 6 / 質問 9</p>
             </a>
           </div>
 
-          <label style="font-size:.78rem;color:var(--ink-mid);display:inline-flex;gap:.35rem;align-items:center">
-            <input type="checkbox" checked> アーカイブ済みのプロジェクトも表示する
-          </label>
+          <p class="app-hint" style="margin-top:1rem"><a href="#">アーカイブ済みを隠す</a></p>
         </div>
       </div>
     </div></div>
@@ -82,6 +97,7 @@
     <li><strong>非公開かどうか</strong>をキーの隣に添える。公開のものには何も書かない</li>
     <li><strong>種別ごとの件数</strong>を出す。議論と質問が多いプロジェクトは、まだ形が定まっていないという意味になる</li>
     <li><strong>アーカイブ済み</strong>は薄く表示し、既定で出す。プロジェクトの数は多くないので、隠すより並べたほうが探しやすい</li>
+    <li><strong>作成の入口</strong>は畳んでおく。この画面の主役は一覧で、作れるのは組織管理者だけである。組織管理者でなければ、この行そのものが出ない</li>
   </ul>
 
   <div class="note">
@@ -99,7 +115,7 @@
 
   <div class="sheet-foot">
     <span>UI / プロジェクト一覧</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

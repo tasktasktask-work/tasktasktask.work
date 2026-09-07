@@ -239,3 +239,65 @@
   padding: .5rem .6rem; border: 1px solid var(--rule-strong);
   border-radius: 2px; background: var(--paper); color: var(--ink);
 }
+/* プロジェクトの一覧 -------------------------------------------------------- */
+.app-projects {
+  display: grid; gap: .8rem;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+.app-project {
+  display: block; text-decoration: none; color: inherit;
+  border: 1px solid var(--rule); background: var(--card);
+  padding: .85rem .95rem;
+  transition: background .15s ease, border-color .15s ease;
+}
+.app-project:hover { background: var(--paper); border-color: var(--rule-strong); }
+.app-project:hover .nm { color: var(--shu); }
+/* 畳んだものも並べる。数が少ないので、隠すより薄くしたほうが探しやすい。 */
+.app-project[data-archived="true"] { opacity: .55; }
+.app-project .k {
+  display: flex; align-items: center; gap: .4rem;
+  font-family: var(--font-mono); font-size: .7rem; letter-spacing: .1em;
+  color: var(--shu);
+}
+.app-project .flag {
+  font-size: .62rem; letter-spacing: .06em;
+  color: var(--ink-faint); border: 1px solid var(--rule-strong);
+  padding: 0 .3rem;
+}
+.app-project .flag.pv { color: var(--ai); border-color: var(--ai); background: var(--ai-wash); }
+.app-project .nm {
+  margin: .45rem 0 0; font-family: var(--font-display); font-weight: 700; font-size: .98rem;
+}
+.app-project .ds {
+  margin: .3rem 0 0; font-size: .78rem; color: var(--ink-mid); line-height: 1.7;
+}
+.app-project .ct {
+  margin: .6rem 0 0; font-family: var(--font-mono); font-size: .68rem; color: var(--ink-soft);
+}
+
+/* 折り畳んだ入力欄。主役でない操作を、開くまで畳んでおく ---------------------- */
+.app-disclosure { margin-bottom: 1.4rem; }
+.app-disclosure > summary {
+  display: inline-flex; align-items: center; gap: .4rem;
+  cursor: pointer; list-style: none;
+  font-size: .82rem; color: var(--ink-mid);
+  border: 1px solid var(--rule-strong); background: var(--card);
+  padding: .38rem .8rem;
+}
+.app-disclosure > summary::-webkit-details-marker { display: none; }
+.app-disclosure > summary::before { content: "\FF0B"; color: var(--shu); }
+.app-disclosure[open] > summary::before { content: "\FF0D"; }
+.app-disclosure > summary:hover { background: var(--paper); }
+.app-disclosure[open] > summary { margin-bottom: .6rem; }
+.app-disclosure .app-form { margin-bottom: 0; }
+
+/* 画面の中の小さな注記と、設定の見出し -------------------------------------- */
+.app-hint {
+  margin: .5rem 0 0; font-size: .74rem; color: var(--ink-soft); line-height: 1.7;
+}
+.app-hint code { font-size: .72rem; }
+.app-section {
+  font-family: var(--font-display); font-size: .9rem; font-weight: 700;
+  margin: 1.6rem 0 .6rem; padding-bottom: .3rem;
+  border-bottom: 1px solid var(--rule);
+}

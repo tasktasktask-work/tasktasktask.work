@@ -128,6 +128,31 @@ export function orgAdminExists(orgParam: string, userParam: string): string {
 }
 
 /**
+ * プロジェクトの管理者であることを確かめる断片。
+ *
+ * 組織管理者は行を持たなくても全プロジェクトの管理者として扱う。
+ * そうしないと、メンバーが退職者しかいないプロジェクトを誰も引き継げなくなる。
+ *
+ * 外側で所属を確かめているのは、組織から外れた人の project_members が
+ * 残っているだけで管理者に戻ってしまうのを避けるためである。
+ * 行の後片付けに権限を預けない。
+ */
+export function projectAdminExists(
+  projectParam: string,
+  orgParam: string,
+  userParam: string,
+): string {
+  return `(${orgMemberExists(orgParam, userParam)}
+       AND (${orgAdminExists(orgParam, userParam)}
+            OR EXISTS (
+                 SELECT 1 FROM project_members pm
+                  WHERE pm.project_id = ${projectParam}
+                    AND pm.user_id = ${userParam}
+                    AND pm.is_admin
+                    AND pm.deleted_at IS NULL)))`;
+}
+
+/**
  * 閲覧できるプロジェクトの id を返す副問い合わせ。
  *
  * 組織の所属、公開設定、プロジェクトメンバー、組織管理者。

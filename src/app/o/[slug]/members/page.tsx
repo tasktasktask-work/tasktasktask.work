@@ -7,6 +7,7 @@ import { RemoveForm, RevokeForm, RoleForm } from '#features/organization/MemberA
 import { OrgShell } from '#features/organization/OrgShell.tsx';
 import { getOrganization, listMembers } from '#features/organization/queries.ts';
 import { currentScope } from '#features/organization/scope.ts';
+import { listProjectLinks } from '#features/project/queries.ts';
 
 export const metadata: Metadata = { title: 'メンバー' };
 
@@ -25,10 +26,11 @@ export default async function MembersPage({ params }: { params: Promise<{ slug: 
   }
 
   const { scope, user } = found;
-  const [organization, members, invitations] = await Promise.all([
+  const [organization, members, invitations, links] = await Promise.all([
     getOrganization(scope),
     listMembers(scope),
     listPendingInvitations(scope),
+    listProjectLinks(scope),
   ]);
 
   return (
@@ -38,6 +40,7 @@ export default async function MembersPage({ params }: { params: Promise<{ slug: 
       displayName={user.displayName}
       isOrgAdmin={scope.isOrgAdmin}
       current="members"
+      projects={links}
     >
       <div className="app-head">
         <div>

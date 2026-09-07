@@ -37,6 +37,14 @@
   </table>
   </div>
 
+  <h2>作れるのは組織管理者だけ</h2>
+
+  <p>プロジェクトを作れるのは<a href="../../glossary.html#org-admin">組織管理者</a>である。
+  作った人は、そのままプロジェクト管理者として登録される。</p>
+
+  <p>公開で作った場合でも登録する。
+  非公開へ切り替えた瞬間に、誰も入っていないプロジェクトができるのを避けるためである。</p>
+
   <h2>公開と非公開</h2>
 
   <p>公開プロジェクトは組織のメンバー全員が見られる。
@@ -48,12 +56,40 @@
 
   <h3>プロジェクト管理者</h3>
 
-  <p>非公開プロジェクトのメンバーを追加したり外したりできる人を<a href="../../glossary.html#project-admin">プロジェクト管理者</a>と呼ぶ。
-  できることはこの一点だけで、スレッドの操作について一般メンバーとの差はない。</p>
+  <p>ひとつのプロジェクトの面倒を見る人を<a href="../../glossary.html#project-admin">プロジェクト管理者</a>と呼ぶ。
+  非公開プロジェクトのメンバーを追加したり外したりでき、名前と説明文、公開設定、アーカイブも変えられる。
+  スレッドの操作について一般メンバーとの差はない。</p>
 
   <p>プロジェクトを作った組織管理者が自動的に管理者になる。
   加えて、すべての組織管理者が全プロジェクトの管理者として扱われる。
   メンバーが退職者しかいないプロジェクトを引き継げなくなる事態を避けるためである。</p>
+
+  <p>できないのは削除だけである。
+  <a href="../../glossary.html#soft-delete">論理削除</a>はどのテーブルでも組織管理者に寄せてあり、
+  プロジェクトだけを例外にしていない。</p>
+
+  <p>公開設定まで任せてあるのは、<strong>この人がすでに非公開の顔ぶれを決められる</strong>からである。
+  組織のメンバーを一人ずつ足していけば、公開に切り替えたのとほぼ同じ状態を作れる。
+  切り替えだけを止めても守りにはならず、手間が増えるだけになる。</p>
+
+  <p>プロジェクトを回している人が、終わったものを自分で畳めず、
+  名前の誤りも直せないのでは、この役を置いた意味がない。</p>
+
+  <p>最後のプロジェクト管理者を守る仕掛けは要らない。
+  行が一本も無くなっても、組織管理者が管理者として扱われるので、
+  そのプロジェクトが誰にも触れなくなることはない。
+  <a href="../organization/index.html">組織管理者</a>のほうに下限があるのは、
+  そちらには外側からの受け皿が無いからである。</p>
+
+  <div class="note">
+    <span class="note-label">公開プロジェクトでも、顔ぶれは揃えられる</span>
+    <p>メンバーの一覧は、公開プロジェクトでも開けて、足したり外したりできる。
+    公開のあいだ、この一覧は閲覧の範囲を変えない。
+    非公開に切り替えたときに効きはじめる。</p>
+    <p>切り替えてから慌てて人を入れる順にすると、
+    <strong>誰も入っていない非公開プロジェクトができる時間</strong>が生まれる。
+    先に揃えられるようにしてある。</p>
+  </div>
 
   <div class="note">
     <span class="note-label">組織から外れたら、何も見えない</span>
@@ -108,6 +144,39 @@
   <p>削除は<a href="../../glossary.html#soft-delete">論理削除</a>で、組織管理者だけが行える。
   アーカイブを経ていないプロジェクトは削除できない。</p>
 
+  <h2>権限は、SQL の中で確かめる</h2>
+
+  <p>スコープの <code>isOrgAdmin</code> は画面の出し分けにしか使わない。
+  呼ぶ側は好きな値のスコープを組み立てられるからである。
+  <a href="../organization/index.html">組織のスコープ</a>と同じ扱いになっている。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>操作</th><th>誰が</th><th>どこで確かめるか</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">作る</td><td>組織管理者</td><td><code>INSERT &#8230; SELECT &#8230; WHERE</code> に条件を入れる</td></tr>
+      <tr><td class="nowrap">名前と説明文を変える</td><td>組織管理者かプロジェクト管理者</td><td><code>UPDATE</code> の <code>WHERE</code> に条件を入れる</td></tr>
+      <tr><td class="nowrap">公開設定を切り替える</td><td>組織管理者かプロジェクト管理者</td><td>同上</td></tr>
+      <tr><td class="nowrap">アーカイブ</td><td>組織管理者かプロジェクト管理者</td><td>同上</td></tr>
+      <tr><td class="nowrap">メンバーを足す、外す</td><td>組織管理者かプロジェクト管理者</td><td>同上</td></tr>
+      <tr><td class="nowrap">削除</td><td>組織管理者</td><td>同上。畳んであることも同時に見る</td></tr>
+      <tr><td class="nowrap">一覧に並べる、中を開く</td><td>閲覧できる人</td><td><code>VISIBLE_PROJECT_IDS</code> を通す</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>フォームから届くのは組織の slug とプロジェクトキーだけである。
+  プロジェクトの id はサーバ側で引き直す。
+  フォームに書かれた id を信じると、他のプロジェクトの id を差し込むだけで
+  閲覧の判定を飛び越えられる。</p>
+
+  <div class="note">
+    <span class="note-label">存在しないキーと、見えないプロジェクトを区別しない</span>
+    <p>どちらも 404 を返す。
+    分けて答えると、キーを総当たりして非公開プロジェクトの存在を確かめられる。
+    <a href="../organization/index.html">slug で同じことをしない</a>のと同じ理由による。</p>
+  </div>
+
   <h2>移動できないことの帰結</h2>
 
   <p>スレッドを別のプロジェクトへ移すことはできない。
@@ -119,7 +188,9 @@
   <h2>関連する画面</h2>
   <div class="cards">
     <a class="card" href="../../ui/pages/o/[slug]/index.html"><span class="card-no">/o/{slug}</span><p class="card-title">プロジェクト一覧</p><p class="card-desc">参加しているプロジェクトが並ぶ</p></a>
-    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/index.html"><span class="card-no">/p/{key}</span><p class="card-title">スレッド一覧</p><p class="card-desc">プロジェクトの中身</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/index.html"><span class="card-no">/o/{slug}/p/{key}</span><p class="card-title">スレッド一覧</p><p class="card-desc">プロジェクトの中身</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/members/index.html"><span class="card-no">&#8230;/members</span><p class="card-title">プロジェクトのメンバー</p><p class="card-desc">非公開の顔ぶれを決める</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/settings/index.html"><span class="card-no">&#8230;/settings</span><p class="card-title">プロジェクトの設定</p><p class="card-desc">公開設定、アーカイブ、削除</p></a>
   </div>
 
   <h2>関連するテーブル</h2>
@@ -130,7 +201,7 @@
 
   <div class="sheet-foot">
     <span>機能 / プロジェクト</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

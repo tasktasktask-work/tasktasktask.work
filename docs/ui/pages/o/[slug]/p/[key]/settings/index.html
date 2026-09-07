@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>プロジェクトの設定画面 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock</p>
+  <h1 class="title">プロジェクトの設定</h1>
+  <p class="lede">
+    名前から削除まで、取り返しのつかなさの順に並べてある。
+    組織管理者とプロジェクト管理者が開けて、削除の一枚だけは組織管理者にしか出ない。
+  </p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/p/WEB/settings</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-top">
+        <span class="app-logo"><span class="m">3</span>TASK3</span>
+        <span class="app-org">株式会社アクメ <span class="slug">acme</span></span>
+        <span class="sp"></span>
+        <span class="hanko sm">佐</span>
+      </div>
+      <div class="app-shell">
+        <nav class="app-side">
+          <h5>プロジェクト</h5>
+          <a href="#">一覧</a>
+          <a href="#" class="on"><span class="k">WEB</span>検索基盤の刷新</a>
+          <a href="#"><span class="k">BILL</span>請求まわり</a>
+          <h5>組織</h5>
+          <a href="#">メンバー</a>
+          <a href="#">設定</a>
+        </nav>
+        <div class="app-main">
+          <div class="app-head">
+            <div><h2>検索基盤の刷新</h2><div class="sub">WEB / 設定</div></div>
+          </div>
+
+          <div class="app-tabs">
+            <a href="#">スレッド</a>
+            <a href="#">ガント</a>
+            <a href="#">メンバー</a>
+            <a href="#" class="on">設定</a>
+          </div>
+
+          <div class="app-form">
+            <div class="line">
+              <div class="auth-field" style="margin-bottom:0;flex:0 1 10rem"><label>キー</label><input type="text" value="WEB" disabled></div>
+              <div class="auth-field" style="margin-bottom:0"><label>プロジェクト名</label><input type="text" value="検索基盤の刷新"></div>
+            </div>
+            <p class="app-hint">キーは変えられません。<code>WEB-128</code> として書かれた記録が、過去を指せなくなるためです。</p>
+            <div class="line" style="margin-top:.7rem">
+              <div class="auth-field" style="margin-bottom:0"><label>説明</label><input type="text" value="検索機能を作り直す。全文検索は次フェーズ。"></div>
+              <button class="app-btn">保存</button>
+            </div>
+          </div>
+
+          <h3 class="app-section">公開設定</h3>
+          <div class="app-form">
+            <div class="line">
+              <p style="margin:0;font-size:.85rem">いまは<strong>公開</strong>です。組織のメンバー全員が見られます。</p>
+              <button class="app-btn ghost">非公開にする</button>
+            </div>
+          </div>
+
+          <h3 class="app-section">アーカイブ</h3>
+          <div class="app-form">
+            <div class="line">
+              <p style="margin:0;font-size:.85rem">アーカイブすると、中のスレッドがまとめて読み取り専用になります。個々のスレッドの状態は書き換えないので、解除すれば元どおりです。</p>
+              <button class="app-btn ghost">アーカイブする</button>
+            </div>
+          </div>
+
+          <h3 class="app-section">削除</h3>
+          <div class="app-form">
+            <div class="line">
+              <p style="margin:0;font-size:.85rem">アーカイブしたプロジェクトだけを削除できます。一覧から一手で消えないようにしてあります。</p>
+              <button class="app-btn ghost" disabled>削除する</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>危ない操作ほど、下に置く</h2>
+
+  <p>上から、名前と説明、公開設定、アーカイブ、削除。
+  取り返しのつかなさの順に並んでいる。</p>
+
+  <p>削除の押しボタンは、アーカイブするまで押せない。
+  「先にアーカイブしてください」と後から言うのではなく、
+  <strong>押せない状態と、その理由を先に見せる</strong>。</p>
+
+  <div class="note">
+    <span class="note-label">削除だけ、出す相手が違う</span>
+    <p>プロジェクト管理者がこの画面を開くと、削除の欄には
+    「削除できるのは組織管理者だけです」とだけ出る。</p>
+    <p>押せないボタンを見せて断るより、押しボタンごと出さない。
+    アーカイブの押しボタンを畳む前から見せているのとは、扱いを変えている。
+    <strong>あちらは自分でできることの前提を伝えており、こちらは自分にはできない。</strong></p>
+  </div>
+
+  <div class="note">
+    <span class="note-label">切り替えの確認で、人数を言う</span>
+    <p>公開から非公開へ切り替えるとき、確認の文には
+    いま登録されている人数が入る。</p>
+    <p>「非公開になります」だけだと、自分以外に誰が残るのかが分からない。
+    ゼロ人のまま切り替えたことに気づけるようにしてある。</p>
+  </div>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../members/index.html"><span class="card-no">PAGE</span><p class="card-title">プロジェクトのメンバー</p><p class="card-desc">非公開の顔ぶれ</p></a>
+    <a class="card" href="../../../../../../../features/project/index.html"><span class="card-no">FEATURE</span><p class="card-title">プロジェクト</p><p class="card-desc">誰が何を変えられるか</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / プロジェクトの設定</span>
+    <span>最終更新 2026-09-07</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../../../../../sidebar.js" defer></script>
+</body>
+</html>

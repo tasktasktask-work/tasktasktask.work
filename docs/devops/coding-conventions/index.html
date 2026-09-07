@@ -83,6 +83,42 @@ if (scope.isOrgAdmin) { await pool.query(`UPDATE organizations SET name = $2 ...
   <p>この「信用しない」は、偽ったスコープを渡すテストで固定してある
   （<code>tests/organization.test.ts</code> の <code>fakedAdminScope</code>）。</p>
 
+  <h2 id="form-ids">フォームから届く id を信じない</h2>
+
+  <p>Server Action が受け取ってよいのは、URL に現れる名前だけである。
+  組織の slug と、プロジェクトのキー。
+  対象の id は、その名前からサーバ側で引き直す。</p>
+
+<pre><code>// 良い例：slug とキーを受け取り、閲覧の判定を通して引き直す
+const found = await currentScope(slug);
+const project = await resolveProject(found.scope, key);
+
+// 悪い例：フォームの hidden から id を受け取る
+const projectId = form.get('projectId');</code></pre>
+
+  <p>悪い例では、他のプロジェクトの id を書いたフォームを投げるだけで
+  閲覧の判定が丸ごと飛ぶ。
+  引き直す形にしておけば、<strong>見えないものは掴めない</strong>。</p>
+
+  <p>id を隠しても守りにはならない。
+  推測できないから安全なのではなく、
+  <a href="#trust">受け取った値を確かめているから安全</a>である。</p>
+
+  <h2 id="typed-routes">URL の組み立てを一枚に閉じ込める</h2>
+
+  <p><code>typedRoutes</code> は、動的な区間がひとつなら
+  <code>Link</code> に渡す文字列をそのまま検査してくれる。
+  <code>/o/{slug}/p/{key}</code> のように二つ並ぶと推論が通らず、型を当て直すことになる。</p>
+
+<pre><code>// src/features/project/path.ts
+export function projectPath(slug: string, key: string): Route {
+  return `/o/${slug}/p/${key}` as Route;
+}</code></pre>
+
+  <p>当て直した箇所では綴りの誤りも検査されない。
+  だから画面の側では URL の文字列を書かず、この関数を呼ぶ。
+  検査の効かない範囲を、探せる大きさに保つためである。</p>
+
   <h2>閲覧できるかの判定を一箇所に置く</h2>
 
   <p><a href="../../glossary.html#private-project">非公開プロジェクト</a>の判定は、
@@ -488,7 +524,7 @@ import { LoginForm } from '#features/authentication/LoginForm.tsx';</code></pre>
 
   <div class="sheet-foot">
     <span>開発と運用 / コーディング規約</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

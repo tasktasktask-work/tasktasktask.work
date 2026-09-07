@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { logout } from '#features/authentication/actions.ts';
+import { projectPath } from '#features/project/path.ts';
 
 /*
  * 組織の中の画面に共通する枠。
@@ -11,7 +12,10 @@ import { logout } from '#features/authentication/actions.ts';
  * ページはどのみちスコープを組み立てるので、その結果をここへ渡す。
  */
 
-export type ShellNav = 'projects' | 'members' | 'settings';
+export type ShellNav = 'projects' | 'members' | 'settings' | 'project';
+
+/** 左帯に並べるプロジェクト。畳んだものは出さない。 */
+export type ShellProject = { key: string; name: string };
 
 export function OrgShell({
   slug,
@@ -19,6 +23,8 @@ export function OrgShell({
   displayName,
   isOrgAdmin,
   current,
+  projects,
+  currentProjectKey,
   children,
 }: {
   slug: string;
@@ -26,6 +32,8 @@ export function OrgShell({
   displayName: string;
   isOrgAdmin: boolean;
   current: ShellNav;
+  projects: ShellProject[];
+  currentProjectKey?: string;
   children: ReactNode;
 }) {
   return (
@@ -54,6 +62,16 @@ export function OrgShell({
           <Link href={`/o/${slug}`} className={current === 'projects' ? 'on' : ''}>
             一覧
           </Link>
+          {projects.map((project) => (
+            <Link
+              key={project.key}
+              href={projectPath(slug, project.key)}
+              className={current === 'project' && project.key === currentProjectKey ? 'on' : ''}
+            >
+              <span className="k">{project.key}</span>
+              {project.name}
+            </Link>
+          ))}
           <h5>組織</h5>
           <Link href={`/o/${slug}/members`} className={current === 'members' ? 'on' : ''}>
             メンバー

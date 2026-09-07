@@ -46,14 +46,15 @@ CREATE INDEX project_members_by_user
   <table>
     <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
     <tbody>
-      <tr><td><code>is_admin</code></td><td>boolean</td><td>プロジェクト管理者かどうか。できることはメンバーの追加と削除だけ</td></tr>
+      <tr><td><code>is_admin</code></td><td>boolean</td><td>プロジェクト管理者かどうか。メンバーの出し入れ、名前、説明文、公開設定、アーカイブを行える</td></tr>
     </tbody>
   </table>
   </div>
 
   <h3>役割を boolean にした理由</h3>
-  <p>プロジェクト内の役割は「メンバーを管理できるか」の一点しかない。
+  <p>プロジェクト内の役割は「そのプロジェクトの面倒を見るか」の一点しかない。
   スレッドの操作について管理者と一般メンバーの差はない。
+  削除だけは組織管理者に残してあり、この列では表さない。
   取りうる値が二つしかないものに文字列の列挙型を使うと、
   将来増えるかのような誤解を招く。</p>
 
@@ -103,6 +104,46 @@ SELECT p.id
     <code>is_admin = true</code> の行があるか、または組織管理者であるか、の論理和になる。</p>
   </div>
 
+  <h2>管理できるかの判定</h2>
+
+  <p>閲覧の判定とは別に、そのプロジェクトを管理できるかの判定がある。
+  メンバーの出し入れ、名前と説明文、公開設定、アーカイブがこれを通る。
+  組織管理者は行を持たなくても全プロジェクトの管理者として扱われるので、二つの枝になる。</p>
+
+<pre><code>-- $1 = organization_id, $2 = user_id, p.id = project_id
+   -- 組織が境界である。ここを枝の中に入れてはいけない
+   EXISTS (
+      SELECT 1 FROM organization_members om
+       WHERE om.organization_id = p.organization_id
+         AND om.user_id = $2 AND om.deleted_at IS NULL)
+   AND (
+     EXISTS (   -- 組織管理者
+        SELECT 1 FROM organization_members om
+         WHERE om.organization_id = p.organization_id
+           AND om.user_id = $2 AND om.role = 'admin' AND om.deleted_at IS NULL)
+     OR EXISTS ( -- プロジェクト管理者
+        SELECT 1 FROM project_members pm
+         WHERE pm.project_id = p.id
+           AND pm.user_id = $2 AND pm.is_admin AND pm.deleted_at IS NULL)
+   )</code></pre>
+
+  <p>削除だけはこの判定を使わず、組織管理者かどうかを直に見る。</p>
+
+  <p>いちばん外で所属を見ているのは、閲覧の判定と同じ理由による。
+  組織から外した人の <code>project_members</code> が残っているだけで
+  管理者に戻ってしまう形にしない。
+  <strong>行の後片付けに権限を預けない。</strong></p>
+
+  <h2>畳んだ行は起こさない</h2>
+
+  <p>出入りを繰り返した人には、畳んだ行が何本も並ぶ。
+  <code>project_members_uniq</code> は生きている行だけを見るので、
+  まとめて起こすと生きた行が二本になり、索引に弾かれる。</p>
+
+  <p>そこで、生きている行があればそれを更新し、無ければ新しく足す。
+  畳んだ行は畳んだままにする。
+  <a href="../organization_members/index.html">組織の所属</a>でも同じ形にしてある。</p>
+
   <h2>関係</h2>
 <pre class="figure">projects ──&lt; project_members &gt;── users</pre>
 
@@ -118,7 +159,7 @@ SELECT p.id
 
   <div class="sheet-foot">
     <span>データベース / project_members</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-07</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 
