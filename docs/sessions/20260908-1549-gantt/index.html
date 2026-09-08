@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ガントチャートを描いた | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-08 15:49</p>
+  <h1 class="title">ガントチャートを描いた</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    最後まで残っていた画面である。見本もあり、決め事も書いてあった。
+    ところが実装に入ってみると、決めてあったのは「何を出すか」だけで、
+    「どれを出すか」は一つも決まっていなかった。
+  </p>
+
+  <h2>決まっていたつもりで、決まっていなかったこと</h2>
+
+  <p>機能ページには、載るのは課題だけで、アーカイブ済みは出さず、
+  期間未設定は下の別枠に並べる、と書いてあった。
+  ここまでは対象ごとの扱いである。</p>
+
+  <p>書いていなかったのは、行の集合をどう作るかだった。
+  期間の無い親に、期間のある子がぶら下がっていたら、親の行は出るのか。
+  出さないなら子はどこに置くのか。出すなら、下の別枠との関係はどうなるのか。</p>
+
+  <p>この一点から、聞き取りは34項目に膨らんだ。</p>
+
+  <h2>行の集合を一行で決めた</h2>
+
+  <p>着いた答えは短い。<strong>期間を持つ課題と、その祖先。</strong></p>
+
+  <p>ここには非対称がある。期間の無い課題でも、子がいれば残る。子がいなければ残らない。
+  同じ「期間が無い」で扱いが分かれるのは気持ちが悪いが、
+  落としたときに失われるものが違う。</p>
+
+  <p>子のいない課題を落としても、消えるのはその一行だけで、下の別枠が拾う。
+  親を落とすと、子が一段下がって並んでいる理由が消える。
+  その子は根の無い行として浮く。</p>
+
+  <p>結果として、期間の無い親は図と別枠の両方に出る。
+  同じ課題が二箇所に現れるのは重複に見えるが、片方は「子がここにいる」ことを、
+  もう片方は「まだ計画に載っていない」ことを言っている。</p>
+
+  <h2>見つけた食い違い</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>どこ</th><th>食い違い</th><th>どうしたか</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap">刻み</td>
+          <td>機能ページは「横軸の刻みは日」。モックには「日 / 週 / 月」の選択肢</td>
+          <td>日だけにし、モックから選択肢を消した（Q1）</td>
+        </tr>
+        <tr>
+          <td class="nowrap">件数の位置</td>
+          <td>モックは見出しの下。決めたのは図の上の欄</td>
+          <td>図の上にまとめた。件数は図を読むための数字である（Q27）</td>
+        </tr>
+        <tr>
+          <td class="nowrap">タブ</td>
+          <td>モックは「スレッド / ガント / 設定」。実装は「スレッド / メンバー / 設定」</td>
+          <td>四つ並べ、ガントは見える人全員に出す（Q24）</td>
+        </tr>
+        <tr>
+          <td class="nowrap">アーカイブ</td>
+          <td>用語集は「ガントには絞り込みを切り替えれば表示できる」</td>
+          <td>ガントに絞り込みは無い。生きた子の親としてだけ残ると書き直した</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>言葉が二つの意味を持っていた</h2>
+
+  <p>用例を書いていて気づいた。このシステムでは「畳む」がアーカイブを指す。
+  コードの注釈でも「畳んだスレッド」「畳んだプロジェクト」と通してある。</p>
+
+  <p>ところがガントの行を閉じる操作にも、同じ言葉を当てていた。
+  ボタンの読み上げは「子を畳む」になっていた。
+  <strong>押すとアーカイブされると読めてしまう。</strong></p>
+
+  <p>行を閉じるほうを<a href="../../glossary.html#row-fold">折りたたみ</a>と呼び直し、
+  画面の言葉は「隠す」「出す」に変えた。用語集にも項を立てて、二つの違いを書いた。</p>
+
+  <h2>テストが見つけたこと</h2>
+
+  <p>親を輪にしたデータを与えたら、<strong>図が丸ごと空になった</strong>。</p>
+
+  <p>親を辿って行を集める作りなので、A の親が B で B の親が A だと、
+  どちらも「親がいる」ことになり、根が一つも見つからない。
+  親の付け替えでは輪を弾いているので、正しく動いていれば起きない。
+  それでも、防ぎ漏れたときに何も出ないのは、いちばん困る壊れ方である。</p>
+
+  <p>根から辿り着けなかった行を最上位として拾い上げるようにした。
+  拾い上げがあることを確かめるテストと、輪の外にいる行が巻き込まれないことを確かめるテストを足した。</p>
+
+  <h2>ミューテーションで分かったこと</h2>
+
+  <p>判定を28か所で壊し、26か所をテストが捕まえた。
+  生き残った2つは、どちらも<strong>データベースの制約と重なっていた</strong>。</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>壊したところ</th><th>なぜ落ちないか</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>期間の組を作るときに終了日を見ない</td>
+          <td><code>threads_period_paired</code> が両方入るか両方空くかを保証している。
+          片方だけ入った行はデータベースに存在できない</td>
+        </tr>
+        <tr>
+          <td>取得の条件から <code>type = 'kadai'</code> を外す</td>
+          <td><code>threads_period_only_for_kadai</code> により、期間を持てるのは課題だけ。
+          期間で絞った時点で議論と質問は落ちている</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>どちらも二重の守りである。落とせないと分かったうえで残し、
+  なぜ落とせないのかをコードの注釈に書いた。
+  制約そのものは <code>tests/schema.test.ts</code> が確かめているので、
+  守りの根が試されていないわけではない。</p>
+
+  <p>捕まえられなかった代わりに、テストの弱さが二つ出た。
+  週の縞をずらす日数を確かめるテストが、月曜始まりの範囲だけを見ていた。
+  ずらす日数を 0 に固定しても、月曜なら 0 が正解なので通ってしまう。
+  上限のテストも、祖先を足して件数が戻る形になっていて、上限を外しても同じ数になっていた。
+  どちらも書き直した。</p>
+
+  <h2>決めたこと</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th class="nowrap">番号</th><th>決めたこと</th></tr></thead>
+      <tbody>
+        <tr><td>Q1</td><td>横軸の刻みは日だけ。週と月は持たない</td></tr>
+        <tr><td>Q2</td><td>描く範囲は課題の期間から決め、今日を必ず含める。横にスクロールする</td></tr>
+        <tr><td>Q3</td><td>階層の深さに上限を設けない。インデントは五段目で頭打ち</td></tr>
+        <tr><td>Q4</td><td>親が議論や質問なら、その課題は最上位に上げ、親の番号を添える</td></tr>
+        <tr><td>Q5</td><td>折りたたみの状態は覚えない。開き直すと全部開く</td></tr>
+        <tr><td>Q6</td><td>同じ階層では開始日、終了日、課題番号の順。期間の無い行は末尾</td></tr>
+        <tr><td>Q7</td><td>期間の無い親は図に残す。別枠にも出るので二箇所に現れる</td></tr>
+        <tr><td>Q8</td><td>はみ出しは直接の親だけを見る。期間の無い組は判定しない</td></tr>
+        <tr><td>Q9</td><td>横に伸びる長さに上限を設けない。マス目は背景で描く</td></tr>
+        <tr><td>Q10</td><td>一日 1.6rem。年月の帯を上に出し、今日を左から四分の一に置く</td></tr>
+        <tr><td>Q11</td><td>期間を持つ課題が無ければ図を出さず、別枠だけを出す</td></tr>
+        <tr><td>Q12</td><td>折りたたんでも親のバーは変えない。件数とはみ出しの印は残す</td></tr>
+        <tr><td>Q13</td><td>アーカイブ済みでも、生きた子孫を持つ親は図に残す</td></tr>
+        <tr><td>Q14</td><td>別枠に並ぶのは、終わっておらず、畳まれておらず、期間の無い課題だけ</td></tr>
+        <tr><td>Q15</td><td>絞り込みは置かない。件数と範囲と「今日へ戻る」だけ</td></tr>
+        <tr><td>Q16</td><td>親のバーにも進捗の塗りを出す</td></tr>
+        <tr><td>Q17</td><td>リンクにするのは課題名だけ。バーは押せない</td></tr>
+        <tr><td>Q18</td><td>名前の欄を左に、目盛りを上に貼り付ける</td></tr>
+        <tr><td>Q19</td><td>一枚に描くのは500件を目安にし、超えたことを画面に出す</td></tr>
+        <tr><td>Q20</td><td>土日だけ色を変える。祝日は扱わない</td></tr>
+        <tr><td>Q21</td><td>薄さは進捗率100に、中抜きはアーカイブ済みに割り当てる</td></tr>
+        <tr><td>Q22</td><td>件数の分母は畳まれていない課題。終わったものは含む</td></tr>
+        <tr><td>Q23</td><td>課題が一件も無ければ、枠を出さず一文だけ置く</td></tr>
+        <tr><td>Q24</td><td>タブは「スレッド / ガント / メンバー / 設定」。ガントは全員に出す</td></tr>
+        <tr><td>Q25</td><td>狭い画面では名前の欄を 9rem まで縮める。別の画面は作らない</td></tr>
+        <tr><td>Q26</td><td>切った先の祖先は順位に関わらず残す。上限は目安として扱う</td></tr>
+        <tr><td>Q27</td><td>件数は図の上の欄にまとめる</td></tr>
+        <tr><td>Q28</td><td>バーに触れると期間と進捗を出す。唯一の経路にはしない</td></tr>
+        <tr><td>Q29</td><td>狭くなったら判子、印、親の番号の順に落とす。名前と警告は残す</td></tr>
+        <tr><td>Q30</td><td>ガントへの入り口はタブだけ</td></tr>
+        <tr><td>Q31</td><td>別枠から期間は入れられない。詳細画面へのリンクだけ</td></tr>
+        <tr><td>Q32</td><td>別枠は100件で切り、超えたぶんは数だけ出す</td></tr>
+        <tr><td>Q33</td><td>描く範囲は、切った後の実際に描く課題から決める</td></tr>
+        <tr><td>Q34</td><td>開いた直後は全部開いている</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>書いたもの</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>ファイル</th><th>役目</th></tr></thead>
+      <tbody>
+        <tr><td class="nowrap"><code>gantt/layout.ts</code></td><td>行を選び、木に組み直し、範囲を決める。データベースも React も出てこない</td></tr>
+        <tr><td class="nowrap"><code>gantt/queries.ts</code></td><td>種を選んで祖先まで引き上げる。別枠と件数もここ</td></tr>
+        <tr><td class="nowrap"><code>gantt/GanttChart.tsx</code></td><td>描画。折りたたみと、開いた直後のスクロールだけを持つ</td></tr>
+        <tr><td class="nowrap"><code>gantt/path.ts</code></td><td>行き先の組み立て</td></tr>
+        <tr><td class="nowrap"><code>p/[key]/gantt/page.tsx</code></td><td>空の状態の出し分けと、別枠の描画</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>判定を持たない部分を <code>layout.ts</code> に分けたので、
+  「切ったときに祖先が残るか」も「輪になったときに行が消えないか」も、
+  データベース抜きで確かめられる。実際、この分け方が輪の問題を見つけた。</p>
+
+  <h2>確かめたこと</h2>
+
+  <pre><code>テスト 477件すべて通過（ガント54件を追加）
+判定を28か所壊し、26か所を捕捉（残り2つは制約と重なり落とせない）
+画面の通し確認 44件すべて通過、サーバのエラーなし
+pnpm check 型・整形・共有スタイル・移行の検査すべて通過
+next build 18経路（/o/{slug}/p/{key}/gantt を追加）
+ページ 93 / 用語 49 / リンク切れ 0 / 孤立した用語 0</code></pre>
+
+  <div class="note warn">
+    <span class="note-label">自動では確かめていないところ</span>
+    <p>開いた直後に今日の位置までスクロールする処理は、実物のブラウザでしか動かない。
+    一日あたりの幅を測ってから送る作りなので、描かれていない状態では長さが0になる。</p>
+    <p>折りたたみも同じで、押した後の行の消え方は確かめていない。
+    どの行を隠すかを決める計算そのものは <code>layout.ts</code> の側にあり、そちらは試してある。</p>
+    <p>名前の欄と目盛りの貼り付き、狭い画面での欄の縮み、
+    土日の縞と今日の線の位置は、どれもCSSの働きなので、
+    描画の値が渡っていることまでしか確かめていない。</p>
+  </div>
+
+  <h2>払った代金</h2>
+
+  <p>横に伸びる長さに上限を置かなかった（Q9）。
+  終了日を2126年と打ち間違えると、図は百年ぶんの幅になる。
+  異様に長いこと自体が合図になる、という判断だが、その課題を探して直すまでは読みにくい図が残る。</p>
+
+  <p>絞り込みを置かなかった（Q15）。
+  課題が300件あるプロジェクトでは、自分の担当だけを見る手段がこの画面に無い。
+  探すのはスレッド一覧の役目に寄せてある。</p>
+
+  <p>期間未設定の枠から日付を入れられない（Q31）。
+  枠を空にするには、一件ずつ詳細画面へ行って戻ることになる。</p>
+
+  <h2>次にやること</h2>
+
+  <p>本番への反映が溜まっている。<code>20260907135543</code> 以降の四つの移行がまだ当たっていない。
+  そのうちの一つに <code>CREATE INDEX CONCURRENTLY</code> が入るので、
+  <code>docker compose run --rm migrate</code> がトランザクションを張らないことを、
+  本物のデータベースで初めて確かめることになる。</p>
+
+  <p>あわせて <code>deploy/</code> の二つのファイルを VPS へ写す必要がある。
+  <code>CLIENT_MAX_BODY_SIZE</code> を上げないと、大きい添付だけが本番で 413 になる。</p>
+
+  <p>機能としては、これで一通り出そろった。
+  残っているのは<a href="../../issues/index.html">先送りにした課題</a>である。
+  用例の無い19語もそこに加えた。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/gantt/index.html"><span class="card-no">FEATURE</span><p class="card-title">ガントチャート</p><p class="card-desc">決めたことの置き場</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/gantt/index.html"><span class="card-no">UI</span><p class="card-title">ガント画面</p><p class="card-desc">見本</p></a>
+    <a class="card" href="../../issues/gantt-enhancement/index.html"><span class="card-no">ISSUE</span><p class="card-title">ガントの拡張</p><p class="card-desc">ドラッグと依存関係</p></a>
+    <a class="card" href="../../issues/glossary-examples/index.html"><span class="card-no">ISSUE</span><p class="card-title">用例の無い用語</p><p class="card-desc">19語</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / ガントチャート</span>
+    <span>2026-09-08 15:49</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

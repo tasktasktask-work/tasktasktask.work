@@ -16,8 +16,8 @@
   <p class="eyebrow">Component</p>
   <h1 class="title">ガントバー</h1>
   <p class="lede">
-    親か子か、進んでいるか終わっているか、親からはみ出しているか。
-    バーひとつが四つの情報を同時に運ぶ。
+    親か子か、どこまで進んだか、親からはみ出しているか、畳んであるか。
+    バーひとつが五つの情報を同時に運ぶ。掴むことはできない。
   </p>
 
   <h2>状態</h2>
@@ -27,9 +27,9 @@
     <div class="spec-body">
       <div style="display:flex;flex-direction:column;gap:1.1rem">
         <div style="display:flex;align-items:center;gap:1rem">
-          <span style="width:11rem;font-size:.78rem;color:var(--ink-soft);font-family:var(--font-mono)">親（子を持つ課題）</span>
+          <span style="width:11rem;font-size:.78rem;color:var(--ink-soft);font-family:var(--font-mono)">親（子を持つ課題）/ 進捗 30%</span>
           <span style="position:relative;display:block;width:16rem;height:22px;background:var(--paper-deep);border:1px solid var(--rule)">
-            <span class="p-gantt-bar" data-parent="true" style="left:6%;width:74%"></span>
+            <span class="p-gantt-bar" data-parent="true" style="left:6%;width:74%"><span class="done" style="width:30%"></span></span>
           </span>
         </div>
         <div style="display:flex;align-items:center;gap:1rem">
@@ -53,14 +53,19 @@
         <div style="display:flex;align-items:center;gap:1rem">
           <span style="width:11rem;font-size:.78rem;color:var(--ki);font-family:var(--font-mono)">親からはみ出した子</span>
           <span style="position:relative;display:block;width:16rem;height:22px;background:var(--paper-deep);border:1px solid var(--rule)">
-            <span class="p-gantt-bar" style="left:55%;width:42%;background:var(--ki)"></span>
+            <span class="p-gantt-bar" data-overflow="true" style="left:55%;width:42%"></span>
           </span>
         </div>
         <div style="display:flex;align-items:center;gap:1rem">
-          <span style="width:11rem;font-size:.78rem;color:var(--ink-soft);font-family:var(--font-mono)">今日の線</span>
+          <span style="width:11rem;font-size:.78rem;color:var(--ink-soft);font-family:var(--font-mono)">アーカイブ済み</span>
           <span style="position:relative;display:block;width:16rem;height:22px;background:var(--paper-deep);border:1px solid var(--rule)">
-            <span class="p-gantt-bar" style="left:20%;width:45%"><span class="done" style="width:40%"></span></span>
-            <span class="p-gantt-today" style="left:42%"></span>
+            <span class="p-gantt-bar" data-archived="true" style="left:14%;width:56%"></span>
+          </span>
+        </div>
+        <div style="display:flex;align-items:center;gap:1rem">
+          <span style="width:11rem;font-size:.78rem;color:var(--ink-soft);font-family:var(--font-mono)">今日の線と土日の縞</span>
+          <span class="p-gantt-track" style="--day:1.6rem;--ti:7;--wk:1;display:block;width:16rem;height:22px;border:1px solid var(--rule)">
+            <span class="p-gantt-bar" style="--o:3;--l:5"><span class="done" style="width:40%"></span></span>
           </span>
         </div>
       </div>
@@ -78,7 +83,9 @@
       <tr><td class="nowrap">左からの明るい塗り</td><td>進捗率。バー全体に対する割合</td></tr>
       <tr><td class="nowrap">全体が薄い</td><td>進捗率が100。終わったもの</td></tr>
       <tr><td class="nowrap">黄色</td><td>親の期間からはみ出している</td></tr>
+      <tr><td class="nowrap">枠線だけの中抜き</td><td>アーカイブ済み。生きた子の親としてだけ残っている</td></tr>
       <tr><td class="nowrap">縦の朱線</td><td>今日</td></tr>
+      <tr><td class="nowrap">灰色の縦帯</td><td>土曜と日曜。祝日は扱わない</td></tr>
     </tbody>
   </table>
   </div>
@@ -86,6 +93,21 @@
   <p>進捗を色の変化ではなく、バーの内側の塗り分けで表している。
   色を変えると「進捗率が高い＝良い」という価値判断が乗る。
   塗り分けなら、どこまで進んだかという事実だけを示せる。</p>
+
+  <p>親のバーにも塗りを出す。
+  親の<a href="../../../glossary.html#progress">進捗率</a>は子から計算しておらず、自分で持っている値である。
+  塗らなければ、その値がどの画面にも現れない。</p>
+
+  <p>薄さと中抜きを使い分けているのは、終わったのか畳んだのかを見分けるためである。
+  どちらも薄くすると、進捗率100の課題と<a href="../../../glossary.html#archive">アーカイブ</a>済みの課題が同じ見た目になる。</p>
+
+  <p>バーは掴めない。押しても何も起きず、期間の変更は詳細画面から行う。
+  掴めそうな見た目にしないため、影は一本ぶんだけに留め、握りの印は付けていない。
+  リンクにしてあるのは行の左に並ぶ課題名だけである。</p>
+
+  <p>日のマス目と土日の縞と<a href="../../../glossary.html#today-line">今日の線</a>は、
+  行ごとの要素ではなく背景で描いている。
+  要素の数を日数に比例させると、長いプロジェクトで行数×日数ぶんの節点ができる。</p>
 
   <h2>はみ出し警告</h2>
 
@@ -142,7 +164,7 @@
 
   <div class="sheet-foot">
     <span>UI / ガントバー</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

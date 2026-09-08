@@ -63,3 +63,18 @@ export function formatDay(value: Date, timezone: string): string {
     day: 'numeric',
   }).format(value);
 }
+
+/**
+ * その組織にとっての今日。'YYYY-MM-DD' で返す。
+ *
+ * date 列は文字列のまま流れてくるので、そのまま比べられる形にしてある。
+ * Date を挟むと、比べた時点で実行環境のタイムゾーンぶんずれる。
+ */
+export function todayIn(timezone: string): string {
+  const parts = formatter(timezone, {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(new Date());
+  return `${pick(parts, 'year')}-${pick(parts, 'month')}-${pick(parts, 'day')}`;
+}

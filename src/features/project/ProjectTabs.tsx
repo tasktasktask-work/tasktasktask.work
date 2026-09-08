@@ -1,12 +1,14 @@
 import Link from 'next/link';
+import { projectGanttPath } from '#features/gantt/path.ts';
 import { projectMembersPath, projectPath, projectSettingsPath } from './path.ts';
 
 /*
  * プロジェクトの中の行き先。
  *
- * ガントはまだ無い。並べてから中身を作ると、押しても何も起きない札が残る。
+ * ガントはプロジェクトが見える人全員に出す。読み取り専用なので、
+ * 権限で隠す理由がない。後ろの二つは管理できる人にだけ出す。
  */
-export type ProjectTab = 'threads' | 'members' | 'settings';
+export type ProjectTab = 'threads' | 'gantt' | 'members' | 'settings';
 
 export function ProjectTabs({
   slug,
@@ -23,6 +25,12 @@ export function ProjectTabs({
     <div className="app-tabs">
       <Link href={projectPath(slug, projectKey)} className={current === 'threads' ? 'on' : ''}>
         スレッド
+      </Link>
+      <Link
+        href={projectGanttPath(slug, projectKey)}
+        className={current === 'gantt' ? 'on' : ''}
+      >
+        ガント
       </Link>
       {canManage ? (
         <Link

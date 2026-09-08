@@ -27,20 +27,40 @@
 
   <p>載るのは<a href="../../glossary.html#kadai">課題</a>だけである。
   <a href="../../glossary.html#giron">議論</a>と<a href="../../glossary.html#shitsumon">質問</a>は<a href="../../glossary.html#period">期間</a>を持たないので、時間軸には置けない。
-  親子のツリー上には現れるが、期間の計算からは外れる。</p>
+  行としても出さない。</p>
 
   <div class="table-scroll">
-  <table>
-    <thead><tr><th>対象</th><th>扱い</th></tr></thead>
-    <tbody>
-      <tr><td class="nowrap">進捗率が 1 から 99 の課題</td><td>通常のバー。進捗ぶんを塗り分ける</td></tr>
-      <tr><td class="nowrap">進捗率が 100 の課題</td><td>薄く表示する</td></tr>
-      <tr><td class="nowrap"><a href="../../glossary.html#archive">アーカイブ</a>済みの課題</td><td>表示しない</td></tr>
-      <tr><td class="nowrap"><a href="../../glossary.html#no-period">期間未設定</a>の課題</td><td>図の下に別枠で並べる</td></tr>
-      <tr><td class="nowrap">議論と質問</td><td>行としては出さない</td></tr>
-    </tbody>
-  </table>
+    <table>
+      <thead><tr><th>対象</th><th>扱い</th></tr></thead>
+      <tbody>
+        <tr><td>期間を持つ課題</td><td>バーを描く。進捗ぶんを塗り分ける</td></tr>
+        <tr><td>その祖先</td><td>期間が無くても、畳んであっても行として残す</td></tr>
+        <tr><td><a href="../../glossary.html#progress">進捗率</a>が100の課題</td><td>薄く表示する</td></tr>
+        <tr><td><a href="../../glossary.html#archive">アーカイブ</a>済みの課題</td><td>生きた子の親としてだけ残す。バーは中抜き</td></tr>
+        <tr><td><a href="../../glossary.html#no-period">期間未設定</a>の課題</td><td>図の下に別枠で並べる</td></tr>
+        <tr><td>議論と質問</td><td>行としては出さない</td></tr>
+      </tbody>
+    </table>
   </div>
+
+  <h2>図に出る行の決め方</h2>
+
+  <p>行の集合を決める規則は一行で書ける。
+  <strong>期間を持つ課題と、その祖先である。</strong></p>
+
+  <p>この規則には非対称がある。
+  期間の入っていない課題でも、期間を持つ子がぶら下がっていれば図に残る。
+  一方、子を持たない期間未設定の課題は図に出ない。
+  同じ「期間が無い」でも、扱いが分かれる。</p>
+
+  <p>分けているのは、行を落としたときに何が失われるかが違うためである。
+  子のいない課題を落としても、失われるのはその一行だけで、下の別枠が拾う。
+  親を落とすと、子のインデントの根拠が消える。
+  一段下がって並んでいる理由が読めなくなり、その子は根の無い行として浮く。</p>
+
+  <p>期間の無い親は、図と別枠の両方に現れる。
+  同じ課題が二箇所に出るが、それぞれが言っていることは違う。
+  図の行は「子がここにぶら下がっている」ことを示し、別枠の行は「まだ計画に載っていない」ことを数え上げている。</p>
 
   <h2>行は階層で並べる</h2>
 
@@ -51,74 +71,61 @@
   ガントは計画の構造を読むための画面である。
   親の期間と子の期間の関係は、入れ子で並んでいなければ読み取れない。</p>
 
-  <p>親の行は折りたためる。</p>
+  <p>同じ階層の中では、開始日の早い順に並べる。
+  同じなら終了日の早い順、それも同じなら課題番号の若い順。
+  期間を持たない行は、その階層の末尾に置く。</p>
 
-  <h2>見え方</h2>
+  <p>親の行は<a href="../../glossary.html#row-fold">折りたためる</a>。
+  畳んでも親のバーは変わらない。閉じたかどうかでバーの意味が変わってはいけない。</p>
 
-  <div class="spec">
-    <div class="spec-head"><span>ガント</span><span>GanttChart</span></div>
-    <div class="spec-body tight">
-      <div class="p-gantt"><div class="p-gantt-inner">
-        <div class="p-gantt-head">
-          <div class="lbl">課題</div>
-          <div class="p-gantt-days">
-            <span>1</span><span>2</span><span class="wk">3</span><span class="wk">4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span class="wk">10</span><span class="wk">11</span><span>12</span><span>13</span><span>14</span><span>15</span><span>16</span><span class="wk">17</span><span class="wk">18</span><span>19</span><span>20</span>
-          </div>
-        </div>
-        <div class="p-gantt-row">
-          <div class="name" data-depth="0">
-            <span class="p-type" data-type="kadai">課題</span>
-            <span class="txt">検索機能の刷新</span>
-            <span class="p-gantt-warn" title="子が親の期間からはみ出しています">&#9888;</span>
-          </div>
-          <div class="p-gantt-track">
-            <span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span>
-            <span class="p-gantt-bar" data-parent="true" style="left:5%;width:70%"></span>
-          </div>
-        </div>
-        <div class="p-gantt-row">
-          <div class="name" data-depth="1">
-            <span class="p-type" data-type="kadai">課題</span>
-            <span class="txt">検索APIの実装</span>
-          </div>
-          <div class="p-gantt-track">
-            <span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span>
-            <span class="p-gantt-bar" style="left:35%;width:30%"><span class="done" style="width:40%"></span></span>
-          </div>
-        </div>
-        <div class="p-gantt-row">
-          <div class="name" data-depth="1">
-            <span class="p-type" data-type="kadai">課題</span>
-            <span class="txt">検索UIの実装</span>
-          </div>
-          <div class="p-gantt-track">
-            <span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span>
-            <span class="p-gantt-bar" style="left:60%;width:35%"></span>
-          </div>
-        </div>
-        <div class="p-gantt-row">
-          <div class="name" data-depth="1">
-            <span class="p-type" data-type="kadai">課題</span>
-            <span class="txt">旧ロジックの撤去</span>
-          </div>
-          <div class="p-gantt-track">
-            <span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell wk"></span><span class="cell wk"></span><span class="cell"></span><span class="cell"></span>
-            <span class="p-gantt-bar" data-complete="true" style="left:5%;width:20%"><span class="done" style="width:100%"></span></span>
-          </div>
-        </div>
-      </div></div>
-      <div class="p-undated">
-        <h4>&#9888; 期間未設定 &#160;2件</h4>
-        <ul>
-          <li><span class="p-id">WEB-12</span> 検索結果のキャッシュ設計</li>
-          <li><span class="p-id">WEB-14</span> インデックスの再構築手順</li>
-        </ul>
-      </div>
-    </div>
+  <h2>親が議論や質問だったとき</h2>
+
+  <p>親子は同じプロジェクトに閉じるが、種別の制限は無い。
+  課題の親が議論になることがある。</p>
+
+  <p>その議論は行として出せない。
+  かといって、行の無い親のぶんだけインデントを下げると、なぜ下がっているのかが読めない。
+  そこで、その課題を最上位に上げる。</p>
+
+  <p>ただし上げただけでは、親から外れて見える理由が伝わらない。
+  名前の横に親の番号を小さく添えて、たどれるようにしてある。</p>
+
+  <h2>横軸</h2>
+
+  <p>刻みは日である。週や月には切り替えられない。
+  刻みを増やすと、バーの端をどちらに丸めるか、はみ出しが一マスの中に隠れたときにどう見せるか、
+  今日の線をどこに引くかが、刻みごとに別の判断になる。</p>
+
+  <p>広い範囲は、刻みではなく<a href="../../glossary.html#gantt-range">横軸の範囲</a>で受ける。
+  実際に描く課題の最も早い開始日から最も遅い終了日までを取り、今日がその外なら今日まで伸ばす。
+  一日あたりの幅は固定で、長くなったぶんは横へスクロールする。</p>
+
+  <p>月を単位に切る案は採らなかった。
+  三か月のプロジェクトでは、親のバーが常に画面の外へ切れる。</p>
+
+  <div class="note warn">
+    <span class="note-label">上限を設けなかったこと</span>
+    <p>終了日を2126年と打ち間違えると、図は百年ぶんの幅になる。
+    切り詰める案もあったが、採らなかった。
+    異様に長いこと自体が打ち間違いの合図になり、直す先は詳細画面にある。
+    日のマス目と土日の縞と<a href="../../glossary.html#today-line">今日の線</a>は行ごとの要素ではなく背景で描いてあるので、
+    伸びても要素の数は行数ぶんしか増えない。</p>
   </div>
 
-  <p>上の図で、いちばん上の行が親である。
-  子の「検索UIの実装」が親のバーの右端を越えているため、親に警告の印が出ている。</p>
+  <p>土日は色を変える。祝日は扱わない。
+  祝日の一覧は国ごとに違い、毎年更新が要る。組織にタイムゾーンの設定はあるが、国の設定は無い。
+  ここで日本の祝日を焼き付けると、後から外せなくなる。</p>
+
+  <h2>名前の欄と目盛りを貼り付ける</h2>
+
+  <p>図は横に長くなる。右へスクロールすると左端の課題名が流れて消える。
+  そこで名前の欄は左に、目盛りは上に貼り付けて動かさない。</p>
+
+  <p>狭い画面では名前の欄が場所を食う。
+  幅に応じて欄を縮め、入りきらないものから落とす。
+  落とす順は、担当者の判子、アーカイブ済みの印と親の番号、である。
+  最後まで残すのは課題名と<a href="../../glossary.html#overflow-warning">はみ出し警告</a>にしてある。
+  警告は、この画面がいちばん伝えたいことの一つである。</p>
 
   <h2>期間未設定を隠さない</h2>
 
@@ -126,21 +133,65 @@
   だからといって表示から外すと、ガントに載っていない課題があること自体に誰も気づけなくなる。</p>
 
   <p>そこで図の下に別枠のリストとして並べる。
-  この一覧が空になっていれば、プロジェクトの全課題が計画に載っているという意味になる。</p>
+  並ぶのは、終わっておらず、畳まれておらず、期間の入っていない課題だけである。
+  終わった課題をここに出しても、もう計画に載せる先が無い。</p>
+
+  <p><strong>この一覧が空になっていれば、動いている課題はすべて計画に載っているという意味になる。</strong>
+  逆に件数が増えていくなら、計画されないまま溜まっている作業があるということである。</p>
+
+  <p>この枠から日付を入れられるようにはしていない。
+  バーが掴めないのに下の枠では書ける、という不揃いを作らないためである。
+  課題名は詳細画面へのリンクになっている。</p>
 
   <h2>はみ出し警告</h2>
 
   <p>子の期間が親の期間の外に出ているとき、親の行に印を出す。
   該当する子のバーも色を変える。</p>
 
+  <p>見るのは直接の親だけである。
+  孫が祖父の期間を越えていても、親の期間に収まっていれば印は出ない。
+  連鎖してはみ出しているなら各段に印が出るので、辿れば発生源に着く。
+  すべての祖先に印を出すと、根の行に印が集中して、どこで起きたのかが読めなくなる。</p>
+
+  <p>親と子のどちらかに期間が無い組は判定しない。
+  期間が入っていないことは下の別枠が伝えるので、警告と役割を分けてある。</p>
+
   <p>システムは日付を書き換えない。
   <a href="../../glossary.html#parent-child">親子関係</a>に集計の意味を持たせていないためである。
   親の締切を延ばすのか、子を前倒しするのかは人が決める。</p>
 
+  <h2>件数の読み方</h2>
+
+  <p>図の上に「32件のうち 期間あり 28件」と出す。
+  分母は畳まれていない課題で、終わったものも含む。畳んだものは含めない。</p>
+
+  <p>畳んだものを分母から外しているのは、図にも別枠にも出ないものを数えても、
+  その差が何をすれば埋まるのかを指さないためである。
+  分母と分子の差が、そのまま下の別枠の件数に近づく形にしてある。</p>
+
+  <h2>数の上限</h2>
+
+  <p>一枚に描く課題は500件を目安にする。
+  切るのは期間を持つ課題の側だけで、その祖先は順位に関わらず残す。
+  親だけが落ちると枝ごと意味を失うので、上限は目安として扱い、超えたことを画面に出す。</p>
+
+  <p>下の別枠は100件で切る。
+  この枠の役目は「載っていないものがあると気づかせること」なので、全部並べる必要が無い。
+  超えたぶんは数だけを出し、スレッド一覧の絞り込みへ送る。</p>
+
+  <h2>絞り込みを置かない</h2>
+
+  <p>担当者やタグで絞る欄は置いていない。
+  絞ると、条件に合わない親が消えて子だけが残る。
+  その子をどこに置くかを、また決めることになる。</p>
+
+  <p>上の欄にあるのは、件数と<a href="../../glossary.html#gantt-range">描いている範囲</a>と、今日へ戻るための一つだけである。</p>
+
   <h2>読み取り専用にした理由</h2>
 
   <p>バーをドラッグして期間を変えることはできない。
-  期間の変更は<a href="../thread/index.html">スレッド</a>の詳細画面から行う。</p>
+  期間の変更は<a href="../../glossary.html#thread">スレッド</a>の詳細画面から行う。
+  掴めないことを見た目でも伝えるため、リンクにしてあるのは課題名だけにしてある。</p>
 
   <p>ドラッグ編集は、見た目の割に実装が広い。
   楽観的な画面更新、他の人の変更との衝突、スナップの単位、タッチ操作。
@@ -152,11 +203,12 @@
   <h2>関連する画面</h2>
   <div class="cards">
     <a class="card" href="../../ui/pages/o/[slug]/p/[key]/gantt/index.html"><span class="card-no">/gantt</span><p class="card-title">ガントチャート</p><p class="card-desc">プロジェクト一枚ぶん</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/index.html"><span class="card-no">/p</span><p class="card-title">スレッド一覧</p><p class="card-desc">平らに並べるほう</p></a>
   </div>
 
   <h2>関連するコンポーネント</h2>
   <div class="cards">
-    <a class="card" href="../../ui/components/gantt-bar/index.html"><span class="card-no">UI</span><p class="card-title">ガントバー</p><p class="card-desc">親、子、完了、はみ出しの各状態</p></a>
+    <a class="card" href="../../ui/components/gantt-bar/index.html"><span class="card-no">UI</span><p class="card-title">ガントバー</p><p class="card-desc">親、子、完了、はみ出し、中抜きの各状態</p></a>
   </div>
 
   <h2>関連するテーブル</h2>
@@ -166,7 +218,7 @@
 
   <div class="sheet-foot">
     <span>機能 / ガントチャート</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

@@ -326,7 +326,14 @@
       同じ理由で「レビュー中」のような工程も表せない。
       どう扱うかは各組織の運用に委ねる方針を取った。<a href="issues/rejection-representation/index.html">却下の表現</a>に経緯を記録している。</p>
     </div>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#open-close">オープンとクローズ</a><a href="#thread-type">種別</a><a href="#archive">アーカイブ</a></div>
+    <p><a href="#gantt">ガントチャート</a>では、この値がバーの塗り分けになる。
+    親のバーにも塗りを出す。親の進捗率は子から計算しておらず、自分で持っている値なので、
+    塗らなければその値がどの画面にも現れない。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>親の進捗が30%で、子が全部100%になっています。これは矛盾では。</span></p>
+      <p><span class="who">開発者</span><span>親の値は子から計算していません。入れた人がそのままにしているだけです。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#open-close">オープンとクローズ</a><a href="#thread-type">種別</a><a href="#archive">アーカイブ</a><a href="#gantt">ガントチャート</a><a href="#today-line">今日の線</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a></div>
   </article>
 
@@ -347,7 +354,15 @@
     <p>時刻を持たせない理由は、<a href="#organization">組織</a>ごとにタイムゾーンを設定できるようにしたためである。
     時刻を持つと、設定を変えた瞬間に既存の日付が前後する。
     日付だけなら、その事故が構造的に起きない。</p>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#kadai">課題</a><a href="#no-period">期間未設定</a><a href="#overflow-warning">はみ出し警告</a><a href="#gantt">ガントチャート</a></div>
+    <p>開始日と終了日は、両方入れるか両方空けるかのどちらかである。
+    片方だけ入った状態はデータベースが受け付けない。
+    <a href="#giron">議論</a>と<a href="#shitsumon">質問</a>は期間を持てない。時間軸に置くものではないためである。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>終了日だけ決まっているんですが、開始日は空けておけますか。</span></p>
+      <p><span class="who">開発者</span><span>片方だけは入りません。期間が半分だけ入った課題は、ガントに置きようがないので。</span></p>
+      <p><span class="who">PM</span><span>では着手予定日を仮で入れます。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#kadai">課題</a><a href="#no-period">期間未設定</a><a href="#overflow-warning">はみ出し警告</a><a href="#gantt">ガントチャート</a><a href="#gantt-range">横軸の範囲</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/gantt/index.html">ガントチャート</a>／<a href="devops/coding-conventions/index.html#datetime">日付と時刻の扱い</a></div>
   </article>
 
@@ -356,8 +371,18 @@
     <p>開始日と終了日が入っていない<a href="#kadai">課題</a>の状態を<strong>期間未設定</strong>と呼ぶ。</p>
     <p>期間がなければ<a href="#gantt">ガントチャート</a>の時間軸には置けない。
     しかし単に隠すと、ガントに載っていない課題があること自体に誰も気づけなくなる。
-    そのためガントの下部に別枠のリストとして並べ、日付を入れるべき課題が目に入るようにする。</p>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#period">期間</a><a href="#gantt">ガントチャート</a></div>
+    そのため図の下に別枠として並べ、日付を入れるべき課題が目に入るようにする。</p>
+    <p>この枠に並ぶのは、終わっておらず、<a href="#archive">アーカイブ</a>されておらず、期間の入っていない課題だけである。
+    終わった課題を並べても、もう計画に載せる先がない。
+    <strong>枠が空なら、動いている課題はすべて計画に載っている</strong>と読める。</p>
+    <p>期間が入っていない課題でも、期間を持つ子がぶら下がっていれば図の側にも行として残る。
+    そのときは図と別枠の両方に現れるが、意味は違う。
+    図の行は「子がここにぶら下がっている」ことを示し、別枠の行は「まだ計画に載っていない」ことを数え上げている。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>下の枠に14件あります。これは減らすべき数字ですか。</span></p>
+      <p><span class="who">開発者</span><span>そうです。ゼロなら、動いている課題は全部ガントに載っています。増えていくなら、計画されないまま溜まっている作業があるということです。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#period">期間</a><a href="#gantt">ガントチャート</a><a href="#archive">アーカイブ</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/gantt/index.html">ガントチャート</a></div>
   </article>
 
@@ -367,8 +392,15 @@
     <p>印は子の側に出る。一覧では親の行にも子の行にも出しうるが、親に出しても、
     ぶら下がっている十件のうちどれがはみ出しているのかは分からない。
     詳細画面では親にも出す。こちらは子が数件ずつ並んでいるので、探す手間にならない。</p>
+    <p><a href="#gantt">ガントチャート</a>では親の行に印を出し、はみ出した子のバーの色を変える。
+    入れ子で並んでいるので、印の付いた親のすぐ下を見れば、どの子かはすぐ分かる。</p>
+    <p>見るのは直接の親だけである。
+    孫が祖父の期間を越えていても、親の期間に収まっていれば印は出ない。
+    連鎖してはみ出している場合は各段に印が出るので、辿れば発生源に着く。
+    すべての祖先に印を出すと、根の行に印が集中して、どこで起きているのかが読めなくなる。</p>
     <p>判定は、親と子の両方に期間があるときだけ行う。
-    親が<a href="#no-period">期間未設定</a>なら、外側の枠そのものが無いので、はみ出しようがない。</p>
+    親が<a href="#no-period">期間未設定</a>なら、外側の枠そのものが無いので、はみ出しようがない。
+    期間が入っていないこと自体は、ガントの下の別枠が伝える。</p>
     <p><a href="#parent-child">親子関係</a>には集計の意味を持たせていないため、システムは日付を書き換えない。
     警告は「計画と実態が合っていない」という事実を伝えるだけで、どう直すかは人が決める。
     はみ出す期間を入力すること自体は止めない。止めると、親の締切を延ばすまで子の日付を入れられなくなる。</p>
@@ -784,14 +816,19 @@
     <a href="#thread">スレッド</a>にも<a href="#project">プロジェクト</a>にも行える。</p>
     <p>アーカイブしたスレッドは読み取り専用になる。
     新しいコメントも、子スレッドの追加もできない。
-    一覧やガントには既定で出ないが、絞り込みを切り替えれば表示できる。</p>
+    一覧には既定で出ないが、絞り込みを切り替えれば表示できる。
+    <a href="#gantt">ガントチャート</a>には絞り込みが無く、生きた子の親としてだけ、バーを中抜きにして残る。</p>
     <p>親をアーカイブしても子は連鎖しない。
     親が畳まれても、子にはまだ動いているものがありうるからである。
     そのため、活動中の子を持つアーカイブ済みスレッドは、一覧に読み取り専用として出しておく。
     子だけが宙に浮いて見えなくなる状態を避けるためである。</p>
     <p>プロジェクトをアーカイブすると、配下のスレッドがまとめて読み取り専用になる。
     こちらは個々のスレッドのアーカイブ状態を書き換えず、プロジェクト単位で凍結する。</p>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#soft-delete">論理削除</a><a href="#thread">スレッド</a><a href="#project">プロジェクト</a><a href="#progress">進捗率</a></div>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>この課題、ガントで枠線だけになってます。消したわけじゃないですよね。</span></p>
+      <p><span class="who">開発者</span><span>畳んだ課題です。中身が動いている子がぶら下がっているので、その親としてだけ残しています。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#soft-delete">論理削除</a><a href="#thread">スレッド</a><a href="#project">プロジェクト</a><a href="#progress">進捗率</a><a href="#row-fold">折りたたみ</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a>／<a href="features/project/index.html">プロジェクト</a></div>
   </article>
 
@@ -856,17 +893,76 @@
   <article class="term" id="gantt">
     <h3>ガントチャート<span class="reading">gantt chart</span></h3>
     <p><a href="#kadai">課題</a>の<a href="#period">期間</a>を横方向の時間軸に並べた図を<strong>ガントチャート</strong>と呼ぶ。
-    描く範囲は<a href="#project">プロジェクト</a>ひとつぶんで、横軸の刻みは日である。</p>
-    <p>左側に並ぶ行は<a href="#parent-child">親子関係</a>のとおりに入れ子で表示し、折りたためる。
+    描くのは<a href="#project">プロジェクト</a>ひとつぶんで、横軸の刻みは日である。
+    週や月の刻みは持たない。広い範囲は<a href="#gantt-range">横軸の範囲</a>を伸ばして横にスクロールする。</p>
+    <p>左側に並ぶ行は<a href="#parent-child">親子関係</a>のとおりに入れ子で表示し、<a href="#row-fold">折りたたみ</a>で閉じられる。
     <a href="#thread-list">スレッド一覧</a>が階層を持たないのと対照的だが、これは目的の違いによる。
     一覧は探すための画面であり、ガントは計画の構造を読むための画面である。
     親と子の期間の関係は、入れ子で並んでいなければ読み取れない。</p>
-    <p>進捗率が100の課題も薄く表示する。
-    <a href="#archive">アーカイブ</a>済みのものは表示しない。
-    <a href="#no-period">期間未設定</a>の課題は図の下に別枠で並べる。</p>
-    <p>バーをドラッグして期間を変えることはできない。
-    期間の変更はスレッドの詳細画面から行う。</p>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#period">期間</a><a href="#no-period">期間未設定</a><a href="#overflow-warning">はみ出し警告</a><a href="#parent-child">親子関係</a></div>
+    <p>図に出る行は、期間を持つ課題と、その祖先である。
+    祖先は期間が入っていなくても、<a href="#archive">アーカイブ</a>済みであっても残す。
+    親を落とすと、子がどこにぶら下がっていたのかが読めなくなるためである。
+    ぶら下がる子を持たない<a href="#no-period">期間未設定</a>の課題は、図ではなく下の別枠に並ぶ。</p>
+    <p>進捗率が100の課題は薄く表示する。アーカイブ済みの行はバーを中抜きにする。
+    薄さと中抜きを使い分けているのは、終わったのか畳んだのかを見分けられるようにするためである。</p>
+    <p>バーは掴めない。期間の変更はスレッドの詳細画面から行う。
+    絞り込みも置かない。担当者で絞ると親の消えた子が生まれ、その置き場所をもう一度決めることになる。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>ガントで担当者を絞れませんか。自分のぶんだけ見たいんですが。</span></p>
+      <p><span class="who">開発者</span><span>絞ると、条件に合わない親が消えて子だけが残ります。その子がどこにぶら下がっていたか読めなくなるので、絞り込みはスレッド一覧の役目にしてあります。</span></p>
+      <p><span class="who">PM</span><span>なるほど。ガントは構造を見る画面ということですね。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#period">期間</a><a href="#no-period">期間未設定</a><a href="#overflow-warning">はみ出し警告</a><a href="#gantt-range">横軸の範囲</a><a href="#today-line">今日の線</a><a href="#row-fold">折りたたみ</a><a href="#parent-child">親子関係</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/gantt/index.html">ガントチャート</a></div>
+  </article>
+
+  <article class="term" id="gantt-range">
+    <h3>横軸の範囲<span class="reading">chart range</span></h3>
+    <p><a href="#gantt">ガントチャート</a>が描く最初の日から最後の日までを<strong>横軸の範囲</strong>と呼ぶ。
+    実際に描いた課題の最も早い開始日から最も遅い終了日までを取り、今日がその外にあれば今日まで伸ばす。
+    両端には数日の余白を置く。</p>
+    <p>月を単位に切らないのは、三か月のプロジェクトで親のバーが常に画面の外へ切れてしまうためである。
+    一日あたりの幅は固定で、範囲が長くなるぶんは横へ伸びる。上限は設けない。</p>
+    <p>範囲を決めるのに使うのは、上限で切った後に実際に描く課題だけである。
+    描かないものに合わせて幅を取ると、誰のものでもない空白が図の端にできる。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>ガントがものすごく横に長いんですが、壊れてますか。</span></p>
+      <p><span class="who">開発者</span><span>どこかの終了日が遠すぎるはずです。範囲はいちばん遅い終了日まで伸びるので、年を打ち間違えるとそうなります。</span></p>
+      <p><span class="who">PM</span><span>探して直します。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#gantt">ガントチャート</a><a href="#today-line">今日の線</a><a href="#period">期間</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/gantt/index.html">ガントチャート</a></div>
+  </article>
+
+  <article class="term" id="today-line">
+    <h3>今日の線<span class="reading">today line</span></h3>
+    <p><a href="#gantt">ガントチャート</a>の上に縦に引かれる朱色の線を<strong>今日の線</strong>と呼ぶ。
+    今日は必ず<a href="#gantt-range">横軸の範囲</a>の中に入るので、この線は常に図のどこかにある。
+    画面を開いた直後は、この線が左から四分の一の位置に来るところまで送ってある。</p>
+    <p>どの日を今日とするかは、その<a href="#organization">組織</a>のタイムゾーンで決まる。
+    <a href="#period">期間</a>が日付だけを持つのと同じ理由で、見る人の端末の時計では決めない。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>この線より左にあるのに、色が半分も進んでいないバーがありますね。</span></p>
+      <p><span class="who">開発者</span><span>期間の大半が過ぎているのに進捗率が上がっていない、という意味です。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#gantt">ガントチャート</a><a href="#gantt-range">横軸の範囲</a><a href="#progress">進捗率</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/gantt/index.html">ガントチャート</a></div>
+  </article>
+
+  <article class="term" id="row-fold">
+    <h3>折りたたみ<span class="reading">row fold</span></h3>
+    <p><a href="#gantt">ガントチャート</a>で、親の行を閉じて子孫の行を隠す操作を<strong>折りたたみ</strong>と呼ぶ。
+    <a href="#archive">アーカイブ</a>を指す「畳む」とは別の操作である。データは何も変わらない。</p>
+    <p>畳んでも親のバーは変わらない。子の期間を合わせた幅に描き直したりはしない。
+    <a href="#parent-child">親子関係</a>に集計の意味を持たせていないので、閉じるかどうかでバーの意味が変わってはいけない。
+    代わりに、隠れている子孫の件数と、その中に<a href="#overflow-warning">はみ出し警告</a>があるかどうかを親の行に残す。</p>
+    <p>閉じた状態は覚えない。画面を開き直すと全部開いている。
+    先週閉じた枝が今日も閉じたままだと、そこに何が入ったかに気づけなくなる。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>昨日たたんだはずの枝が、また開いてます。</span></p>
+      <p><span class="who">開発者</span><span>覚えない作りです。隠したものが翌週まで隠れ続けると、この画面が見せたいものを自分で隠すことになるので。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#gantt">ガントチャート</a><a href="#archive">アーカイブ</a><a href="#parent-child">親子関係</a><a href="#overflow-warning">はみ出し警告</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/gantt/index.html">ガントチャート</a></div>
   </article>
 
@@ -877,6 +973,10 @@
     <p>全文検索を持たないため、この画面の絞り込みが探すための唯一の手段になる。
     種別、担当者、タグ、進捗率が100のものを除くかどうか、アーカイブ済みを出すかどうかで絞り込む。
     既定の並び順は更新の新しい順とする。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>一覧とガントで、同じプロジェクトなのに並び方が違いますね。</span></p>
+      <p><span class="who">開発者</span><span>一覧は探すための画面なので平らに、ガントは構造を読むための画面なので入れ子にしています。絞り込むときに階層があると邪魔になるんです。</span></p>
+    </div>
     <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread">スレッド</a><a href="#tag">タグ</a><a href="#gantt">ガントチャート</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a></div>
   </article>
@@ -894,7 +994,7 @@
 
   <div class="sheet-foot">
     <span>TASK3 / 用語集</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>語を足したら本文からのリンクも張ること</span>
   </div>
 

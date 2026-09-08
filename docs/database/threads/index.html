@@ -205,26 +205,64 @@ SELECT id FROM ancestors WHERE id &lt;&gt; $1;</code></pre>
 
   <h2>ガントで使う問い合わせ</h2>
 
-<pre><code>-- 期間を持つ課題（時間軸に描くもの）
-SELECT id, number, title, progress, starts_on, ends_on, parent_thread_id
-  FROM threads
- WHERE project_id  = $1
-   AND type        = 'kadai'
-   AND starts_on IS NOT NULL
-   AND archived_at IS NULL
-   AND deleted_at  IS NULL;
+  <p><a href="../../glossary.html#gantt">ガントチャート</a>に出す行は、期間を持つ課題とその祖先である。
+  期間で絞ってから親を辿るので、再帰の起点は種になる課題だけになる。</p>
 
--- 期間未設定の課題（図の下に別枠で並べるもの）
+<pre><code>WITH RECURSIVE seed AS (
+  -- 時間軸に描く課題。ここだけ件数を切る
+  SELECT id FROM threads
+   WHERE project_id  = $1
+     AND type        = 'kadai'
+     AND starts_on IS NOT NULL
+     AND archived_at IS NULL
+     AND deleted_at  IS NULL
+   ORDER BY starts_on, ends_on, number
+   LIMIT 500
+),
+tree AS (
+  SELECT t.id, t.parent_thread_id, 1 AS depth
+    FROM threads t JOIN seed ON seed.id = t.id
+  UNION ALL
+  -- 親は期間が無くても、畳んであっても引き上げる。
+  -- 落とすと、子が一段下がっている理由が読めなくなる
+  SELECT p.id, p.parent_thread_id, tree.depth + 1
+    FROM threads p JOIN tree ON p.id = tree.parent_thread_id
+   WHERE p.deleted_at IS NULL AND p.type = 'kadai' AND tree.depth &lt; 50
+)
+SELECT DISTINCT id FROM tree;</code></pre>
+
+  <p>辿る親を課題に限っているので、親が<a href="../../glossary.html#giron">議論</a>や<a href="../../glossary.html#shitsumon">質問</a>なら
+  そこで打ち切られ、その課題は最上位の行になる。行として出せない親の下にぶら下げても、
+  なぜ下がっているのかが読めないためである。</p>
+
+  <p>深さを50で切っているのは、親の付け替えの検査と同じ理由による。
+  仕様としての階層の上限ではない。</p>
+
+<pre><code>-- 期間未設定の課題（図の下に別枠で並べるもの）
 SELECT id, number, title
   FROM threads
  WHERE project_id  = $1
    AND type        = 'kadai'
    AND starts_on IS NULL
+   AND progress   &lt; 100
    AND archived_at IS NULL
-   AND deleted_at  IS NULL;</code></pre>
+   AND deleted_at  IS NULL
+ ORDER BY number
+ LIMIT 100;</code></pre>
 
-  <p>二つ目の問い合わせがなければ、<a href="../../glossary.html#no-period">期間未設定</a>の課題はどこにも現れない。
+  <p>この問い合わせがなければ、<a href="../../glossary.html#no-period">期間未設定</a>の課題はどこにも現れない。
   ガントに載っていない課題があること自体に気づけなくなる。</p>
+
+  <p><code>progress &lt; 100</code> を入れてあるのは、終わった課題をここに出しても、
+  もう計画に載せる先が無いためである。
+  この条件があるので、<strong>枠が空なら動いている課題はすべて計画に載っている</strong>と読める。</p>
+
+  <div class="note">
+    <span class="note-label">効いている索引</span>
+    <p>種を選ぶ側は <code>threads_gantt</code>
+    （<code>project_id, starts_on, ends_on</code> の部分索引）に当たる。
+    条件が索引の絞り込み条件とそのまま重なっている。</p>
+  </div>
 
   <h2>関係</h2>
 <pre class="figure">projects ──&lt; threads ──┬─&lt; comments

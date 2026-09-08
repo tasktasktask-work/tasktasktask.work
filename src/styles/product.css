@@ -334,47 +334,120 @@
 }
 
 /* ガント ----------------------------------------------------------------- */
-.p-gantt { border: 1px solid var(--rule); background: var(--card); overflow-x: auto; }
-.p-gantt-inner { min-width: 44rem; }
-.p-gantt-head {
-  display: grid; grid-template-columns: 17rem 1fr;
-  border-bottom: 2px solid var(--ink); position: sticky; top: 0; background: var(--card); z-index: 2;
+/*
+ * 日のマス目、土日の縞、今日の線は、行ごとの要素ではなく背景で描く。
+ * 要素の数を日数に比例させると、長いプロジェクトで行×日数ぶんの節点ができる。
+ *
+ * 名前の欄は左に、目盛りは上に貼り付ける。
+ * 三か月先を見ているときに、どのバーがどの課題なのか分からなくなるため。
+ */
+.p-gantt { border: 1px solid var(--rule); background: var(--card); }
+.p-gantt .app-filters { border-bottom: 1px solid var(--rule); }
+.p-gantt-count { font-weight: 500; }
+.p-gantt-range { font-family: var(--font-mono); font-size: .7rem; color: var(--ink-mid); }
+
+.p-gantt-scroll { overflow: auto; max-height: 34rem; }
+.p-gantt-grid {
+  --day: 1.6rem;
+  --name-w: 17rem;
+  display: grid;
+  grid-template-columns: var(--name-w) calc(var(--days) * var(--day));
 }
-.p-gantt-head .lbl {
-  font-family: var(--font-mono); font-size: .66rem; letter-spacing: .12em;
-  text-transform: uppercase; color: var(--ink-soft); padding: .5rem .8rem;
-  border-right: 1px solid var(--rule);
+
+.p-gantt-corner {
+  position: sticky; left: 0; top: 0; z-index: 4; height: 1.5rem;
+  background: var(--paper-deep); border-right: 1px solid var(--rule-strong);
 }
-.p-gantt-days { display: flex; }
-.p-gantt-days span {
-  flex: 1; text-align: center; font-family: var(--font-mono); font-size: .6rem;
-  color: var(--ink-faint); padding: .5rem 0; border-right: 1px solid var(--rule);
+.p-gantt-corner.low { top: 1.5rem; height: 1.4rem; border-bottom: 2px solid var(--ink); }
+
+.p-gantt-months {
+  position: sticky; top: 0; z-index: 2; height: 1.5rem;
+  display: flex; background: var(--paper-deep); border-bottom: 1px solid var(--rule);
 }
-.p-gantt-days span.wk { background: var(--paper-deep); }
-.p-gantt-row { display: grid; grid-template-columns: 17rem 1fr; border-bottom: 1px solid var(--rule); }
-.p-gantt-row:hover { background: var(--paper); }
-.p-gantt-row .name {
-  display: flex; align-items: center; gap: .4rem;
-  padding: .45rem .8rem; font-size: .8rem;
-  border-right: 1px solid var(--rule); min-width: 0;
+.p-gantt-months span {
+  flex: none; overflow: hidden; white-space: nowrap;
+  padding: .32rem 0 0 .35rem; border-left: 1px solid var(--rule-strong);
+  font-family: var(--font-mono); font-size: .62rem; letter-spacing: .06em; color: var(--ink-soft);
 }
-.p-gantt-row .name .txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.p-gantt-row .name[data-depth="1"] { padding-left: 2rem; }
-.p-gantt-row .name[data-depth="2"] { padding-left: 3.2rem; }
-.p-gantt-track { position: relative; display: flex; }
-.p-gantt-track .cell { flex: 1; border-right: 1px solid var(--rule); }
-.p-gantt-track .cell.wk { background: rgba(23,27,34,.025); }
+
+.p-gantt-scale {
+  position: sticky; top: 1.5rem; z-index: 2; height: 1.4rem;
+  display: flex; background: var(--card); border-bottom: 2px solid var(--ink);
+}
+.p-gantt-scale span {
+  width: var(--day); flex: none; text-align: center; padding-top: .3rem;
+  font-family: var(--font-mono); font-size: .58rem; color: var(--ink-faint);
+}
+
+.p-gantt-name {
+  position: sticky; left: 0; z-index: 1;
+  display: flex; align-items: center; gap: .35rem; min-width: 0;
+  /* インデントは五段目で頭打ちにする。深い階層でも名前の欄を潰さない */
+  padding: .35rem .6rem .35rem calc(.6rem + min(var(--depth, 0), 5) * 1.05rem);
+  font-size: .78rem; background: var(--card);
+  border-right: 1px solid var(--rule-strong); border-bottom: 1px solid var(--rule);
+}
+.p-gantt-name:hover { background: var(--paper); }
+.p-gantt-name .ttl { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.p-gantt-name .fold {
+  flex: none; width: .9rem; padding: 0; border: 0; background: none;
+  color: var(--ink-faint); font-size: .62rem; line-height: 1; cursor: pointer;
+}
+.p-gantt-name .fold:hover { color: var(--shu); }
+.p-gantt-name .hanko { margin-left: auto; }
+
+.p-gantt-track {
+  position: relative; min-height: 1.75rem; border-bottom: 1px solid var(--rule);
+  background-image:
+    linear-gradient(to right,
+      transparent calc(var(--ti) * var(--day)),
+      rgba(200,64,44,.55) 0 calc(var(--ti) * var(--day) + 1px),
+      transparent 0),
+    repeating-linear-gradient(to right,
+      transparent 0 calc(var(--day) * 5),
+      rgba(23,27,34,.045) calc(var(--day) * 5) calc(var(--day) * 7)),
+    repeating-linear-gradient(to right, var(--rule) 0 1px, transparent 1px var(--day));
+  background-position: 0 0, calc(var(--wk) * var(--day) * -1) 0, 0 0;
+  background-repeat: no-repeat, repeat, repeat;
+}
+
 .p-gantt-bar {
   position: absolute; top: 50%; transform: translateY(-50%);
-  height: 15px; border-radius: 2px;
-  background: var(--shu); display: flex; align-items: center;
-  overflow: hidden; box-shadow: 0 1px 0 rgba(0,0,0,.08);
+  left: calc(var(--o) * var(--day)); width: calc(var(--l) * var(--day));
+  height: 15px; border-radius: 2px; background: var(--shu);
+  display: flex; align-items: center; overflow: hidden;
+  box-shadow: 0 1px 0 rgba(0,0,0,.08);
 }
 .p-gantt-bar .done { height: 100%; background: rgba(255,255,255,.42); }
-.p-gantt-bar[data-parent="true"] { background: var(--ai); height: 11px; border-radius: 1px; }
+/* 親も自分の進捗率を持つ。塗らないと、その値が画面のどこにも出ない */
+.p-gantt-bar[data-parent="true"] { background: var(--ai); height: 10px; border-radius: 1px; }
+.p-gantt-bar[data-overflow="true"] { background: var(--ki); }
 .p-gantt-bar[data-complete="true"] { opacity: .32; }
+/* 畳んだものは中抜きにする。薄さは進捗率100だけに使い、二つを見分けられるようにする */
+.p-gantt-bar[data-archived="true"] {
+  background: transparent; border: 1px dashed var(--ink-soft); box-shadow: none; opacity: 1;
+}
+
 .p-gantt-warn { color: var(--ki); font-size: .8rem; flex: none; }
-.p-gantt-today { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--shu); opacity: .55; }
+.p-gantt-flag {
+  flex: none; white-space: nowrap; padding: 0 .22rem; border-radius: 2px;
+  border: 1px solid var(--rule-strong); color: var(--ink-soft);
+  font-family: var(--font-mono); font-size: .56rem;
+}
+.p-gantt-of, .p-gantt-hidden {
+  flex: none; font-family: var(--font-mono); font-size: .6rem; color: var(--ink-faint);
+}
+.p-gantt-hidden { color: var(--ai); }
+
+/* 狭い画面では、判子、印、親の番号の順に落とす。最後まで残すのは名前と警告 */
+@media (max-width: 68rem) {
+  .p-gantt-grid { --name-w: 13rem; }
+  .p-gantt-name .hanko { display: none; }
+}
+@media (max-width: 52rem) {
+  .p-gantt-grid { --name-w: 9rem; }
+  .p-gantt-flag, .p-gantt-of, .p-gantt-hidden { display: none; }
+}
 
 /* 期間未設定の別枠 ------------------------------------------------------- */
 .p-undated {
@@ -382,7 +455,12 @@
   background: var(--paper-deep); padding: .9rem 1rem;
 }
 .p-undated h4 { margin: 0 0 .6rem; font-size: .78rem; color: var(--ki); letter-spacing: .08em; }
+.p-undated h4.ok { color: var(--ink-soft); }
 .p-undated ul { margin: 0; padding-left: 1.1rem; font-size: .82rem; max-width: none; }
+.p-undated li { margin-bottom: .18rem; }
+.p-undated .who { color: var(--ink-faint); }
+.p-undated .none, .p-undated .more { margin: 0; font-size: .8rem; color: var(--ink-mid); }
+.p-undated .more { margin-top: .6rem; }
 
 /* 見本の枠（Storybook 風） ------------------------------------------------ */
 .spec { border: 1px solid var(--rule); margin: 0 0 1.6rem; background: var(--card); }

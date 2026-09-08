@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用例の無い用語 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 中</p>
+  <h1 class="title">用例の無い用語</h1>
+
+  <h2>概要</h2>
+
+  <p><a href="../../glossary.html">用語集</a>の49語のうち、19語に用例が付いていない。
+  用例とは、その語を使った開発者とドメインエキスパートの会話である。</p>
+
+  <p>用語集の役目は、語の意味を揃えることではない。
+  <strong>その語をどう使うかを揃えることである。</strong>
+  定義文だけを読むと、書いた人が何を心配してその語を立てたのかが伝わらない。
+  会話の形になっていれば、どこで誤解が起きるのかまで一緒に運べる。</p>
+
+  <p>実際、用例を書く途中で食い違いが見つかったことがある。
+  進捗率の用例を書こうとして、「親の進捗が30%で子が全部100%」という場面を思い浮かべたときに、
+  それが矛盾ではないことをどこにも書いていないと気づいた。</p>
+
+  <h2>用例が無い19語</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>まとまり</th><th>用語</th></tr></thead>
+      <tbody>
+        <tr><td class="nowrap">プロジェクト</td><td><a href="../../glossary.html#project-admin">プロジェクト管理者</a></td></tr>
+        <tr><td class="nowrap">スレッド</td><td><a href="../../glossary.html#thread-type">種別</a>、<a href="../../glossary.html#kadai">課題</a>、<a href="../../glossary.html#shitsumon">質問</a>、<a href="../../glossary.html#thread-id">スレッド識別子</a>、<a href="../../glossary.html#assignee">担当者</a>、<a href="../../glossary.html#open-close">オープンとクローズ</a></td></tr>
+        <tr><td class="nowrap">通知</td><td><a href="../../glossary.html#mention">メンション</a>、<a href="../../glossary.html#watch">ウォッチ</a>、<a href="../../glossary.html#notification">通知</a>、<a href="../../glossary.html#read-state">既読</a>、<a href="../../glossary.html#notification-mail">通知メール</a>、<a href="../../glossary.html#delivery-pass">巡回</a>、<a href="../../glossary.html#assigned-list">担当スレッド一覧</a></td></tr>
+        <tr><td class="nowrap">扱いの決まり</td><td><a href="../../glossary.html#soft-delete">論理削除</a></td></tr>
+        <tr><td class="nowrap">認証</td><td><a href="../../glossary.html#magic-link">マジックリンク</a>、<a href="../../glossary.html#invitation">招待</a>、<a href="../../glossary.html#account-lock">アカウントロック</a></td></tr>
+        <tr><td class="nowrap">見せ方</td><td><a href="../../glossary.html#hanko">ハンコアバター</a></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>先送りとした理由</h2>
+
+  <p>19語はどれも別々の機能に属している。
+  ガントの作業の中で通知やマジックリンクの用例を書くと、その語をどう使うかを、
+  いま手元で確かめられないまま想像で書くことになる。</p>
+
+  <p>用例は、その機能を実装しているときに書くのがいちばん正確である。
+  何に迷ったかを覚えているうちなら、迷いどころがそのまま会話になる。</p>
+
+  <p>実際、今回書き足した用例は、ガントの聞き取りで実際に交わした問答から取っている。
+  「担当者で絞れませんか」も「昨日たたんだ枝がまた開いてます」も、この作業の中で出た形である。</p>
+
+  <h2>どうするか</h2>
+
+  <p>次にその機能に手を入れるときに、まとめて書く。
+  通知の7語は次に通知へ触れるとき、認証の3語は認証へ触れるときである。</p>
+
+  <p>まとめて片付ける必要はない。
+  一度に19本の会話を作ると、どれも同じ調子の作り物になる。</p>
+
+  <div class="note">
+    <span class="note-label">数え方</span>
+    <p>用例の有無は機械的に数えられる。
+    <code>glossary.html</code> の <code>&lt;article class="term"&gt;</code> のうち、
+    <code>class="dialogue"</code> を含まないものを数える。</p>
+  </div>
+
+  <h2>優先度</h2>
+
+  <p><strong>中。</strong>
+  使えない状態ではないが、用語集の役目の半分しか果たしていない。
+  機能に触れるたび、その機能の語から潰していく。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../glossary.html"><span class="card-no">DOC</span><p class="card-title">用語集</p><p class="card-desc">49語</p></a>
+    <a class="card" href="../index.html"><span class="card-no">ISSUE</span><p class="card-title">課題の一覧</p><p class="card-desc">先送りにしたもの</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / 用例の無い用語</span>
+    <span>最終更新 2026-09-08</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>
