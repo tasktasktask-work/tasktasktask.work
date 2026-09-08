@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { after, describe, it } from 'node:test';
+import { backHome } from '#features/authentication/landing.ts';
 import { consumeMagicLink } from '#features/authentication/magic-link.ts';
 import { hashPassword, verifyPassword } from '#features/authentication/password.ts';
 import {
@@ -250,5 +251,46 @@ describe('ログイン後の戻り先', () => {
 
   it('認証の途中経過へは戻さない', () => {
     assert.equal(safeReturnTo('/auth/magic?token=xxx'), '/');
+  });
+});
+
+/* --------------------------------------------------------------------------
+   マジックリンクから戻る先
+   -------------------------------------------------------------------------- */
+
+describe('マジックリンクから戻る先', () => {
+  /*
+   * 本番で 0.0.0.0 へ飛ばされた（2026-09-08）。
+   * NextRequest の nextUrl が Host ヘッダではなく、サーバが束ねている
+   * ホスト名を返すためである。ここで絶対URLを組まないことを固定する。
+   */
+  it('行き先にホスト名が入らない', () => {
+    for (const response of [backHome(), backHome('used'), backHome('expired')]) {
+      const location = response.headers.get('Location') ?? '';
+      assert.ok(location.startsWith('/'), location);
+      assert.ok(!location.includes('://'), location);
+      assert.ok(!location.startsWith('//'), `オリジンを乗っ取られる形: ${location}`);
+    }
+  });
+
+  it('理由がなければ入口へ戻す', () => {
+    assert.equal(backHome().headers.get('Location'), '/');
+  });
+
+  it('理由は問い合わせに載る', () => {
+    assert.equal(backHome('expired').headers.get('Location'), '/?magic=expired');
+  });
+
+  it('理由に何を入れてもパスは動かない', () => {
+    // 理由は consumeMagicLink が返す値だが、組み立ての側でも閉じておく
+    const location = backHome('//evil.example.com').headers.get('Location') ?? '';
+    assert.ok(location.startsWith('/?magic='), location);
+    assert.ok(!location.includes('evil.example.com/'), location);
+  });
+
+  it('本文は持たせず、307 で返す', () => {
+    const response = backHome();
+    assert.equal(response.status, 307);
+    assert.equal(response.body, null);
   });
 });

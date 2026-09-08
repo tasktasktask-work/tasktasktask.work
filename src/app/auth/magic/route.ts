@@ -1,5 +1,6 @@
-import { type NextRequest, NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { setSessionCookie } from '#features/authentication/cookie.ts';
+import { backHome } from '#features/authentication/landing.ts';
 import { consumeMagicLink } from '#features/authentication/magic-link.ts';
 
 /*
@@ -7,16 +8,16 @@ import { consumeMagicLink } from '#features/authentication/magic-link.ts';
  *
  * 失敗の理由は問い合わせに載せて返す。文言はログイン画面が作る。
  * ここで文言を組み立てると、認証の見せ方が二か所に散る。
+ *
+ * 戻り先の組み立ては landing.ts にある。
+ * リクエストから絶対URLを組んではいけない理由も、そちらに書いてある。
  */
+
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token');
 
-  // 使えなかったときの戻り先。着いた先の画面がログイン画面を出す。
-  const home = new URL('/', request.nextUrl.origin);
-
   if (!token) {
-    home.searchParams.set('magic', 'invalid');
-    return NextResponse.redirect(home);
+    return backHome('invalid');
   }
 
   const result = await consumeMagicLink(token, {
@@ -25,10 +26,10 @@ export async function GET(request: NextRequest) {
   });
 
   if (!result.ok) {
-    home.searchParams.set('magic', result.reason);
-    return NextResponse.redirect(home);
+    return backHome(result.reason);
   }
 
+  // Cookie は cookies() 経由で付く。Next が返り値の Response へ混ぜる
   await setSessionCookie(result.session);
-  return NextResponse.redirect(new URL('/', request.nextUrl.origin));
+  return backHome();
 }

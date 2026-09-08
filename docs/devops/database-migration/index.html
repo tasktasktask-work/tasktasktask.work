@@ -241,6 +241,45 @@ CREATE INDEX CONCURRENTLY "notifications_pending_email"
   スキーマの正本と食い違う。
   そのあいだ総なめになるだけなので、使い手が巡回しか居ない索引ならこれで足りる。</p>
 
+  <h3>途中で落ちたとき</h3>
+
+  <p>トランザクションを張らないファイルは、途中まで進んだ状態で止まりうる。
+  落とすところまでは通って、張るところで落ちる、という止まり方である。</p>
+
+  <p><strong>そのまま流し直してよい。</strong>
+  Atlas は文の単位で進み具合を記録しており、続きから再開する。
+  落とす文が二度実行されて
+  <code>index ... does not exist</code> になることはない。</p>
+
+<pre><code>$ atlas migrate status --dir file://migrations --url "$DATABASE_URL"
+
+Migration Status: PENDING
+  -- Current Version: 20260908004350 (1 statements applied)
+  -- Next Version:    20260908004350 (1 statements left)
+  -- Executed Files:  4 (last one partially)
+
+Last migration attempt had errors:
+  -- SQL:   CREATE INDEX CONCURRENTLY "notifications_pending_email" ...
+  -- ERROR: ...</code></pre>
+
+  <p>記録は <code>atlas_schema_revisions</code> にあり、
+  <code>applied</code> と <code>total</code> の食い違いが、途中で止まった印である。
+  <strong>原因を取り除いてから流す。</strong>
+  原因が残ったまま流し直しても、同じ文で同じように落ちる。</p>
+
+  <div class="note warn">
+    <span class="note-label">無効な索引が残ることがある</span>
+    <p><code>CREATE INDEX CONCURRENTLY</code> は、走っている途中で落ちると
+    <strong>使われない索引を残す</strong>。行は増え続けるのに検索には使われない、という状態になる。</p>
+<pre><code>SELECT indexrelid::regclass FROM pg_index WHERE NOT indisvalid;</code></pre>
+    <p>出てきたら手で落とす。落としてから流し直せば、張り直される。
+    Atlas は索引が有効かどうかまでは見ない。</p>
+  </div>
+
+  <p>ここに書いたことは、2026-09-08 に手元で確かめた。
+  索引の作成だけが失敗するイベントトリガを仕掛けて途中で落とし、
+  取り除いてから流し直して、正本と一致するところまでを見ている。</p>
+
   <h2>適用のタイミング</h2>
 
   <p>アプリケーションの起動時に自動で流さない。

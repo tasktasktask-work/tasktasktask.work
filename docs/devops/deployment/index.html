@@ -107,6 +107,30 @@
     Dockerfile で <code>ENV HOSTNAME=0.0.0.0</code> を明示する。</p>
   </div>
 
+  <div class="note warn">
+    <span class="note-label">リクエストから絶対URLを組まない</span>
+    <p>上の <code>HOSTNAME</code> は、待ち受け先を決めるだけでは終わらない。
+    <strong><code>NextRequest</code> の <code>nextUrl</code> にもそのまま出る。</strong>
+    <code>Host</code> ヘッダは見ない。</p>
+<pre><code>$ curl -D - http://127.0.0.1:3000/auth/magic -H "Host: tasktasktask.work"
+location: http://0.0.0.0:3000/?magic=invalid
+
+$ curl -D - ... -H "X-Forwarded-Proto: https" -H "X-Forwarded-Host: tasktasktask.work"
+location: https://0.0.0.0:3000/?magic=invalid</code></pre>
+    <p>プロトコルは <code>X-Forwarded-Proto</code> が効くのに、ホストは効かない。
+    リダイレクト先をここから組むと、ブラウザが <code>0.0.0.0</code> へ飛ばされ、
+    <code>ERR_CONNECTION_REFUSED</code> になる（2026-09-08 に本番で踏んだ）。</p>
+    <p><strong>行き先は相対で返す。</strong>
+    相対の <code>Location</code> は RFC 7231 が認めており、
+    ブラウザはいま見ているオリジンに対して解決する。
+    <code>NextResponse.redirect()</code> は絶対URLしか受け取らないので、
+    <code>Response</code> を直に組む。</p>
+<pre><code>return new Response(null, { status: 307, headers: { Location: '/' } });</code></pre>
+    <p>メールに載せるリンクだけは相対に書けないので、そちらは
+    <code>APP_ORIGIN</code> から組む。組み立てが二通りあるのは、
+    リクエストがある側と無い側で、正しい答えが違うためである。</p>
+  </div>
+
   <h3>作って送る</h3>
 
   <p>GitHub Actions の <strong>Deploy</strong> ワークフローを手で起こす。
