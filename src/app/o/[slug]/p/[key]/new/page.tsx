@@ -7,6 +7,7 @@ import { getOrganization, listMembers } from '#features/organization/queries.ts'
 import { currentScope } from '#features/organization/scope.ts';
 import { projectPath } from '#features/project/path.ts';
 import { listProjectLinks, resolveProject } from '#features/project/queries.ts';
+import { listTags } from '#features/tag/queries.ts';
 import { NewThreadForm } from '#features/thread/NewThreadForm.tsx';
 import { threadLabel } from '#features/thread/path.ts';
 import { resolveThread, type ThreadType } from '#features/thread/queries.ts';
@@ -40,11 +41,12 @@ export default async function NewThreadPage({
   const { scope, user } = found;
   const query = await searchParams;
 
-  const [organization, project, links, members] = await Promise.all([
+  const [organization, project, links, members, tags] = await Promise.all([
     getOrganization(scope),
     resolveProject(scope, key),
     listProjectLinks(scope),
     listMembers(scope),
+    listTags(scope),
   ]);
 
   if (!project) {
@@ -109,6 +111,7 @@ export default async function NewThreadPage({
         slug={slug}
         projectKey={project.key}
         members={members}
+        tags={tags}
         defaultType={defaultType}
         defaultParent={parent ? threadLabel(project.key, parent.number) : ''}
       />

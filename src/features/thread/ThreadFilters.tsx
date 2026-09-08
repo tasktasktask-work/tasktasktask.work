@@ -12,15 +12,23 @@
 export type ThreadQuery = {
   type?: string;
   assignee?: string;
+  tag?: string;
   completed?: string;
   archived?: string;
 };
 
 export function ThreadFilters({
   members,
+  tags,
   query,
 }: {
   members: { userId: string; displayName: string }[];
+  /*
+   * このプロジェクトで実際に使われているタグだけ。
+   * 組織の全タグを並べると、別のプロジェクト専用のタグが混ざり、
+   * 選んでも常に 0 件になる選択肢が並ぶ。
+   */
+  tags: { id: string; name: string }[];
   query: ThreadQuery;
 }) {
   return (
@@ -41,6 +49,18 @@ export function ThreadFilters({
           </option>
         ))}
       </select>
+
+      {/* 一つも使われていないプロジェクトでは、欄そのものを出さない */}
+      {tags.length > 0 ? (
+        <select name="tag" defaultValue={query.tag ?? ''} aria-label="タグで絞り込む">
+          <option value="">タグ すべて</option>
+          {tags.map((tag) => (
+            <option key={tag.id} value={tag.id}>
+              {tag.name}
+            </option>
+          ))}
+        </select>
+      ) : null}
 
       <label>
         <input

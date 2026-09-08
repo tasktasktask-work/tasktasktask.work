@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>タグ | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock &#183; /o/{slug}/tags</p>
+  <h1 class="title">タグ</h1>
+  <p class="lede">
+    <a href="../../../../../glossary.html#tag">タグ</a>を作れるのはこの画面だけである。
+    組織のメンバーなら誰でも入れて、誰でも作れる。
+    付ける欄で作れる形にすると、打ち間違いがそのまま新しいタグになる。
+  </p>
+
+  <h2>タグが並んだ状態</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/tags</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="app-org">株式会社アクメ <span class="slug">acme</span></span>
+          <span class="sp"></span>
+          <span class="app-bell">&#128276;<span class="n">3</span></span>
+          <span class="hanko sm">佐</span>
+          <button class="app-btn ghost">ログアウト</button>
+        </div>
+        <div class="app-shell">
+          <nav class="app-side">
+            <h5>プロジェクト</h5>
+            <a href="#">一覧</a>
+            <a href="#"><span class="k">WEB</span>検索基盤の刷新</a>
+            <a href="#"><span class="k">BILL</span>請求まわり</a>
+            <h5>わたし</h5>
+            <a href="#">担当スレッド</a>
+            <a href="#">通知</a>
+            <a href="#">アカウント</a>
+            <h5>組織</h5>
+            <a href="#">メンバー</a>
+            <a href="#" class="on">タグ</a>
+            <a href="#">設定</a>
+          </nav>
+          <div class="app-main">
+            <div class="app-head">
+              <div><h2>タグ</h2><div class="sub">株式会社アクメ / 5 件 / 誰でも作れます</div></div>
+            </div>
+
+            <form class="app-form" onsubmit="return false">
+              <div class="line">
+                <input type="text" placeholder="タグの名前" style="width:12rem">
+                <span class="p-swatches">
+                  <label class="p-swatch" style="--tag-color:#c8402c"><input type="radio" name="mk-c" aria-label="朱"><span></span></label>
+                  <label class="p-swatch" style="--tag-color:#2c4a75"><input type="radio" name="mk-c" aria-label="藍"><span></span></label>
+                  <label class="p-swatch" style="--tag-color:#3f6b52"><input type="radio" name="mk-c" aria-label="緑"><span></span></label>
+                  <label class="p-swatch" style="--tag-color:#8f6410"><input type="radio" name="mk-c" aria-label="黄"><span></span></label>
+                  <label class="p-swatch" style="--tag-color:#6b4a7d"><input type="radio" name="mk-c" aria-label="紫"><span></span></label>
+                  <label class="p-swatch" style="--tag-color:#7a5a3c"><input type="radio" name="mk-c" aria-label="茶"><span></span></label>
+                  <label class="p-swatch" style="--tag-color:#2c6f75"><input type="radio" name="mk-c" aria-label="浅葱"><span></span></label>
+                  <label class="p-swatch" style="--tag-color:#7d8792"><input type="radio" name="mk-c" aria-label="灰" checked><span></span></label>
+                </span>
+                <button class="app-btn">作る</button>
+              </div>
+            </form>
+
+            <div class="app-people">
+              <div class="app-person p-tag-admin">
+                <form class="nm" onsubmit="return false">
+                  <input type="text" value="backend" aria-label="backend の名前">
+                  <span class="p-swatches">
+                    <label class="p-swatch" style="--tag-color:#c8402c"><input type="radio" name="c1" aria-label="朱" checked><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#2c4a75"><input type="radio" name="c1" aria-label="藍"><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#3f6b52"><input type="radio" name="c1" aria-label="緑"><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#8f6410"><input type="radio" name="c1" aria-label="黄"><span></span></label>
+                  </span>
+                  <button class="app-btn ghost">保存</button>
+                </form>
+                <span class="sp" style="flex:1"></span>
+                <span class="use">128件</span>
+                <form onsubmit="return false"><button class="app-btn ghost">消す</button></form>
+              </div>
+
+              <div class="app-person p-tag-admin">
+                <form class="nm" onsubmit="return false">
+                  <input type="text" value="frontend" aria-label="frontend の名前">
+                  <span class="p-swatches">
+                    <label class="p-swatch" style="--tag-color:#c8402c"><input type="radio" name="c2" aria-label="朱"><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#2c4a75"><input type="radio" name="c2" aria-label="藍"><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#3f6b52"><input type="radio" name="c2" aria-label="緑" checked><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#8f6410"><input type="radio" name="c2" aria-label="黄"><span></span></label>
+                  </span>
+                  <button class="app-btn ghost">保存</button>
+                </form>
+                <span class="sp" style="flex:1"></span>
+                <span class="use">64件</span>
+                <form onsubmit="return false"><button class="app-btn ghost">消す</button></form>
+              </div>
+
+              <div class="app-person p-tag-admin">
+                <form class="nm" onsubmit="return false">
+                  <input type="text" value="設計" aria-label="設計 の名前">
+                  <span class="p-swatches">
+                    <label class="p-swatch" style="--tag-color:#c8402c"><input type="radio" name="c3" aria-label="朱"><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#2c4a75"><input type="radio" name="c3" aria-label="藍" checked><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#3f6b52"><input type="radio" name="c3" aria-label="緑"><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#8f6410"><input type="radio" name="c3" aria-label="黄"><span></span></label>
+                  </span>
+                  <button class="app-btn ghost">保存</button>
+                </form>
+                <span class="sp" style="flex:1"></span>
+                <span class="use">31件</span>
+                <form onsubmit="return false"><button class="app-btn ghost">消す</button></form>
+              </div>
+
+              <div class="app-person p-tag-admin">
+                <form class="nm" onsubmit="return false">
+                  <input type="text" value="bakcend" aria-label="bakcend の名前">
+                  <span class="p-swatches">
+                    <label class="p-swatch" style="--tag-color:#c8402c"><input type="radio" name="c4" aria-label="朱"><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#2c4a75"><input type="radio" name="c4" aria-label="藍"><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#3f6b52"><input type="radio" name="c4" aria-label="緑"><span></span></label>
+                    <label class="p-swatch" style="--tag-color:#7d8792"><input type="radio" name="c4" aria-label="灰" checked><span></span></label>
+                  </span>
+                  <button class="app-btn ghost">保存</button>
+                </form>
+                <span class="sp" style="flex:1"></span>
+                <span class="use">0件</span>
+                <form onsubmit="return false"><button class="app-btn ghost">本当に消す</button></form>
+                <span class="note">どのスレッドにも付いていません。もう一度押すと消えます</span>
+              </div>
+            </div>
+
+            <p class="app-note">
+              消すと、付いていたスレッドとの結びも一緒に消えます。取り消せません。
+              件数はこの組織のすべてのスレッドを数えたもので、
+              自分に見えないプロジェクトのぶんも含みます。
+            </p>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>消す押しボタンが二度押しである理由</h2>
+
+  <p>四行目が一度押したあとの状態である。
+  文言が「消す」から「本当に消す」に変わり、何件から外れるかが横に出る。
+  この時点ではまだ何も起きていない。</p>
+
+  <p>確認の窓を出す案もあった。やめたのは、
+  <strong>窓は押し慣れると読まれなくなる</strong>からである。
+  出るのがいつも同じ形なら、文面が変わっても目は止まらない。
+  押しボタン自身の文言が変われば、押した手のほうが「変わった」ことに気づく。</p>
+
+  <p>それでも取り違えは起こりうる。<code>backend</code> の128件は、
+  押した瞬間に戻せなくなる。だから
+  <a href="../../../../../glossary.html#tag-usage">使用数</a>を数字で出している。</p>
+
+  <h2>使用数が見えない範囲まで数える理由</h2>
+
+  <p>数えるのは組織のすべてのスレッドで、自分に見えない
+  <a href="../../../../../glossary.html#private-project">非公開プロジェクト</a>のぶんも含む。</p>
+
+  <p>見える範囲に絞るほうが、他の画面との揃いはよい。それでも全体を数えているのは、
+  この数字が「消したら何件から外れるか」の歯止めだからである。
+  絞ると、実際より少ない数を見せることになる。
+  「3件」と読んで押した先で、見えていなかった20件も一緒に外れる。</p>
+
+  <p>引き換えに、非公開プロジェクトでそのタグがどれだけ使われているかが数として見える。
+  出るのは件数だけで、何のスレッドかは分からない。</p>
+
+  <h2>名前の欄が入力欄のまま置いてある理由</h2>
+
+  <p>タグは名前と色しか持たない。
+  そのために編集画面へ移らせると、往復のほうが操作より長くなる。</p>
+
+  <p>打ち間違えたタグを直せることには、それ自体の意味がある。
+  四行目の <code>bakcend</code> は、まだ誰にも使われていないので消してよい。
+  ところが128件に付いてから気づいた場合、消して作り直す道しかないと、
+  結びが消えたぶんを人が思い出して付け直すことになる。</p>
+
+  <h2>関連する画面</h2>
+  <div class="cards">
+    <a class="card" href="../p/[key]/t/[number]/index.html"><span class="card-no">/t/{number}</span><p class="card-title">スレッド詳細</p><p class="card-desc">属性欄での付け外し</p></a>
+    <a class="card" href="../p/[key]/index.html"><span class="card-no">/p/{key}</span><p class="card-title">スレッド一覧</p><p class="card-desc">タグでの絞り込み</p></a>
+    <a class="card" href="../members/index.html"><span class="card-no">/members</span><p class="card-title">メンバー</p><p class="card-desc">同じ並びの一覧</p></a>
+  </div>
+
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../../../../features/tag/index.html"><span class="card-no">FEATURE</span><p class="card-title">タグ</p><p class="card-desc">階層と直交する軸</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / ページモック / タグ</span>
+    <span>最終更新 2026-09-08</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../../../sidebar.js" defer></script>
+</body>
+</html>

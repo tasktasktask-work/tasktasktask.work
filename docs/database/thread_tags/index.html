@@ -56,6 +56,23 @@ CREATE INDEX thread_tags_by_tag ON thread_tags (tag_id);</code></pre>
     <code>deleted_at</code> を足すのではなく操作ログを別に持つ形（<a href="../../issues/audit-log/index.html">監査ログ</a>）で扱う。</p>
   </div>
 
+  <h2>タグを消すと、この行も消える</h2>
+
+  <p><a href="../tags/index.html"><code>tags</code></a> の削除は論理削除だが、
+  そのタグに紐づく <code>thread_tags</code> の行は同じ取引の中で物理削除する。</p>
+
+  <p>残しておくと、消えたタグを指す行が積み上がる。
+  一覧の問い合わせは <code>JOIN tags g ON ... AND g.deleted_at IS NULL</code> で結合しているので
+  画面には出ないが、出ないだけで行は増える。
+  <a href="../../glossary.html#tag-usage">使用数</a>が数えている行と、
+  実際にそのタグへ紐づいている行がずれることになる。</p>
+
+  <h2>付けるときの重複</h2>
+
+  <p>挿入は <code>ON CONFLICT DO NOTHING</code> で行う。
+  同じスレッドを二つの画面から開いて同じタグを付けても、片方が主キー違反で落ちない。
+  押した結果はどちらも「付いている」であり、二度目を失敗として返す理由がない。</p>
+
   <h2>関係</h2>
 <pre class="figure">threads ──&lt; thread_tags &gt;── tags</pre>
 
@@ -72,7 +89,7 @@ CREATE INDEX thread_tags_by_tag ON thread_tags (tag_id);</code></pre>
 
   <div class="sheet-foot">
     <span>データベース / thread_tags</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

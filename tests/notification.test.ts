@@ -332,6 +332,7 @@ describe('担当者から積まれる行', () => {
       type: 'kadai',
       title: '検索APIの実装',
       body: '',
+      tagIds: [],
       parentNumber: null,
       assigneeUserId: other.userId,
       startsOn: null,

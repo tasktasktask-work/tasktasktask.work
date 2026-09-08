@@ -4,6 +4,7 @@ import { logout } from '#features/authentication/actions.ts';
 import { dashboardPath } from '#features/notification/path.ts';
 import { countUnread } from '#features/notification/queries.ts';
 import { projectPath } from '#features/project/path.ts';
+import { tagsPath } from '#features/tag/path.ts';
 import type { OrgScope } from '#lib/db.ts';
 
 /*
@@ -15,7 +16,14 @@ import type { OrgScope } from '#lib/db.ts';
  * ページはどのみちスコープを組み立てるので、その結果をここへ渡す。
  */
 
-export type ShellNav = 'projects' | 'members' | 'settings' | 'project' | 'me' | 'notices';
+export type ShellNav =
+  | 'projects'
+  | 'members'
+  | 'settings'
+  | 'tags'
+  | 'project'
+  | 'me'
+  | 'notices';
 
 /** 左帯に並べるプロジェクト。畳んだものは出さない。 */
 export type ShellProject = { key: string; name: string };
@@ -106,6 +114,11 @@ export async function OrgShell({
           <h5>組織</h5>
           <Link href={`/o/${slug}/members`} className={current === 'members' ? 'on' : ''}>
             メンバー
+          </Link>
+          {/* 設定の中ではなくここに置く。設定は組織管理者だけの場所で、
+              タグは誰でも作れる */}
+          <Link href={tagsPath(slug)} className={current === 'tags' ? 'on' : ''}>
+            タグ
           </Link>
           {scope.isOrgAdmin ? (
             <Link href={`/o/${slug}/settings`} className={current === 'settings' ? 'on' : ''}>

@@ -55,6 +55,7 @@
           <div class="app-filters">
             <select><option>種別 すべて</option><option>課題</option><option>議論</option><option>質問</option></select>
             <select><option>担当者 すべて</option><option>未設定</option><option>佐藤 明日香</option><option>田中 亮</option></select>
+            <select><option>タグ すべて</option><option>backend</option><option>frontend</option><option>設計</option></select>
             <label><input type="checkbox"> 完了も表示</label>
             <label><input type="checkbox"> アーカイブ済みも表示</label>
             <button class="app-btn ghost">絞り込む</button>
@@ -69,7 +70,7 @@
               <span class="p-oc" data-oc="open">オープン</span>
               <span class="hanko sm">佐</span>
               <span class="p-id">WEB-3</span>
-              <span class="meta"><span class="p-tag" style="--tag-color:#2c4a75">設計</span><a class="rel-link" href="#">子 2件 &#8594;</a><span>更新 9/4 13:40</span></span>
+              <span class="meta"><span class="p-tag" style="--tag-color:#2c4a75">設計</span><span class="p-tag" style="--tag-color:#8f6410">要相談</span><span class="p-tag" style="--tag-color:#7d8792">保留</span><span class="p-tag-more">+2</span><a class="rel-link" href="#">子 2件 &#8594;</a><span>更新 9/4 13:40</span></span>
             </div>
             <div class="p-row">
               <span class="p-type" data-type="kadai">課題</span>
@@ -146,7 +147,7 @@
     <tbody>
       <tr><td class="nowrap">完了も表示</td><td>オフ</td><td>進捗率100のものは、通常の作業では見る必要がない</td></tr>
       <tr><td class="nowrap">アーカイブ済みも表示</td><td>オフ</td><td>畳んだものを既定で出すと、畳んだ意味がなくなる</td></tr>
-      <tr><td class="nowrap">種別 / 担当者</td><td>すべて</td><td>最初は全体を見せ、絞るのは利用者に任せる</td></tr>
+      <tr><td class="nowrap">種別 / 担当者 / タグ</td><td>すべて</td><td>最初は全体を見せ、絞るのは利用者に任せる</td></tr>
       <tr><td class="nowrap">並び順</td><td>更新の新しい順</td><td>動いているものが上に来る</td></tr>
     </tbody>
   </table>
@@ -159,7 +160,16 @@
   絞り込んだ結果をそのまま人に渡せる。
   JavaScript は使っていないので、選んで押せば画面が引き直る。</p>
 
-  <p>タグの欄と<a href="gantt/index.html">ガント</a>の札は、それぞれの機能ができたときに並ぶ。
+  <p><a href="../../../../../../glossary.html#tag">タグ</a>の選択肢には、
+  このプロジェクトで実際に使われているものだけが並ぶ。一つも使われていなければ、欄そのものが出ない。
+  組織の全タグを並べると、別のプロジェクト専用のタグが混ざり、
+  選んでも常に0件になる選択肢が並ぶ。</p>
+
+  <p>行に出るタグは三つまでで、四つ目からは <code>+2</code> のように数だけになる。
+  全部並べると、タグの多い行だけが折り返して高さが変わる。
+  一覧は上から下へ目を滑らせる場所なので、高さが揃っていないと数えるほうに注意が向く。</p>
+
+  <p><a href="gantt/index.html">ガント</a>の札は、その機能ができたときに並ぶ。
   押しても何も起きない札を先に置くと、動かないのか壊れたのかが利用者に区別できない。</p>
 
   <h2>最後の行について</h2>
@@ -183,7 +193,7 @@
 
   <div class="sheet-foot">
     <span>UI / スレッド一覧</span>
-    <span>最終更新 2026-09-07</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

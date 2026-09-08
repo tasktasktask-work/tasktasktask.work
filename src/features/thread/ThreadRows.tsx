@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { TagList } from '#features/tag/TagChip.tsx';
 import { formatStamp } from '#lib/datetime.ts';
 import { threadLabel, threadPath } from './path.ts';
 import type { ThreadRow, ThreadType } from './queries.ts';
@@ -79,6 +80,8 @@ export function ThreadRows({
 
           {showMeta ? (
             <span className="meta">
+              <TagList tags={thread.tags} />
+
               {thread.archived ? <span className="badge mute">アーカイブ済み</span> : null}
 
               {thread.parentNumber !== null ? (

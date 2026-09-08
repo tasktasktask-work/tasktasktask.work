@@ -449,6 +449,7 @@ describe('スレッドを立てる', () => {
     assigneeUserId: null,
     startsOn: null,
     endsOn: null,
+    tagIds: [],
   };
 
   it('プロジェクトが見えていれば、組織管理者でなくても立てられる', async () => {

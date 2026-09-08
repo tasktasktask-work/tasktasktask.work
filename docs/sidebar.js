@@ -85,7 +85,8 @@
         { path: "ui/pages/join/index.html",                  label: "招待を受ける", d: 2 },
         { path: "ui/pages/o/[slug]/index.html",              label: "プロジェクト一覧", d: 2 },
         { path: "ui/pages/o/[slug]/members/index.html",      label: "メンバー", d: 2 },
-        { path: "ui/pages/o/[slug]/settings/index.html",     label: "組織の設定", d: 2 },
+        { path: "ui/pages/o/[slug]/tags/index.html",         label: "タグ", d: 2 },
+      { path: "ui/pages/o/[slug]/settings/index.html",     label: "組織の設定", d: 2 },
         { path: "ui/pages/o/[slug]/dashboard/index.html",    label: "担当スレッド", d: 2 },
         { path: "ui/pages/me/index.html",                    label: "アカウント", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/index.html",      label: "スレッド一覧", d: 2 },
@@ -132,14 +133,14 @@
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 13,
+      sessionTotal: 14,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260908-1113-tags/index.html", label: "2026-09-08 タグ", d: 2 },
         { path: "sessions/20260908-0943-notification-mail/index.html", label: "2026-09-08 通知メール", d: 2 },
         { path: "sessions/20260908-0028-notifications/index.html", label: "2026-09-08 通知", d: 2 },
         { path: "sessions/20260907-2320-comments/index.html", label: "2026-09-07 コメント", d: 2 },
-        { path: "sessions/20260907-1920-threads/index.html", label: "2026-09-07 スレッド", d: 2 },
-        { path: "sessions/20260907-1825-projects/index.html", label: "2026-09-07 プロジェクト", d: 2 }
+        { path: "sessions/20260907-1920-threads/index.html", label: "2026-09-07 スレッド", d: 2 }
       ]
     }
   ];

@@ -28,6 +28,7 @@ const assignedRow = z.object({
   endsOn: dateColumn.nullable(),
   /** 今日から終了日までの日数。過ぎていれば負になる。期間が無ければ null。 */
   daysLeft: z.number().int().nullable(),
+  tags: z.array(z.object({ name: z.string(), color: z.string() })),
 });
 
 export type AssignedRow = z.infer<typeof assignedRow>;
@@ -54,9 +55,17 @@ export async function listAssignedThreads(
             t.progress,
             t.starts_on  AS "startsOn",
             t.ends_on    AS "endsOn",
-            (t.ends_on - (now() AT TIME ZONE $3)::date)::int AS "daysLeft"
+            (t.ends_on - (now() AT TIME ZONE $3)::date)::int AS "daysLeft",
+            COALESCE(tags.list, '[]'::json) AS tags
        FROM threads t
        JOIN projects p ON p.id = t.project_id
+       LEFT JOIN LATERAL (
+         SELECT json_agg(json_build_object('name', g.name, 'color', g.color)
+                         ORDER BY g.name) AS list
+           FROM thread_tags tt
+           JOIN tags g ON g.id = tt.tag_id AND g.deleted_at IS NULL
+          WHERE tt.thread_id = t.id
+       ) tags ON true
       WHERE t.organization_id = $1
         AND t.deleted_at IS NULL
         AND t.archived_at IS NULL

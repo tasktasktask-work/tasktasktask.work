@@ -138,6 +138,16 @@ export async function createThreadAction(
     return { error: '親は WEB-3 のような形か、番号だけで指定してください' };
   }
 
+  /*
+   * チェックボックスは同じ名前の欄が並ぶ。
+   * Object.fromEntries は最後の一つしか残さないので、
+   * 三つ選んでも一つしか届かない。ここだけ getAll で取り直す。
+   */
+  const tagIds = z.array(z.uuid()).safeParse(form.getAll('tags').map(String));
+  if (!tagIds.success) {
+    return { error: 'タグの指定が正しくありません' };
+  }
+
   const result = await createThread(found.scope, project.id, {
     type: input.type,
     title: input.title,
@@ -146,6 +156,7 @@ export async function createThreadAction(
     assigneeUserId: blankToNull(input.assignee),
     startsOn: blankToNull(input.startsOn),
     endsOn: blankToNull(input.endsOn),
+    tagIds: tagIds.data,
   });
   if (!result.ok) {
     return { error: say(result.reason) };

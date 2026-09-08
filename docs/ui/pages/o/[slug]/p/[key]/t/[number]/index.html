@@ -168,8 +168,33 @@
                 <form><input type="date" value="2026-09-08" style="width:8.2rem"><input type="date" value="2026-09-19" style="width:8.2rem"><button class="app-btn ghost">保存</button></form>
               </span></div>
               <div class="row"><span class="k">タグ</span><span class="v">
-                <span class="p-tag" style="--tag-color:#c8402c">backend</span>
-                <span class="p-tag" style="--tag-color:#8f6410">要相談</span>
+                <span class="p-tag-pick">
+                  <form class="on" onsubmit="return false">
+                    <span class="p-tag" style="--tag-color:#c8402c">backend<button aria-label="backend を外す">&#215;</button></span>
+                    <span class="p-tag" style="--tag-color:#8f6410">要相談<button aria-label="要相談 を外す">&#215;</button></span>
+                  </form>
+                  <form onsubmit="return false">
+                    <input type="text" list="mk-tags" placeholder="タグの名前" aria-label="タグを名前で足す" style="width:9rem">
+                    <datalist id="mk-tags">
+                      <option value="backend"></option><option value="frontend"></option>
+                      <option value="設計"></option><option value="要相談"></option>
+                    </datalist>
+                    <button class="app-btn ghost">足す</button>
+                  </form>
+                  <details>
+                    <summary>一覧から選ぶ</summary>
+                    <form onsubmit="return false">
+                      <span class="boxes">
+                        <label><input type="checkbox" checked><span class="p-tag" style="--tag-color:#c8402c">backend</span></label>
+                        <label><input type="checkbox"><span class="p-tag" style="--tag-color:#3f6b52">frontend</span></label>
+                        <label><input type="checkbox"><span class="p-tag" style="--tag-color:#2c4a75">設計</span></label>
+                        <label><input type="checkbox" checked><span class="p-tag" style="--tag-color:#8f6410">要相談</span></label>
+                        <label><input type="checkbox"><span class="p-tag" style="--tag-color:#7d8792">保留</span></label>
+                      </span>
+                      <button class="app-btn ghost">保存</button>
+                    </form>
+                  </details>
+                </span>
               </span></div>
               <div class="row"><span class="k">親</span><span class="v">
                 <form><input type="text" value="WEB-3" style="width:7rem"><button class="app-btn ghost">保存</button></form>
@@ -183,6 +208,26 @@
       </div>
     </div></div>
   </div>
+
+  <h2>タグの欄に入り口が三つある理由</h2>
+
+  <p>付いている札それぞれの&#215;、名前を打って足す欄、そして畳んだチェックの一覧。
+  同じ操作に三つの道があるのは、多いように見える。</p>
+
+  <p>打つ側を主にしてあるのは、<a href="../../../../../../../../glossary.html#tag">タグ</a>が
+  組織の単位で誰でも作れるためである。数十個まで増えうる。
+  その数のチェックボックスを常に開いておくと、属性欄が縦に伸びて、
+  <a href="../../../../../../../../glossary.html#progress">進捗率</a>も期間も画面の外へ出る。
+  畳んでおけば、他の欄の位置が動かない。</p>
+
+  <p>札の&#215;を残したのは、一つ外すためだけに一覧を開かせないためである。
+  チェックの一覧は付いているものと付いていないものを同時に扱うので、
+  「これを外す」という一手には重い。</p>
+
+  <p>名前の欄は <code>datalist</code> で補助する。ただし補助であって制限ではないので、
+  一覧に無い名前も送れてしまう。作れるのは
+  <a href="../../../../../../../../ui/pages/o/[slug]/tags/index.html">管理画面</a>だけなので、
+  届いた側で断り、そこへのリンクを添える。</p>
 
   <h2>ウォッチの欄に人数を出さない理由</h2>
 
@@ -285,7 +330,7 @@
 
   <div class="sheet-foot">
     <span>UI / スレッド詳細</span>
-    <span>最終更新 2026-09-07</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

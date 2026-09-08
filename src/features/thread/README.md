@@ -35,6 +35,6 @@ Markdown の仕組みはコメントと共通で、二つ作らない。
   辿るところと書くところは同じトランザクションに入れる
 - 本文のチェックボックス（`setBodyCheck`）は `body_edited_at` に触らない。
   印は「課題の定義が変わった」ことを知らせるもので、箱が入ったことではない
-- `THREAD_WRITABLE` はコメント側からも使う。書き写さない
+- `THREAD_WRITABLE` はコメント側とタグ側からも使う。書き写さない
 - 時刻の表示は `#lib/datetime.ts` を通し、組織のタイムゾーンを渡す
 - import には必ず拡張子を書く（[規約](../../../docs/devops/coding-conventions/index.html#imports)）

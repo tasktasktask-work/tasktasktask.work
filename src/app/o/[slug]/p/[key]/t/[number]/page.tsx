@@ -12,6 +12,9 @@ import { getOrganization, listMembers } from '#features/organization/queries.ts'
 import { currentScope } from '#features/organization/scope.ts';
 import { projectPath } from '#features/project/path.ts';
 import { listProjectLinks, resolveProject } from '#features/project/queries.ts';
+import { listTags, listThreadTags } from '#features/tag/queries.ts';
+import { TagChip } from '#features/tag/TagChip.tsx';
+import { TagPicker } from '#features/tag/TagPicker.tsx';
 import { newThreadPath, threadLabel, threadPath } from '#features/thread/path.ts';
 import {
   listChildren,
@@ -83,11 +86,13 @@ export default async function ThreadPage({
     return notFound();
   }
 
-  const [children, comments, candidates, watching] = await Promise.all([
+  const [children, comments, candidates, watching, attachedTags, allTags] = await Promise.all([
     listChildren(scope, thread.id),
     listComments(scope, thread.id),
     listMentionCandidates(scope, project.id),
     isWatching(scope, thread.id),
+    listThreadTags(scope, thread.id),
+    listTags(scope),
   ]);
   const label = threadLabel(project.key, thread.number);
   const canWrite = writable(thread);
@@ -329,6 +334,25 @@ export default async function ThreadPage({
                 />
               ) : (
                 <span style={{ fontSize: '.82rem' }}>{thread.assigneeName ?? '未設定'}</span>
+              )}
+            </span>
+          </div>
+
+          <div className="row">
+            <span className="k">タグ</span>
+            <span className="v">
+              {canWrite ? (
+                <TagPicker target={target} attached={attachedTags} all={allTags} />
+              ) : attachedTags.length > 0 ? (
+                <span className="p-tag-pick">
+                  <span className="on">
+                    {attachedTags.map((tag) => (
+                      <TagChip key={tag.id} name={tag.name} color={tag.color} />
+                    ))}
+                  </span>
+                </span>
+              ) : (
+                <span style={{ fontSize: '.82rem' }}>なし</span>
               )}
             </span>
           </div>

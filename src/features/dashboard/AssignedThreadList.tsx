@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { TagList } from '#features/tag/TagChip.tsx';
 import { threadLabel, threadPath } from '#features/thread/path.ts';
 import type { ThreadType } from '#features/thread/queries.ts';
 import type { AssignedRow } from './queries.ts';
@@ -78,6 +79,8 @@ export function AssignedThreadList({ slug, rows }: { slug: string; rows: Assigne
           <span className="p-id">{threadLabel(row.projectKey, row.number)}</span>
 
           <span className="meta">
+            <TagList tags={row.tags} />
+
             {row.startsOn && row.endsOn ? (
               <span>
                 {shortDay(row.startsOn)} – {shortDay(row.endsOn)}

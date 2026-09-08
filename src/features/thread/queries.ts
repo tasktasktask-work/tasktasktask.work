@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import { z } from 'zod';
 import { notifyUsers } from '#features/notification/queries.ts';
+import { attachTagsTo } from '#features/tag/attach.ts';
 import {
   nextThreadNumber,
   type OrgScope,
@@ -396,6 +397,8 @@ export type CreateThread = {
   readonly assigneeUserId: string | null;
   readonly startsOn: string | null;
   readonly endsOn: string | null;
+  /** 立てると同時に付けるタグ。組織の外の id は挿入の側で落ちる。 */
+  readonly tagIds: readonly string[];
 };
 
 export type CreateResult = { ok: true; number: number } | { ok: false; reason: ThreadProblem };
@@ -487,6 +490,10 @@ export async function createThread(
     if (!threadId) {
       throw new Error('スレッドの挿入が行を返しませんでした');
     }
+
+    // タグは同じ取引の中で付ける。分けると、スレッドだけが立って
+    // タグの付いていない行が残る道ができる。
+    await attachTagsTo(client, scope.organizationId, threadId, input.tagIds);
 
     // 立てた時点で担当者を付けられる。ここで知らせないと、
     // 指名されたことに気づく手立てが無い。

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>タグを付けられるようにした | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-08 11:13</p>
+  <h1 class="title">タグを付けられるようにした</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    読み取りの側は既にできていた。<code>listThreads</code> はタグを返し、
+    <code>tagId</code> での絞り込みも書いてある。
+    行を作る側と、返ってきたものを画面に出す側だけが空だった。
+  </p>
+
+  <h2>一覧はタグを受け取りながら描いていなかった</h2>
+
+  <p>問い合わせは <code>json_agg</code> で名前と色を組み立てて返している。
+  <code>ThreadRows</code> はそれを受け取り、どこにも使っていなかった。</p>
+
+  <p>絞り込みの <code>tagId</code> も同じで、条件を組み立てる分岐はあるが、
+  それを渡す画面が無い。<code>tags</code> と <code>thread_tags</code> の行を作る経路も無い。
+  片側だけが先に用意されていた。</p>
+
+  <h2>作れる場所を一つに絞った</h2>
+
+  <p>付ける欄の中で作れる形にすると、手数は減る。やめたのは、
+  <strong>打ち間違いがそのまま新しいタグになる</strong>からである。
+  <code>backend</code> と <code>bakcend</code> が並んだ時点で、
+  組織で共通に使うという前提が壊れる。</p>
+
+  <p>ところが付ける欄は、名前を打つ形にした。
+  <code>datalist</code> は入力を補助するだけで制限しないので、
+  一覧に無い名前がそのまま届く。この二つは噛み合っていない。</p>
+
+  <p>届いた側で断ることにした。断る文面に
+  <a href="../../ui/pages/o/[slug]/tags/index.html">管理画面</a>へのリンクを添える。
+  本当に新しいタグが要る人は、そこへ行ける。</p>
+
+  <h2>消したものを起こす仕掛けを、作ってから捨てた</h2>
+
+  <p>タグの一意索引は <code>WHERE deleted_at IS NULL</code> の部分索引である。
+  消した <code>backend</code> が残っていても、新しい <code>backend</code> はそのまま入る。</p>
+
+  <p>それでも一度は「同じ名前で作り直すときは、消えた行を起こす」と決めた。
+  死んだ行が溜まらないほうがよい、という理由である。
+  そこから三つの枝が出た。起こした行の色はどちらになるか。
+  同名の消えた行が複数あったらどれを起こすか。起こしたことを利用者に伝えるか。</p>
+
+  <p>三つとも答えを出したあとで、開発者から
+  「部分ユニークだと新規登録時も復活させる必要が無かったりしますか」と指摘があった。
+  そのとおりだった。</p>
+
+  <div class="note warn">
+    <span class="note-label">要らなかった理由</span>
+    <p>タグを消すときに <code>thread_tags</code> の行も消すと決めている。
+    起こした行に付いているスレッドは一件もない。
+    <strong>新しく入れた行と、中身が一件も違わない。</strong></p>
+    <p>三つの枝は、どれも画面に出ない違いについての決定だった。
+    答えを三つ出したのに、決めた内容が一つも表に出ない。
+    それが、この枝が要らなかったことを示していた。</p>
+  </div>
+
+  <p>もし「消したのを取り消したい」が本当に欲しかったのであれば、
+  直すべきは起こす側ではなく、結びを消すという決定のほうだった。
+  結びを残せば、起こす操作がそのまま取り消しになる。
+  ただしその場合、半年前に消した <code>backend</code> を作り直した人の前に、
+  128件のスレッドが一斉にタグ付きで現れる。
+  消したのを取り消したい人と、同じ名前で始め直したい人が、同じ操作をすることになる。</p>
+
+  <h2>決めたこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>論点</th><th>決定</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">作れる場所</td><td>管理画面だけ</td><td>付ける欄で作れると、打ち間違いがタグになる</td></tr>
+      <tr><td class="nowrap">管理画面の位置</td><td><code>/o/{slug}/tags</code></td><td>組織の設定は管理者以外に404を返す。誰でも作れる決まりと合わない</td></tr>
+      <tr><td class="nowrap">付ける形</td><td>名前を打つ欄＋畳んだチェック</td><td>数十個のチェックを開いておくと、属性欄が縦に伸びて他の欄が画面外へ出る</td></tr>
+      <tr><td class="nowrap">立てるフォーム</td><td>チェックだけ</td><td>「一つ足す」という操作が存在せず、送るのは常に全体</td></tr>
+      <tr><td class="nowrap">色</td><td>八色の見本から</td><td>制約は <code>#rrggbb</code> しか見ない。薄い色を選ばれると点が消えたのと同じになる</td></tr>
+      <tr><td class="nowrap">名前の変更</td><td>できる</td><td>できないと、打ち間違えたタグは消して作り直すしかない</td></tr>
+      <tr><td class="nowrap">消したとき</td><td>結びも消す</td><td>残すと、作り直した人の前に過去のスレッドが一斉に現れる</td></tr>
+      <tr><td class="nowrap">消す歯止め</td><td>二度押し＋使用数</td><td>確認の窓は押し慣れると読まれない。押しボタンの文言なら手が気づく</td></tr>
+      <tr><td class="nowrap">使用数の範囲</td><td>組織の全スレッド</td><td>見える範囲に絞ると、実際に外れる行数より少ない数を見せる</td></tr>
+      <tr><td class="nowrap">絞り込みの選択肢</td><td>そのプロジェクトで使用中のものだけ</td><td>常に0件になる選択肢を並べても探す助けにならない</td></tr>
+      <tr><td class="nowrap">付ける側の選択肢</td><td>組織の全タグ</td><td>使用中に限ると、新しいタグを最初に付ける道が無くなる</td></tr>
+      <tr><td class="nowrap">一覧の行</td><td>三つまで、あとは <code>+2</code></td><td>全部並べると、タグの多い行だけ高さが変わる</td></tr>
+      <tr><td class="nowrap">通知</td><td>飛ばさない</td><td><code>notifications_kind_valid</code> は三種類しか許さない。足すと移行が要る</td></tr>
+      <tr><td class="nowrap">「タグなし」での絞り込み</td><td>置かない</td><td>探す動機は、運用が定まってから出てくる</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>模組が互いを呼びそうになった</h2>
+
+  <p>スレッドを立てるときにもタグを付けるので、
+  <code>#features/thread/queries.ts</code> がタグ側を呼ぶ。
+  一方でタグ側は、書き込みの可否を判定するために <code>THREAD_WRITABLE</code> を読む。
+  そのままだと二つが互いを参照する。</p>
+
+  <p>行を入れるだけの部分を <code>attach.ts</code> へ分けた。
+  ここには判定を置かない。呼ぶ側が先に済ませている前提の関数である。
+  判定を書き写す形にはしなかった。
+  <a href="../../devops/coding-conventions/index.html#visibility">同じ条件を各所に書き写すと、片方だけ直したときに穴が開く</a>。</p>
+
+  <p>色の定義も <code>colors.ts</code> へ分けた。
+  色見本は画面の側でも要るので、<code>queries.ts</code> を読ませると
+  <code>pg</code> がブラウザ向けの束に入る。</p>
+
+  <h2>確かめたこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>確認</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">テスト</td><td>374件すべて通過（タグ32件を追加）</td></tr>
+      <tr><td class="nowrap">ミューテーション</td><td>判定を18か所壊し、18か所とも捕捉</td></tr>
+      <tr><td class="nowrap">画面の通し確認</td><td>29件すべて通過。サーバのエラーなし</td></tr>
+      <tr><td class="nowrap">ビルド</td><td>16経路（<code>/o/{slug}/tags</code> を追加）</td></tr>
+      <tr><td class="nowrap">スキーマ</td><td>変更なし。移行も増えていない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">自動では確かめていないところ</span>
+    <p>消す押しボタンの二度押しは、サーバアクションの中の分岐にある。
+    アクションは <code>cookies()</code> を読むので、テストの中から呼べない。
+    分岐そのものは確かめていない。何件から外れるかを数える
+    <code>countTagUsage</code> は確かめてある。</p>
+  </div>
+
+  <h2>直したもの</h2>
+
+  <p>機能ドキュメントとデータベースのドキュメントに
+  「リネームは初期リリースに含めていない」と書いてあった。
+  名前を変えられるようにしたので、そこを直した。
+  除外すべきだったのは統合と一括削除である。</p>
+
+  <p>スレッドのドキュメントにあった「タグでの絞り込みは……いまは欄が出ない」も外した。</p>
+
+  <h2>次にやること</h2>
+
+  <p><a href="../../features/attachment/index.html">添付ファイル</a>である。
+  <code>attachments</code> はスキーマにあり、置き場も
+  <a href="../../devops/deployment/index.html">デプロイ構成</a>に用意してあるが、
+  上げる経路も出す経路も無い。</p>
+
+  <p>本番への反映も溜まったままである。
+  <code>20260907135543</code> 以降の三つの移行がまだ当たっていない。
+  そのうちの一つに <code>CREATE INDEX CONCURRENTLY</code> が入るので、
+  <code>docker compose run --rm migrate</code> がトランザクションを張らないことを、
+  本物のデータベースで初めて確かめることになる。</p>
+
+  <h2>関連するドキュメント</h2>
+  <div class="cards">
+    <a class="card" href="../../features/tag/index.html"><span class="card-no">FEATURE</span><p class="card-title">タグ</p><p class="card-desc">階層と直交する軸</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/tags/index.html"><span class="card-no">MOCK</span><p class="card-title">タグの管理画面</p><p class="card-desc">作る、直す、消す</p></a>
+    <a class="card" href="../../database/tags/index.html"><span class="card-no">TABLE</span><p class="card-title">tags</p><p class="card-desc">部分索引と消し方</p></a>
+    <a class="card" href="../../glossary.html#tag-usage"><span class="card-no">TERM</span><p class="card-title">使用数</p><p class="card-desc">見えない範囲まで数える</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-08 タグ</span>
+    <span>最終更新 2026-09-08</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

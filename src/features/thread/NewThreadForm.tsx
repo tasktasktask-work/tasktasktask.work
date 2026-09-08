@@ -1,6 +1,8 @@
 'use client';
 
 import { useActionState, useState } from 'react';
+import type { TagRow } from '#features/tag/queries.ts';
+import { TagBoxes } from '#features/tag/TagBoxes.tsx';
 import { createThreadAction, type ThreadActionState } from './actions.ts';
 import type { ThreadType } from './queries.ts';
 
@@ -21,12 +23,15 @@ export function NewThreadForm({
   slug,
   projectKey,
   members,
+  tags,
   defaultType,
   defaultParent,
 }: {
   slug: string;
   projectKey: string;
   members: { userId: string; displayName: string }[];
+  /** 組織のタグすべて。立てる時点では、まだ使われていないタグも選べる */
+  tags: TagRow[];
   defaultType: ThreadType;
   defaultParent: string;
 }) {
@@ -120,6 +125,16 @@ export function NewThreadForm({
           ガントに置けるのか置けないのかが決まりません。
         </p>
       ) : null}
+
+      <div className="line" style={{ marginTop: '.7rem' }}>
+        <div className="auth-field" style={{ marginBottom: 0 }}>
+          {/* 名前を打つ欄は置かない。立てる時点では「一つ足す」が存在せず、
+              送るのは常に選んだ全体である */}
+          <span className="field-label">タグ</span>
+          <TagBoxes slug={slug} all={tags} />
+        </div>
+        <span style={{ flex: 1 }} />
+      </div>
 
       <div className="line" style={{ marginTop: '1rem' }}>
         <span style={{ flex: 1 }} />

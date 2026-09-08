@@ -69,9 +69,33 @@ CREATE UNIQUE INDEX tags_name_uniq
     <span class="note-label">増え続けることへの手当てがない</span>
     <p>組織単位かつ誰でも作成可という組み合わせは、タグが増え続けることを意味する。
     選択肢に数十個が並ぶ状態は起こりうる。</p>
-    <p>統合、リネーム、未使用タグの一括削除といった整理の仕組みは初期リリースに含めていない。
+    <p>名前と色の変更は管理画面から行える。
+    統合と、未使用タグの一括削除は入れていない。
     運用してみて実際に問題になるかを見てから判断する。</p>
   </div>
+
+  <h2>消すときに結びも消す</h2>
+
+  <p>タグの削除は <code>deleted_at</code> を入れる論理削除である。
+  同じ取引の中で、<a href="../thread_tags/index.html"><code>thread_tags</code></a> の行を物理削除する。</p>
+
+  <p>結びを残しておけば、<code>deleted_at</code> を戻すだけで消す前に戻せる。
+  それでも消しているのは、<strong>同じ名前で作り直した人の前に、半年前のスレッドが一斉にタグ付きで現れる</strong>からである。
+  消したのを取り消したい人と、同じ名前で始め直したい人が、同じ操作をすることになる。</p>
+
+  <h2>一意の索引が生きている行しか見ない</h2>
+
+  <p><code>tags_name_uniq</code> は <code>WHERE deleted_at IS NULL</code> の部分索引である。
+  消した <code>backend</code> が残っていても、新しい <code>backend</code> はそのまま挿入できる。</p>
+
+  <p>消えた行を起こす形も考えたが、採らなかった。
+  結びは消すときに一緒に消しているので、起こした行に付いているスレッドは一件もない。
+  新しく入れた行と中身が一致するため、区別する意味がない。</p>
+
+  <p>そのため、同じ名前の消えた行が複数溜まりうる。
+  リネームでも起こしにはいかないので、
+  <code>foo</code> を消したあと別のタグを <code>foo</code> にして、それも消す、という順で二行になる。
+  どれも表には出ない。</p>
 
   <h2>関係</h2>
 <pre class="figure">organizations ──&lt; tags &gt;── thread_tags ──&lt; threads</pre>
@@ -88,7 +112,7 @@ CREATE UNIQUE INDEX tags_name_uniq
 
   <div class="sheet-foot">
     <span>データベース / tags</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

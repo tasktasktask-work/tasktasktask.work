@@ -485,7 +485,55 @@
     誰でも新しいタグを作れる。</p>
     <p>タグが必要なのは、<a href="#parent-child">親子関係</a>が階層という一本の軸しか表せないからである。
     <code>bug</code> や <code>要相談</code> のように階層と直交する分類は、親子では代わりにならない。</p>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread">スレッド</a><a href="#parent-child">親子関係</a><a href="#organization">組織</a></div>
+    <p>作るのは<a href="#tag-admin">タグの管理画面</a>だけである。
+    付けるのはスレッド詳細の属性欄と、スレッドを立てるフォーム。
+    どちらも、既にあるタグから選ぶ形になっている。</p>
+    <div class="dialogue">
+      <p><span class="who">開発者</span><span>この課題、frontend と backend の両方を付けてしまっていいですか。</span></p>
+      <p><span class="who">PM</span><span>付けてください。両方にまたがる作業はよくあります。片方だけにすると、もう片方の担当が探すときに引っかかりません。</span></p>
+      <p><span class="who">開発者</span><span>一覧の行には三つまでしか出ません。四つ目からは数だけになります。</span></p>
+      <p><span class="who">PM</span><span>四つ以上付けることは滅多にないので、それで足ります。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#thread">スレッド</a><a href="#parent-child">親子関係</a><a href="#organization">組織</a><a href="#tag-admin">タグの管理画面</a><a href="#tag-usage">使用数</a><a href="#thread-list">スレッド一覧</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/tag/index.html">タグ</a></div>
+  </article>
+
+  <article class="term" id="tag-admin">
+    <h3>タグの管理画面<span class="reading">tag admin</span></h3>
+    <p>組織のタグを作り、名前と色を変え、消す画面を<strong>タグの管理画面</strong>と呼ぶ。
+    <code>/o/{slug}/tags</code> にあり、組織のメンバーなら誰でも入れる。</p>
+    <p>組織の設定の中に置いていない。あの画面は<a href="#org-admin">組織管理者</a>以外に
+    404 を返すので、置いた時点で「タグは管理者のもの」になる。
+    誰でも作れる、という決まりと食い違う。</p>
+    <p>タグを付ける欄では新しいタグを作れない。
+    名前を打つ欄はあるが、一覧に無い名前は断られる。
+    その場で作れる形にすると、打ち間違いがそのまま新しいタグになり、
+    <code>backend</code> と <code>bakcend</code> が並ぶ。</p>
+    <div class="dialogue">
+      <p><span class="who">開発者</span><span>タグを付ける欄で、その場で新しいタグも作れるようにしますか。</span></p>
+      <p><span class="who">PM</span><span>やめてください。前のツールがそうで、似た名前のタグが山ほど溜まりました。作るときだけ別の画面へ行くくらいでちょうどいいです。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#tag">タグ</a><a href="#tag-usage">使用数</a><a href="#org-admin">組織管理者</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/tag/index.html">タグ</a></div>
+  </article>
+
+  <article class="term" id="tag-usage">
+    <h3>使用数<span class="reading">usage count</span></h3>
+    <p><a href="#tag-admin">タグの管理画面</a>の各行に出る、そのタグが付いているスレッドの数を
+    <strong>使用数</strong>と呼ぶ。</p>
+    <p>数えるのは組織のすべてのスレッドで、
+    自分に見えない<a href="#private-project">非公開プロジェクト</a>のぶんも含む。
+    見える範囲に絞ると、消したときに実際に外れる行数より少ない数を見せることになり、
+    歯止めとして働かない。</p>
+    <p>引き換えに、非公開プロジェクトでそのタグがどれだけ使われているかが数として見える。
+    分かるのは件数だけで、何のスレッドかは出ない。</p>
+    <p>タグを消すと、付いていたスレッドとの結びも一緒に消える。取り消せない。
+    消す押しボタンは二度押しで、一度目は何件から外れるかを返すだけである。</p>
+    <div class="dialogue">
+      <p><span class="who">開発者</span><span>使わなくなったタグを消したいとのことですが、128件に付いています。</span></p>
+      <p><span class="who">PM</span><span>それなら消さないでください。過去の課題を探す手掛かりが128件ぶん消えるということですよね。名前を変えて残します。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#tag">タグ</a><a href="#tag-admin">タグの管理画面</a><a href="#private-project">非公開プロジェクト</a><a href="#soft-delete">論理削除</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/tag/index.html">タグ</a></div>
   </article>
 

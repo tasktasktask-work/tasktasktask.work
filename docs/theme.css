@@ -795,6 +795,61 @@ td.nowrap, th.nowrap { white-space: nowrap; }
 /* チェックを入れそこねたときに、その箱の横に出す */
 .p-check-error { font-size: .74rem; color: var(--shu); margin-left: .4rem; }
 
+/* タグを外す押しボタン。札の中に置く ------------------------------------- */
+.p-tag button {
+  border: 0; background: none; padding: 0; margin: 0 -.15em 0 .1em;
+  font: inherit; line-height: 1; color: var(--ink-faint); cursor: pointer;
+}
+.p-tag button:hover { color: var(--shu); }
+
+/* 一覧の行は三つまで。四つ目からは数だけ出して高さを守る */
+.p-tag-more { font-size: .72rem; color: var(--ink-faint); white-space: nowrap; }
+
+/* 色見本。丸をそのまま押させる。select に色名を並べると、選ぶ前に色が見えない */
+.p-swatches { display: flex; gap: .3rem; align-items: center; flex-wrap: wrap; }
+.p-swatch { position: relative; display: inline-flex; }
+.p-swatch input {
+  position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer;
+}
+.p-swatch span {
+  width: 1.15rem; height: 1.15rem; border-radius: 50%;
+  border: 2px solid var(--card); outline: 1px solid var(--rule-strong);
+  background: var(--tag-color);
+}
+.p-swatch input:checked + span { outline: 2px solid var(--ink); }
+.p-swatch input:focus-visible + span { outline: 2px solid var(--ai); }
+
+/* タグの管理画面の一行。名前、色、使用数、保存、消す */
+.p-tag-admin .nm input {
+  font-family: var(--font-body); font-size: .82rem;
+  padding: .22rem .45rem; border: 1px solid var(--rule-strong);
+  border-radius: 2px; background: var(--paper); color: var(--ink); width: 11rem;
+}
+.p-tag-admin .use {
+  font-family: var(--font-mono); font-size: .72rem; color: var(--ink-soft);
+  white-space: nowrap;
+}
+.p-tag-admin .note { flex-basis: 100%; font-size: .74rem; color: var(--ki); }
+
+/* 付ける欄。札の並び、テキスト入力、畳んだチェックの一覧 */
+.p-tag-pick { display: flex; flex-direction: column; gap: .4rem; align-items: flex-start; }
+.p-tag-pick .on { display: flex; flex-wrap: wrap; gap: .3rem; }
+.p-tag-pick form { display: flex; align-items: center; gap: .35rem; margin: 0; flex-wrap: wrap; }
+.p-tag-pick details > summary {
+  font-size: .74rem; color: var(--ink-soft); cursor: pointer; padding: .1rem 0;
+}
+.p-tag-pick details[open] > summary { margin-bottom: .35rem; }
+.p-tag-pick .boxes {
+  display: flex; flex-direction: column; gap: .25rem;
+  max-height: 13rem; overflow-y: auto;
+  border: 1px solid var(--rule); background: var(--paper); padding: .45rem .55rem;
+}
+.p-tag-pick .boxes label {
+  display: flex; align-items: center; gap: .35rem; font-size: .8rem;
+}
+.p-tag-pick .err { font-size: .74rem; color: var(--ki); }
+.p-tag-pick .err a { color: var(--ai); }
+
 /* @shared:product end ---------------------------------------------------- */
 
 /* ==========================================================================
@@ -989,7 +1044,9 @@ td.nowrap, th.nowrap { white-space: nowrap; }
   margin-bottom: 1.6rem;
 }
 .auth-field { margin-bottom: .9rem; }
-.auth-field label {
+.auth-field label,
+/* チェックボックスの束のように、labelを一つに絞れない欄の名札 */
+.auth-field .field-label {
   display: block; font-size: .74rem; color: var(--ink-soft);
   margin-bottom: .25rem; letter-spacing: .04em;
 }

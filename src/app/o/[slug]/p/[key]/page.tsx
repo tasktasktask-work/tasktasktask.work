@@ -6,6 +6,7 @@ import { getOrganization, listMembers } from '#features/organization/queries.ts'
 import { currentScope } from '#features/organization/scope.ts';
 import { ProjectTabs } from '#features/project/ProjectTabs.tsx';
 import { listProjectLinks, resolveProject } from '#features/project/queries.ts';
+import { listProjectTags } from '#features/tag/queries.ts';
 import { newThreadPath } from '#features/thread/path.ts';
 import { listThreads, type ThreadType } from '#features/thread/queries.ts';
 import { ThreadFilters, type ThreadQuery } from '#features/thread/ThreadFilters.tsx';
@@ -54,16 +55,20 @@ export default async function ProjectThreads({
     ? (query.type as ThreadType)
     : undefined;
 
-  const threads = await listThreads(scope, project.id, {
-    ...(type ? { type } : {}),
-    ...(query.assignee === 'none'
-      ? { unassigned: true }
-      : query.assignee
-        ? { assigneeUserId: query.assignee }
-        : {}),
-    includeCompleted: query.completed === '1',
-    includeArchived: query.archived === '1',
-  });
+  const [threads, tags] = await Promise.all([
+    listThreads(scope, project.id, {
+      ...(type ? { type } : {}),
+      ...(query.assignee === 'none'
+        ? { unassigned: true }
+        : query.assignee
+          ? { assigneeUserId: query.assignee }
+          : {}),
+      ...(query.tag ? { tagId: query.tag } : {}),
+      includeCompleted: query.completed === '1',
+      includeArchived: query.archived === '1',
+    }),
+    listProjectTags(scope, project.id),
+  ]);
 
   return (
     <OrgShell
@@ -108,11 +113,11 @@ export default async function ProjectThreads({
         </p>
       ) : null}
 
-      <ThreadFilters members={members} query={query} />
+      <ThreadFilters members={members} tags={tags} query={query} />
 
       {threads.length === 0 ? (
         <p className="app-empty">
-          {query.type || query.assignee
+          {query.type || query.assignee || query.tag
             ? 'この条件に合うスレッドはありません。'
             : 'まだスレッドがありません。決まっていない相談も、議論として立てられます。'}
         </p>

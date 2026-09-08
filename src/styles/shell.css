@@ -160,7 +160,9 @@
   margin-bottom: 1.6rem;
 }
 .auth-field { margin-bottom: .9rem; }
-.auth-field label {
+.auth-field label,
+/* チェックボックスの束のように、labelを一つに絞れない欄の名札 */
+.auth-field .field-label {
   display: block; font-size: .74rem; color: var(--ink-soft);
   margin-bottom: .25rem; letter-spacing: .04em;
 }
