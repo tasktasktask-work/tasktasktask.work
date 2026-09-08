@@ -169,6 +169,22 @@
     <li><a href="pages/index.html">ページモック</a>に追加し、<a href="../sidebar.js">サイドバー</a>にも登録する</li>
   </ol>
 
+  <div class="note warn">
+    <span class="note-label">使う class は @shared ブロックの中にあること</span>
+    <p><code>docs/theme.css</code> には、資料だけで使う区画がある。
+    <code>.sheet</code> や <code>.eyebrow</code> のような、製品には出ない見出しの意匠である。</p>
+    <p>そこにある規則を画面から使っても、<strong>何も知らせてくれない。</strong>
+    型検査もビルドもテストも通り、ページモックは正しく描かれる。
+    崩れるのは本物の画面だけで、開いて初めて分かる。</p>
+    <p>実際に <code>.badge</code> と <code>.card</code> がその状態で本番に出た（2026-09-08）。
+    スレッド一覧の「親からはみ出し」も、組織の一覧のカードも、
+    枠のない素の文字として並んでいた。</p>
+    <p>いまは <code>pnpm check</code> が照合する。
+    画面が使う名前が <code>src/styles/</code> に無ければ、そこで止まる。
+    足りなければ、その規則を <code>@shared</code> ブロックの中へ移して
+    <code>pnpm styles:sync</code> を実行する。</p>
+  </div>
+
   <h2>関連するページ</h2>
   <div class="cards">
     <a class="card" href="components/index.html"><span class="card-no">UI</span><p class="card-title">コンポーネント</p><p class="card-desc">状態ごとの見本</p></a>
@@ -177,7 +193,7 @@
 
   <div class="sheet-foot">
     <span>UI / 設計方針</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

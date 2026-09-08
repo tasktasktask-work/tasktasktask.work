@@ -400,3 +400,61 @@
 .app-mentions button[aria-selected="true"], .app-mentions button:hover {
   background: var(--ai-wash); color: var(--ai);
 }
+
+/* --------------------------------------------------------------------------
+   カードの並び
+
+   押すと中へ入る場所を並べる。組織の一覧がこれを使う。
+   資料の側では、関連するページへの導線としても使っている。
+   -------------------------------------------------------------------------- */
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  margin: 0 0 2.2rem;
+}
+
+.card {
+  display: block;
+  background: var(--card);
+  padding: 1.15rem 1.25rem 1.25rem;
+  text-decoration: none;
+  color: inherit;
+  position: relative;
+  transition: background .16s ease;
+}
+.card:hover { background: var(--paper); color: inherit; }
+.card:hover .card-title { color: var(--shu); }
+.card::after {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 2px; background: var(--shu);
+  transform: scaleY(0); transform-origin: top;
+  transition: transform .2s ease;
+}
+.card:hover::after { transform: scaleY(1); }
+
+.card-no {
+  font-family: var(--font-mono);
+  font-size: .66rem;
+  letter-spacing: .12em;
+  color: var(--ink-faint);
+  display: block;
+  margin-bottom: .4rem;
+}
+.card-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.02rem;
+  line-height: 1.5;
+  margin: 0 0 .4rem;
+  transition: color .16s ease;
+}
+.card-desc {
+  font-size: .82rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  margin: 0;
+}

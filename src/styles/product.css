@@ -572,3 +572,28 @@
 .p-attach-pick .picked { margin: 0; padding: 0; list-style: none; font-size: .74rem; }
 .p-attach-pick .picked li { color: var(--ink-soft); word-break: break-all; }
 .p-attach-pick .picked .size { font-family: var(--font-mono); font-size: .68rem; color: var(--ink-faint); }
+
+/* --------------------------------------------------------------------------
+   小さな札
+
+   資料の中でも画面の中でも同じものを指す。
+   スレッド一覧の「親からはみ出し」、担当スレッドの残り日数、
+   通知の「コメントは削除済み」がこれを使う。
+   -------------------------------------------------------------------------- */
+
+.badge {
+  display: inline-flex; align-items: center; gap: .35em;
+  font-family: var(--font-mono);
+  font-size: .68rem;
+  letter-spacing: .08em;
+  padding: .18em .6em;
+  border-radius: 2px;
+  border: 1px solid currentColor;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.badge.shu    { color: var(--shu);    background: var(--shu-wash); }
+.badge.ai     { color: var(--ai);     background: var(--ai-wash); }
+.badge.midori { color: var(--midori); background: var(--midori-wash); }
+.badge.ki     { color: var(--ki);     background: var(--ki-wash); }
+.badge.mute   { color: var(--ink-soft); background: var(--paper-deep); }

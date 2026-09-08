@@ -81,6 +81,7 @@
         { path: "ui/components/progress-input/index.html",   label: "進捗率入力", d: 2 },
         { path: "ui/components/gantt-bar/index.html",        label: "ガントバー", d: 2 },
         { path: "ui/pages/index.html",                       label: "ページモック" },
+        { path: "ui/pages/root/index.html",                  label: "組織の一覧", d: 2 },
         { path: "ui/pages/login/index.html",                 label: "ログイン", d: 2 },
         { path: "ui/pages/join/index.html",                  label: "招待を受ける", d: 2 },
         { path: "ui/pages/o/[slug]/index.html",              label: "プロジェクト一覧", d: 2 },

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>組織の一覧 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock</p>
+  <h1 class="title">組織の一覧</h1>
+  <p class="lede">
+    ログインすると必ずここに着く。所属している組織が並ぶ。
+    組織がひとつしかない人も、ここを通る。
+  </p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="sp"></span>
+          <span class="hanko sm">佐</span>
+          <button class="app-btn ghost" type="button">ログアウト</button>
+        </div>
+
+        <div class="app-main">
+          <div class="app-head">
+            <div>
+              <h2>組織</h2>
+              <div class="sub">佐藤 明日香（asuka.sato@example.com）</div>
+            </div>
+          </div>
+
+          <div class="cards">
+            <a class="card" href="../o/[slug]/index.html">
+              <span class="card-no">acme</span>
+              <p class="card-title">株式会社アクメ</p>
+              <p class="card-desc">組織管理者</p>
+            </a>
+            <a class="card" href="#">
+              <span class="card-no">torimori</span>
+              <p class="card-title">鳥森デザイン</p>
+              <p class="card-desc">メンバー</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>組織がひとつでも、ここへ着く</h2>
+
+  <p>所属が一つしかないなら、そのまま
+  <a href="../o/[slug]/index.html">プロジェクト一覧</a>へ送ってしまう手もある。
+  一手間が減る。</p>
+
+  <p>採らなかった。
+  <strong>二つめの組織に招待された日から、着地点が変わってしまう。</strong>
+  昨日までログイン直後に見えていた画面が、今日は組織の一覧になる。
+  毎日同じ場所に着くほうを取った。</p>
+
+  <h2>左帯が付かない</h2>
+
+  <p>組織の中の画面には左帯が付くが、ここには付かない。
+  <a href="../login/index.html">ログイン</a>、
+  <a href="../join/index.html">招待の受諾</a>、
+  <a href="../me/index.html">アカウント</a>と同じ扱いである。</p>
+
+  <p>左帯に並ぶのはプロジェクトと通知で、どちらも組織が決まって初めて中身が決まる。
+  この画面はまさに組織を決めるための画面なので、並べるものが一つも無い。</p>
+
+  <p>上帯からも組織の切り替えが消える。
+  代わりに置いてあるのは、自分が誰かを示すハンコと、ログアウトだけである。</p>
+
+  <h2>まだ組織に入っていないとき</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="sp"></span>
+          <span class="hanko sm">田</span>
+          <button class="app-btn ghost" type="button">ログアウト</button>
+        </div>
+        <div class="app-main">
+          <div class="app-head">
+            <div>
+              <h2>組織</h2>
+              <div class="sub">田中 亮（ryo.tanaka@example.com）</div>
+            </div>
+          </div>
+          <p class="app-empty">
+            所属している組織がありません。<br>
+            招待を受け取ると、そのリンクから参加できます。
+          </p>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>アカウントはあるのに、どこにも所属していない状態は起こりうる。
+  組織から外されたあとがそれである。</p>
+
+  <p>ここに「組織を作る」ボタンは置いていない。
+  <strong>画面から組織は作れない。</strong>
+  参加は<a href="../../../glossary.html#invitation">招待</a>だけで、招待を送れるのは
+  <a href="../../../glossary.html#org-admin">組織管理者</a>に限る。
+  最初のひとりは外から入れることになっており、
+  その経緯は<a href="../../../issues/organization-signup/index.html">組織を自分で作る</a>に置いた。</p>
+
+  <h2>未ログインのとき</h2>
+
+  <p>このURLのまま<a href="../login/index.html">ログイン画面</a>を出す。
+  <code>/login</code> へは送らない。</p>
+
+  <p>送らない理由は二つある。
+  ひとつは、送ると戻り先を持ち回る必要が出ること。
+  もうひとつは、<a href="../../../glossary.html#magic-link">マジックリンク</a>の着地点がここだからである。
+  リンクを踏んだ人は必ずこのURLへ来る。
+  入れていれば組織の一覧、入れていなければログイン画面、と一枚で受けられる。</p>
+
+  <div class="note warn">
+    <span class="note-label">戻り先は相対で返す</span>
+    <p>マジックリンクの着地点（<code>/auth/magic</code>）から、この画面へ戻す。
+    そのときの行き先を、リクエストから組んではいけない。</p>
+    <p><code>NextRequest</code> の <code>nextUrl</code> は <code>Host</code> ヘッダを見ず、
+    サーバが束ねているホスト名を返す。本番は <code>0.0.0.0</code> である。
+    <a href="../../../devops/deployment/index.html">デプロイ</a>に、踏んだ内容を書いてある。</p>
+  </div>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">入れていないときに出るもの</p></a>
+    <a class="card" href="../o/[slug]/index.html"><span class="card-no">/o/{slug}</span><p class="card-title">プロジェクト一覧</p><p class="card-desc">カードを押した先</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / 組織の一覧</span>
+    <span>最終更新 2026-09-08</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../sidebar.js" defer></script>
+</body>
+</html>
