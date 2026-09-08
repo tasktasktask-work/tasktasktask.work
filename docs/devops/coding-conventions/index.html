@@ -155,6 +155,67 @@ AND $6::uuid IN (${visibleProjectIds('$1', 'w.user_id')})</code></pre>
   <a href="#trust">同じ判定が二箇所にある状態</a>は、片方だけ直したときに穴が開く。
   実際に一度開けた（<a href="../../sessions/20260907-1050-permission-tests/index.html">権限判定のテスト</a>）。</p>
 
+  <h2 id="org-scope-exception">組織のスコープを取らないもの</h2>
+
+  <p>データベースを触る関数は <code>OrgScope</code> を第一引数に取る。
+  例外は二つある。認証と、アカウントの設定である。</p>
+
+<pre><code>// #features/account/queries.ts
+export async function setEmailNotifications(userId: string, enabled: boolean)</code></pre>
+
+  <p>これは組織の境界を越えているのではない。
+  <code>users.email_notifications_enabled</code> は組織の外側にある値で、
+  所属しているすべての組織に効く。</p>
+
+  <p>見分け方は「どの組織で操作したかを問えるか」である。
+  問えないなら、スコープを渡しても嘘の引数になる。
+  画面の URL も揃える。この設定は <code>/o/{slug}/...</code> ではなく <code>/me</code> にある。</p>
+
+  <h2 id="outside-calls">外への呼び出しを、取引の中で待たない</h2>
+
+  <p>SMTP のような外部への呼び出しは、いつ返るかを決められない。
+  行のロックを握ったまま待つと、相手が詰まっているあいだ、その行に触れる問い合わせが並ぶ。</p>
+
+<pre><code>// 掴む取引。ここで試行の回数を増やし、閉じる
+const rows = await claim(RECIPIENTS_PER_PASS);
+// 取引の外。ここでようやく送る
+await sender.send(composeNotificationMail(...));
+// 結果を書き戻す
+await markSent(ids);</code></pre>
+
+  <p>回数を掴む側で増やすのは、送信の途中で落ちる束を外すためである。
+  送ってから増やす形だと、その束は回数が永久に 0 のまま、
+  起動のたびに同じ場所で落ち続ける。</p>
+
+  <div class="note warn">
+    <span class="note-label">拾って送る仕掛けには、決着の付け方が要る</span>
+    <p>送らないと決めた行にも印を付ける。
+    付けないと、その行は毎回の巡回に拾われ続ける。</p>
+    <p>拾う順が古い順なら、居座った行が枠を先に取り、後ろに並んだものへ永久に届かない。
+    <strong>送らないことと、拾うのをやめることは、同じ操作でなければならない。</strong></p>
+  </div>
+
+  <h2 id="loop-shell">繰り返しの殻に、判断を置かない</h2>
+
+  <p>一定間隔で回るものは、一巡ぶんを関数に切り出す。
+  ループのほうは間隔を計るだけにする。</p>
+
+  <p>判断をループの中に置くと、確かめるのに間隔ぶん待つ仕掛けになる。
+  そうなると誰も確かめなくなる。</p>
+
+<pre><code>// 判断はここ。テストから直接呼べる
+export async function deliverPendingNotifications(
+  sender: MailSender = mailSender,
+  origin: string = env.APP_ORIGIN,
+): Promise&lt;DeliveryReport&gt;
+
+// 殻。間隔を計るだけ
+export function startNotificationMailLoop(): void</code></pre>
+
+  <p>外へ出るものは引数で受け取り、既定値に本物を置く。
+  テストは記録するだけの偽物を渡す。
+  文面の組み立ては、さらにその外へ出してデータベースも要らなくしてある。</p>
+
   <h2 id="typed-routes">URL の組み立てを一枚に閉じ込める</h2>
 
   <p><code>typedRoutes</code> は、動的な区間がひとつなら

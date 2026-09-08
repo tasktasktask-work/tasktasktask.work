@@ -522,7 +522,8 @@
       <li><a href="#watch">ウォッチ</a>しているスレッドに新しいコメントが付いたとき</li>
     </ul>
     <p>アプリ内の通知には<a href="#read-state">既読</a>と未読がある。
-    メールは送りっぱなしなので、何を見落としたかを確かめる場所としてアプリ内の一覧が要る。</p>
+    <a href="#notification-mail">通知メール</a>は送りっぱなしなので、
+    何を見落としたかを確かめる場所としてアプリ内の一覧が要る。</p>
     <p>並ぶ場所は<a href="#assigned-list">担当スレッド一覧</a>と同じ画面で、タブで切り替える。
     未読の数は、組織の中のどの画面でも上帯のベルに出る。</p>
     <div class="note">
@@ -532,10 +533,10 @@
       通知にはスレッドの題名が含まれるので、絞らなければそこが情報の漏れ口になる。
       宛先は行を作るときに絞り、一覧に出すときにもう一度絞る。</p>
     </div>
-    <p>メール通知はユーザーごとにまとめて止められる。
-    止める手段がないと、煩わしく感じた人に迷惑メールとして報告され、送信ドメインの評価が下がる。
-    そうなると<a href="#magic-link">マジックリンク</a>まで届かなくなり、ログインそのものができなくなる。</p>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#watch">ウォッチ</a><a href="#mention">メンション</a><a href="#assignee">担当者</a><a href="#magic-link">マジックリンク</a></div>
+    <p>メールで届くほうは<a href="#notification-mail">通知メール</a>と呼び、
+    ユーザーごとにまとめて止められる。
+    送るのはリクエストの中ではなく、<a href="#delivery-pass">巡回</a>が後から拾って送る。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#watch">ウォッチ</a><a href="#mention">メンション</a><a href="#assignee">担当者</a><a href="#notification-mail">通知メール</a><a href="#delivery-pass">巡回</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/notification/index.html">通知とウォッチ</a></div>
   </article>
 
@@ -557,6 +558,54 @@
       マウスを乗せただけで消えた通知は、二度と探せない。</p>
     </div>
     <div class="rel"><span class="rel-label">関連する用語</span><a href="#notification">通知</a><a href="#assigned-list">担当スレッド一覧</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/notification/index.html">通知とウォッチ</a></div>
+  </article>
+
+  <article class="term" id="notification-mail">
+    <h3>通知メール<span class="reading">notification mail</span></h3>
+    <p><a href="#notification">通知</a>のうち、メールで届くほうを<strong>通知メール</strong>と呼ぶ。
+    アプリの中の一覧と同じ三つのきっかけで飛ぶ。</p>
+    <p>投稿した人のリクエストの中では送らない。
+    行だけを先に積み、<a href="#delivery-pass">巡回</a>が後から拾って送る。
+    コメントを書いた人が SMTP の応答を待つ形にすると、
+    相手が詰まったときに投稿の押しボタンまで詰まる。</p>
+    <p>宛先ごとに一通へまとめる。
+    会議がひとつ荒れると、同じ人に十数通が数分で届く。</p>
+    <div class="note">
+      <span class="note-label">止めるのは、送るためである</span>
+      <p>ユーザーごとにまとめて止められる。きっかけごとの細かい設定は持たない。</p>
+      <p>止める手段が無いと、煩わしく感じた人は迷惑メールとして報告する。
+      報告が積み重なると送信ドメインの評価が下がり、
+      <a href="#magic-link">マジックリンク</a>まで届かなくなる。
+      通知の煩わしさが、最後にはログインの入り口を塞ぐ。</p>
+      <p>止め方はメールの末尾にも書く。
+      アプリの中にしか切り替えが無いと、迷惑メールの押しボタンのほうが近い。</p>
+    </div>
+    <p>マジックリンクと招待は、この設定に関わらず届く。
+    こちらは通知ではなく、本人が待っている応答である。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#notification">通知</a><a href="#delivery-pass">巡回</a><a href="#read-state">既読</a><a href="#magic-link">マジックリンク</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/notification/index.html">通知とウォッチ</a></div>
+  </article>
+
+  <article class="term" id="delivery-pass">
+    <h3>巡回<span class="reading">delivery pass</span></h3>
+    <p>未送信の<a href="#notification-mail">通知メール</a>を拾って送る、一定間隔の一巡を<strong>巡回</strong>と呼ぶ。
+    間隔は60秒である。</p>
+    <p>この60秒は、まとめる幅でもある。
+    一巡のあいだに積まれた行が、宛先ごとに一通へ束ねられる。</p>
+    <p>一巡で相手にする宛先は50人までとし、あふれた分は次の巡回が拾う。
+    拾う順は古い順である。ここで打ち切ると、後ろに並んだ人の通知が永久に順番待ちになる。</p>
+    <div class="note">
+      <span class="note-label">送らないと決めた行にも、決着を付ける</span>
+      <p>アプリで先に読まれた、本人が通知メールを切っている、
+      <a href="#private-project">非公開</a>になって見えなくなった、飛ぶ先が消えた。
+      どれも送らないが、送らないだけでは足りない。</p>
+      <p>決着を付けないと、その行は毎分の巡回に拾われ続ける。
+      拾う順は古い順なので、居座った行が枠を先に取り、後ろの人へいつまでも届かない。</p>
+    </div>
+    <p>送れなかったときは、宛先が無いのか、相手がいま受けられないだけなのかで分ける。
+    回数だけで諦めると、SMTP が数分止まっただけで、その間の通知がまとめて捨てられる。</p>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#notification-mail">通知メール</a><a href="#notification">通知</a><a href="#read-state">既読</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/notification/index.html">通知とウォッチ</a></div>
   </article>
 

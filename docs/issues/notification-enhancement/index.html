@@ -51,6 +51,18 @@
   <a href="../../devops/deployment/index.html">デプロイ構成</a>に新しい要素が加わるため、
   アプリケーションだけで完結する機能を先に固めることにした。</p>
 
+  <div class="note">
+    <span class="note-label">壁の半分は、2026-09-08 に崩れた</span>
+    <p>通知メールの<a href="../../glossary.html#delivery-pass">巡回</a>ができ、
+    定期的に何かを走らせる場所そのものは手に入った。</p>
+    <p>残っているのは、日をまたいで一度だけ送る仕掛けである。
+    通知メールは行が積まれたことをきっかけにするが、期限は誰も行を積まない。
+    毎分の巡回から「今日はもう送ったか」を判断する必要があり、
+    <code>notifications</code> だけでは足りない。</p>
+    <p>多重起動の防止も残る。
+    いま巡回が一つで済んでいるのは、<code>app</code> が一つだからである。</p>
+  </div>
+
   <h3>通知の消去と保持期間</h3>
   <p>一覧は未読を全部と既読を直近20件しか出さないので、行が増えても画面は伸びない。
   伸びるのはテーブルだけである。</p>
@@ -61,8 +73,8 @@
   <ul>
     <li>「質問したのに誰も答えてくれない」という声が出たとき（1 の穴が顕在化した合図）</li>
     <li>メール通知をオフにしている人の割合が高いとき（2 が必要な合図）。
-    ただしメールはまだ送っておらず、オフにする画面も無い。
-    切り替えは<a href="../account-settings/index.html">アカウントの設定</a>と一緒に来る</li>
+    2026-09-08 にメールが飛ぶようになり、<code>/me</code> で切れるようになったので、
+    この割合はもう数えられる</li>
     <li>期限切れの課題が放置される事例が繰り返されたとき（3 が必要な合図）</li>
   </ul>
 
@@ -72,9 +84,11 @@
   遡ると、大量の人が突然通知を受け取りはじめる。</p>
 
   <p>2 は <code>users</code> にフラグを足すか、設定用のテーブルを作る。
-  きっかけが三つしかないので、三つの boolean で足りる。</p>
+  きっかけが三つしかないので、三つの boolean で足りる。
+  いまある一つのスイッチを、三つに割ることになる。</p>
 
-  <p>3 は日次バッチと、送信済みを記録する仕組みが要る。
+  <p>3 は送信済みを記録する仕組みが要る。
+  走らせる場所は巡回がある。
   同じ課題について毎日通知が飛ばないよう、
   <code>notifications</code> の <code>kind</code> に <code>due_soon</code> を足したうえで重複を避ける。</p>
 
@@ -82,6 +96,7 @@
   <div class="cards">
     <a class="card" href="../../features/notification/index.html"><span class="card-no">FEATURE</span><p class="card-title">通知とウォッチ</p><p class="card-desc">現在の設計</p></a>
     <a class="card" href="../../database/watches/index.html"><span class="card-no">TABLE</span><p class="card-title">watches</p><p class="card-desc">自動で行を作らない</p></a>
+    <a class="card" href="../account-settings/index.html"><span class="card-no">ISSUE</span><p class="card-title">アカウントの設定</p><p class="card-desc">切り替えの置き場</p></a>
   </div>
 
   <div class="sheet-foot">

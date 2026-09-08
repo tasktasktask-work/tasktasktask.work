@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>通知をメールで送るようにした | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-08 09:43</p>
+  <h1 class="title">通知をメールで送るようにした</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    <code>SmtpMailSender.send</code> は呼ぶと例外を投げていた。
+    止まっていたのは通知だけではない。本番ではマジックリンクも招待も届かない状態だった。
+  </p>
+
+  <h2>認証の入り口が塞がっていた</h2>
+
+  <p>前回までに三つのきっかけはどれも行を積むようになっていた。
+  無いのは送る仕掛けだけ、という認識で始めた。</p>
+
+  <p>手元を見ると、そうではなかった。
+  <code>MAIL_TRANSPORT=console</code> の開発環境では標準出力に書かれるので気づかない。
+  本番の <code>smtp</code> では、<a href="../../glossary.html#magic-link">マジックリンク</a>を送ろうとした時点で例外が飛ぶ。
+  <strong>ログインそのものができない。</strong></p>
+
+  <p>SMTP を実装した時点で、通知より先にそちらが直った。</p>
+
+  <h2>置き場が無い、という壁</h2>
+
+  <p>行を作ってから送るまでのあいだに、誰かがその行を拾わなければならない。
+  デプロイ構成に常駐プロセスも定期実行も無い。
+  期限が近い課題の通知を先送りにしたときと同じ壁である。</p>
+
+  <p>四つ並べて、二つ目を選んだ。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>案</th><th>採らなかった理由</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">リクエストの後で送る</td><td>失敗したときに拾い直す人がいない。永久に未送信の行が残る</td></tr>
+      <tr><td class="nowrap"><strong>同じプロセスで巡回する</strong></td><td>採用。置き場が増えない</td></tr>
+      <tr><td class="nowrap">送信専用のサービスを足す</td><td>デプロイ構成に要素が増える</td></tr>
+      <tr><td class="nowrap">外から定期的に叩く</td><td>同上。加えて叩く口を外へ開けることになる</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>間隔は60秒である。これはまとめる幅でもある。
+  会議がひとつ荒れると一人に十数通が数分で届くので、宛先ごとに一通へ束ねる。
+  無料枠は月3,000通しかない。</p>
+
+  <div class="note warn">
+    <span class="note-label">コンテナが一つであることに寄りかかっている</span>
+    <p>掴むところでは <code>FOR UPDATE SKIP LOCKED</code> を使うが、
+    ロックは掴む取引の終わりで放される。送るのはそのあとである。
+    取引を開けたまま SMTP の応答を待つわけにいかないためだ。</p>
+    <p>したがって <code>app</code> を二つに増やすと、同じ束が二通届きうる。
+    いま動くのは一つだけなので通しているが、<strong>増やすときは掴んだ印を行に持たせるところから直す</strong>。
+    <a href="../../devops/deployment/index.html">デプロイ構成</a>にも書いた。</p>
+  </div>
+
+  <h2>送らない行を、拾い続けないための列</h2>
+
+  <p>送らないと決める場面がいくつもある。
+  アプリで先に読まれた、本人が通知メールを切っている、
+  <a href="../../glossary.html#private-project">非公開</a>になって見えなくなった、飛ぶ先が消えた。</p>
+
+  <p>作りながら気づいたのは、<strong>送らないだけでは足りない</strong>ということである。</p>
+
+  <p>拾う索引は <code>WHERE emailed_at IS NULL</code> の部分索引で、
+  拾う順は古い順である。決着を付けない行はそこに残り続ける。
+  残るだけなら費用の話で済むが、古い順に拾うので、
+  居座った行が毎回の枠を先に取る。後ろに並んだ人の通知が永久に順番待ちになる。</p>
+
+  <p>アプリで先に読まれる行は、通知が来てから60秒以内に画面を開いた人の数だけ生まれる。
+  珍しい出来事ではない。放っておけば、その分だけ索引の先頭が詰まっていく。</p>
+
+  <p>そこで <code>email_gave_up_at</code> を足し、索引の条件をそれで書いた。
+  「送った」と「送らないことにした」を別の列にしてある。</p>
+
+  <div class="note decide">
+    <span class="note-label"><code>emailed_at</code> を代わりに埋めなかった理由</span>
+    <p>列を一つで済ませられる。ただし<strong>送っていないものを送ったことにすると、
+    届かなかった件を数えられなくなる。</strong></p>
+    <p>索引の条件に試行の回数を書く手もあったが、そちらは上限を変えるたびに移行が要る。</p>
+    <p>二つに分けた副産物として、畳んだ理由も読める。
+    <code>email_attempts</code> が 0 のまま畳まれた行は、一度も送ろうとしていない。</p>
+  </div>
+
+  <h2>回数だけで諦めると、復旧のあいだの通知が消える</h2>
+
+  <p>諦めるまでの回数を決める、という話にはもう一段ある。</p>
+
+  <p>60秒ごとに巡回して5回で諦めるなら、
+  <strong>Cloudflare 側が5分止まっただけで、その間の通知が全部捨てられる。</strong>
+  宛先が壊れているのと、相手が一時的に応じないのとを、回数は区別しない。</p>
+
+  <p>SMTP はこの二つを応答コードで分けている。
+  5xx なら回数を待たずその場で諦め、4xx と接続の失敗は数える。
+  上限は60回、つまり一時間ぶんに取った。
+  一時間で復旧しない SMTP は、諦めたことより先に気づくべき事態である。</p>
+
+  <p>接続の失敗を一時側に入れたのは、
+  相手が居ないのか経路が切れているだけなのかを、こちらから区別できないためである。</p>
+
+  <h2>回数は、掴むときに増やす</h2>
+
+  <p>送ってから増やす形も取れる。そちらだと、送信の途中でプロセスが落ちる束は
+  回数が永久に 0 のまま、起動のたびに同じ場所で落ち続ける。</p>
+
+  <p>先に増やしておけば、そういう束もいずれ上限に達して外れる。
+  送れた行には <code>emailed_at</code> が入るので、増えた回数は「何回目で届いたか」として残る。</p>
+
+  <h2>切るスイッチを、同じ回で入れた</h2>
+
+  <p>値は前から <code>users.email_notifications_enabled</code> にあった。切り替える画面が無かった。
+  <a href="../../issues/account-settings/index.html">アカウントの設定</a>として先送りにしてあったものである。</p>
+
+  <p>ただし機能ドキュメントは、このスイッチを迷惑メール報告への保険と位置づけていた。
+  止められないまま送り始めると、報告が積み重なって送信ドメインの評価が下がり、
+  最後にはマジックリンクが届かなくなる。
+  送るのと同じ回に入れないと、順番が逆になる。</p>
+
+  <p>置いたのは <code>/me</code> である。組織の下ではない。</p>
+
+  <div class="note decide">
+    <span class="note-label">URL は、その設定がどこまで効くかを語る</span>
+    <p>この値は所属しているすべての組織に効く。
+    <code>/o/{slug}/...</code> の下に置くと、その組織だけの設定に見える。</p>
+    <p>三つの組織に居る人が三箇所を止めて回り、一つ見落として届き続ける、という形を作らない。</p>
+  </div>
+
+  <p>止め方はメールの末尾にも書いた。
+  煩わしいと感じた人はメールを開いたその場で判断するので、
+  そこに切り方が無ければ、迷惑メールの押しボタンのほうが近い。
+  <code>List-Unsubscribe</code> ヘッダは付けていない。
+  あれは押した瞬間に止まる約束で、認証を通さずに止める口を開けることになる。</p>
+
+  <h2>マジックリンクだけは、その場で送る</h2>
+
+  <p>通知と同じ列に積む手もあった。採らなかった。</p>
+
+  <p>ログイン用リンクが最大一分遅れて届く。
+  ログインは待っている人の目の前で起きるので、その遅れは直接見える。
+  失敗したときに「送りました」と嘘をつかないためでもある。</p>
+
+  <h2>Atlas の指示が、黙って無視された</h2>
+
+  <p><code>CREATE INDEX CONCURRENTLY</code> はトランザクションの中で実行できない。
+  規約どおり別のファイルへ分け、先頭に <code>-- atlas:txmode none</code> を置いた。
+  それでも <code>cannot run inside a transaction block</code> で落ちた。</p>
+
+  <p>指示の直後にコメント行を続けていたのが原因である。
+  一行目に置き、次を空行にすると通った。
+  <a href="../../devops/database-migration/index.html">スキーマ移行</a>に書き足した。</p>
+
+  <h2>テストの並行実行と、絞れない巡回</h2>
+
+  <p>巡回は組織を絞らない。仕組みとして絞れない。宛先は組織をまたぐからである。</p>
+
+  <p>テストは複数のファイルが並行して走るので、
+  一巡の上限を確かめるテストが、他のファイルの積んだ行と枠を取り合って落ちた。</p>
+
+  <p>数え方を変えた。自分の作った宛先が何人届いたかではなく、
+  <strong>一巡で送られた通の総数</strong>を見る。
+  こちらは他のファイルの行が混ざっても、上限を超えないことに変わりはない。</p>
+
+  <h2>確かめたこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <tbody>
+      <tr><td class="nowrap">テスト</td><td>342件すべて通過（通知メール19件、制約1件を追加）</td></tr>
+      <tr><td class="nowrap">画面</td><td>75件すべて通過。サーバのエラーなし</td></tr>
+      <tr><td class="nowrap">巡回</td><td>実際にサーバを70秒動かし、文面が組み立てられて <code>emailed_at</code> が入ることを確認</td></tr>
+      <tr><td class="nowrap">ミューテーション</td><td>14箇所の判定を壊し、14箇所とも捕捉</td></tr>
+      <tr><td class="nowrap">スキーマ</td><td>列を二つ、制約を一つ、索引の張り替えを一つ</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>文面の組み立てはデータベースを通さずに確かめている。
+  三件まとまったときの書き方を見るのに下ごしらえが要る状態にすると、誰も書き方を確かめなくなる。</p>
+
+  <h2>作ったもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <tbody>
+      <tr><td class="nowrap"><code>src/lib/mail.ts</code></td><td>SMTP の実装。恒久と一時を分ける <code>MailFailure</code></td></tr>
+      <tr><td class="nowrap"><code>src/features/notification/mail.ts</code></td><td>文面の組み立て。データベースを触らない</td></tr>
+      <tr><td class="nowrap"><code>src/features/notification/mailer.ts</code></td><td>一巡ぶんと、間隔を計るだけの殻</td></tr>
+      <tr><td class="nowrap"><code>src/instrumentation.ts</code></td><td>起動時に巡回を始める</td></tr>
+      <tr><td class="nowrap"><code>src/features/account/</code></td><td>組織のスコープを取らない数少ない場所</td></tr>
+      <tr><td class="nowrap"><code>src/app/me/page.tsx</code></td><td>上帯だけの枠。左帯は無い</td></tr>
+      <tr><td class="nowrap"><code>deploy/.env.example</code></td><td>差出人を <code>noreply@</code> に直し、巡回の置き場を書き添えた</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>次にやること</h2>
+
+  <p>タグである。
+  <code>tags</code> と <code>thread_tags</code> はスキーマにあるが、誰も行を作らない。
+  一覧の絞り込みも、スレッド詳細の属性欄も、タグのぶんだけ穴が空いたままになっている。</p>
+
+  <p>本番への反映も溜まっている。
+  <code>20260907135543</code> 以降の三つの移行がまだ VPS に当たっていない。
+  今回のぶんには <code>CREATE INDEX CONCURRENTLY</code> が入るので、
+  <code>docker compose run --rm migrate</code> がトランザクションを張らないことを、
+  本物のデータベースで初めて確かめることになる。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../features/notification/index.html"><span class="card-no">FEATURE</span><p class="card-title">通知とウォッチ</p><p class="card-desc">決めたことの本体</p></a>
+    <a class="card" href="../../ui/pages/me/index.html"><span class="card-no">UI</span><p class="card-title">アカウント</p><p class="card-desc">組織の外に置いた一枚</p></a>
+    <a class="card" href="../../database/notifications/index.html"><span class="card-no">TABLE</span><p class="card-title">notifications</p><p class="card-desc">メールの決着を持つ三つの列</p></a>
+    <a class="card" href="../../devops/database-migration/index.html"><span class="card-no">DEVOPS</span><p class="card-title">スキーマ移行</p><p class="card-desc">黙って無視された指示</p></a>
+    <a class="card" href="../../issues/notification-enhancement/index.html"><span class="card-no">ISSUE</span><p class="card-title">通知の拡張</p><p class="card-desc">壁の残り半分</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 通知をメールで送るようにした</span>
+    <span>最終更新 2026-09-08</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

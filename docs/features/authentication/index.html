@@ -95,7 +95,7 @@
 
   <p>送信は Cloudflare Email Service の SMTP 経由で行う。
   ただしアプリケーション側は <code>MailSender</code> という抽象を通してしか呼ばない。
-  開発中はコンソールへ出力する実装を差し込み、本番では SMTP の実装に切り替える。
+  開発中はコンソールへ出力する実装を差し込み、本番では SMTP（<code>nodemailer</code>）の実装に切り替える。
   送信先を別のサービスへ移すときも、接続設定の差し替えで済む。</p>
 
   <div class="note">
@@ -165,9 +165,17 @@
       <tr><td>招待の受諾によるロックの解除</td><td>実装済み</td></tr>
       <tr><td>パスワードの変更</td><td><strong>未実装</strong>（<a href="../../issues/account-settings/index.html">アカウントの設定</a>へ送った）</td></tr>
       <tr><td>組織管理者による手動のロック解除</td><td><strong>未実装</strong></td></tr>
-      <tr><td>SMTP でのメール送信</td><td><strong>未実装</strong>（開発中のコンソール出力のみ）</td></tr>
+      <tr><td>SMTP でのメール送信</td><td>実装済み（2026-09-08。それまで本番ではマジックリンクが届かなかった）</td></tr>
     </tbody>
   </table>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">2026-09-08 まで、本番ではログインできなかった</span>
+    <p><code>SmtpMailSender.send</code> が呼ぶと例外を投げる状態のまま置いてあった。
+    開発環境はコンソールへ書き出す実装なので、通しの確認では見つからない。</p>
+    <p><a href="../notification/index.html">通知メール</a>を作るために SMTP を実装したところ、
+    先にこちらが直った。<strong>通知の付属物として直る場所ではなかった。</strong></p>
   </div>
 
   <p>ログインの経路は通しで確かめてある。
@@ -202,7 +210,7 @@
 
   <div class="sheet-foot">
     <span>機能 / 認証</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

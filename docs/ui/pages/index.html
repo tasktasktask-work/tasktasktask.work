@@ -24,6 +24,7 @@
 <pre class="figure">/                                       所属している組織の一覧
 /login                                  ログイン
 /join?token=...                         招待の受諾
+/me                                     アカウント（組織に依らない）
 /o/{slug}                               プロジェクト一覧
 /o/{slug}/members                       メンバーと招待
 /o/{slug}/settings                      組織の設定（組織管理者だけ）
@@ -35,6 +36,10 @@
   <p>組織を示す <code>{slug}</code> を必ず含める。
   ひとりが複数の組織に所属するため、URLを見てどの組織かがわからないと取り違えが起きる。</p>
 
+  <p><code>/me</code> だけが例外である。
+  ここで触る値は組織の外側にあり、所属しているすべての組織に効く。
+  <code>{slug}</code> を含めると、その組織だけの設定に見える。</p>
+
   <p>スレッドのURLに使うのは <code>{number}</code> だけで、プロジェクトキーは重複しない。
   番号は組織の中で通し番号なので、<code>/o/acme/p/WEB/t/128</code> の <code>WEB</code> と <code>128</code> は
   どちらもプロジェクトを特定しうるが、キーのほうを人間向けの手がかりとして残している。</p>
@@ -43,6 +48,7 @@
   <div class="cards">
     <a class="card" href="login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">パスワードとマジックリンクを一枚に</p></a>
     <a class="card" href="join/index.html"><span class="card-no">/join</span><p class="card-title">招待を受ける</p><p class="card-desc">アカウントの有無で入力欄が変わる</p></a>
+    <a class="card" href="me/index.html"><span class="card-no">/me</span><p class="card-title">アカウント</p><p class="card-desc">通知メールの入り切り</p></a>
     <a class="card" href="o/[slug]/index.html"><span class="card-no">/o/{slug}</span><p class="card-title">プロジェクト一覧</p><p class="card-desc">組織に入って最初に見る</p></a>
     <a class="card" href="o/[slug]/members/index.html"><span class="card-no">/members</span><p class="card-title">メンバー</p><p class="card-desc">一覧、役割、招待</p></a>
     <a class="card" href="o/[slug]/settings/index.html"><span class="card-no">/settings</span><p class="card-title">組織の設定</p><p class="card-desc">組織管理者だけが開ける</p></a>
@@ -57,8 +63,9 @@
 
   <h2>共通のレイアウト</h2>
 
-  <p>ログイン以外のすべての画面は、上帯と左帯を共有する。
-  Next.js の App Router では <code>app/o/[slug]/layout.tsx</code> にあたる。</p>
+  <p>組織の中の画面は、上帯と左帯を共有する。
+  ログイン、招待、組織の一覧、そして <code>/me</code> には左帯が付かない。
+  どれも組織に属していない人が開きうる画面で、そのとき左帯に並べるものが一つも無い。</p>
 
 <pre class="figure">┌────────────────────────────────────────────────┐
 │ [3] TASK3    株式会社アクメ acme    🔔3  [佐]  │ 上帯
@@ -70,7 +77,11 @@
 │ わたし        │                                 │
 │  担当スレッド │                                 │
 │  通知        │                                 │
+│  アカウント   │                                 │
 └──────────────┴─────────────────────────────────┘</pre>
+
+  <p>「アカウント」だけは行き先が組織の外（<code>/me</code>）である。
+  左帯から出ていくことになるが、探す場所としてはここが自然だと見た。</p>
 
   <p>左帯に並ぶプロジェクトは、閲覧できるものだけである。
   <a href="../../glossary.html#private-project">非公開プロジェクト</a>でメンバーでないものは表示されない。
@@ -92,7 +103,7 @@
 
   <div class="sheet-foot">
     <span>UI / ページモック</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

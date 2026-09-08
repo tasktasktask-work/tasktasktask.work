@@ -314,6 +314,7 @@
 }
 .app-props .app-btn { padding: .22rem .5rem; font-size: .7rem; }
 .app-props .err { flex-basis: 100%; font-size: .72rem; color: var(--ki); }
+.app-props .ok  { flex-basis: 100%; font-size: .72rem; color: var(--midori); }
 
 /* 本文の入力欄 -------------------------------------------------------------- */
 .app-form textarea {

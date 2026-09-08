@@ -35,7 +35,12 @@
   comment_id      uuid        REFERENCES comments(id),
   actor_user_id   uuid        REFERENCES users(id),
   read_at         timestamptz,
-  emailed_at      timestamptz,
+
+  -- メールの決着。三つで一組になっている
+  emailed_at       timestamptz,
+  email_attempts   integer     NOT NULL DEFAULT 0,
+  email_gave_up_at timestamptz,
+
   created_at      timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT notifications_kind_valid
@@ -46,7 +51,11 @@
     CHECK (kind = 'assigned' OR comment_id IS NOT NULL),
 
   CONSTRAINT notifications_not_self
-    CHECK (actor_user_id IS DISTINCT FROM user_id)
+    CHECK (actor_user_id IS DISTINCT FROM user_id),
+
+  -- 送ったのに諦めた、という行は作れない
+  CONSTRAINT notifications_email_settled_once
+    CHECK (emailed_at IS NULL OR email_gave_up_at IS NULL)
 );
 
 CREATE INDEX notifications_inbox
@@ -56,7 +65,8 @@ CREATE INDEX notifications_unread
   ON notifications (user_id) WHERE read_at IS NULL;
 
 CREATE INDEX notifications_pending_email
-  ON notifications (created_at) WHERE emailed_at IS NULL;</code></pre>
+  ON notifications (created_at)
+  WHERE emailed_at IS NULL AND email_gave_up_at IS NULL;</code></pre>
 
   <h2>カラム</h2>
   <div class="table-scroll">
@@ -69,6 +79,8 @@ CREATE INDEX notifications_pending_email
       <tr><td><code>actor_user_id</code></td><td>uuid</td><td>きっかけを作った人。受け取る人と同じにはならない</td></tr>
       <tr><td><code>read_at</code></td><td>timestamptz</td><td>アプリ内で既読になった時刻</td></tr>
       <tr><td><code>emailed_at</code></td><td>timestamptz</td><td>メールを送った時刻。NULL なら未送信</td></tr>
+      <tr><td><code>email_attempts</code></td><td>integer</td><td>送ろうとした回数。掴んだ時点で増える</td></tr>
+      <tr><td><code>email_gave_up_at</code></td><td>timestamptz</td><td>送らないことにした時刻</td></tr>
     </tbody>
   </table>
   </div>
@@ -77,10 +89,38 @@ CREATE INDEX notifications_pending_email
   <p>自分の操作で自分に通知が来る状態を、データベース側で拒否する。
   自分のコメントで自分に通知が届く一覧は、すぐに読まれなくなる。</p>
 
-  <h3>emailed_at を持つ理由</h3>
+  <h3>メールの決着が三つの列に分かれている理由</h3>
   <p>メール送信は失敗しうるし、外部サービスへの呼び出しなので同期的に待ちたくない。
-  行を先に作り、未送信のものを後から拾って送る形にする。</p>
-  <p><code>notifications_pending_email</code> の部分インデックスは、この拾い出しのためにある。</p>
+  行を先に作り、未送信のものを後から<a href="../../glossary.html#delivery-pass">巡回</a>が拾って送る。
+  <code>notifications_pending_email</code> の部分インデックスは、この拾い出しのためにある。</p>
+
+  <p>拾われた行は、いずれ三つのどれかに落ち着く。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>状態</th><th>列の形</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">まだ送っていない</td><td><code>emailed_at</code> も <code>email_gave_up_at</code> も NULL</td></tr>
+      <tr><td class="nowrap">送れた</td><td><code>emailed_at</code> が入る。回数は「何回目で届いたか」として残る</td></tr>
+      <tr><td class="nowrap">送らなかった</td><td><code>email_gave_up_at</code> が入る</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>三つめには、性質の違う二つが混ざる。
+  送ろうとして駄目だったものと、送る必要が無くなったものである。
+  <code>email_attempts</code> がそれを分ける。
+  0 のまま畳まれた行は、一度も送ろうとしていない。</p>
+
+  <div class="note warn">
+    <span class="note-label">諦めた行を索引から外す必要がある</span>
+    <p><code>emailed_at</code> を代わりに埋める手もあった。
+    <strong>送っていないものを送ったことにすると、届かなかった件を数えられなくなる。</strong></p>
+    <p>索引の条件に回数を書く手もあった。
+    そちらは上限を変えるたびに移行が要る。列を分けておけば索引は定数を持たない。</p>
+    <p>どの手を取るにせよ、外すこと自体は避けられない。
+    拾う順は古い順なので、居座った行が枠を先に取り、後ろに並んだ人へいつまでも届かなくなる。</p>
+  </div>
 
   <h2>作られるとき</h2>
 
@@ -129,6 +169,10 @@ CREATE INDEX notifications_pending_email
   行は作るがメールは送らない。
   アプリ内の一覧には出る。</p>
 
+  <p>送らないと決めた行には <code>email_gave_up_at</code> が入る。
+  送らないだけでは足りない。切っている人の行が積み上がり、
+  巡回が毎分それを読み直すことになる。</p>
+
   <div class="note decide">
     <span class="note-label">この一つのスイッチが認証を守っている</span>
     <p>メールを止める手段がないと、煩わしく感じた人が迷惑メールとして報告する。
@@ -156,7 +200,7 @@ CREATE INDEX notifications_pending_email
 
   <div class="sheet-foot">
     <span>データベース / notifications</span>
-    <span>最終更新 2026-09-07</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

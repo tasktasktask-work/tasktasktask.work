@@ -100,6 +100,8 @@ export async function OrgShell({
           >
             通知
           </Link>
+          {/* 組織の外にある。メール通知の入り切りは users にあり、全組織に効く */}
+          <Link href="/me">アカウント</Link>
 
           <h5>組織</h5>
           <Link href={`/o/${slug}/members`} className={current === 'members' ? 'on' : ''}>

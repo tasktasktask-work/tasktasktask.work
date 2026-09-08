@@ -214,6 +214,33 @@ ALTER TABLE threads VALIDATE CONSTRAINT threads_progress_range;</code></pre>
   <p><strong>この文はトランザクションの中で実行できない。</strong>
   Atlas の生成したファイルに他の文と混ざっていたら、別のファイルに分ける。</p>
 
+  <p>分けたファイルの先頭に、トランザクションを張らせない指示を置く。
+  Atlas の既定は「ファイル一つにつき一トランザクション」である。</p>
+
+<pre><code>-- atlas:txmode none
+
+-- 巡回が拾う行の索引を張り替える
+DROP INDEX "notifications_pending_email";
+
+CREATE INDEX CONCURRENTLY "notifications_pending_email"
+  ON "notifications" ("created_at")
+  WHERE ((emailed_at IS NULL) AND (email_gave_up_at IS NULL));</code></pre>
+
+  <div class="note warn">
+    <span class="note-label">指示の後ろに空行が要る</span>
+    <p><code>-- atlas:txmode none</code> の直後にコメント行が続くと、
+    <strong>Atlas はこの指示を読まない。</strong>
+    黙って無視され、適用したときに
+    <code>CREATE INDEX CONCURRENTLY cannot run inside a transaction block</code> で落ちる。</p>
+    <p>指示は一行目に置き、その次を空行にする。
+    説明を書くのは、そのあとである（2026-09-08 に踏んだ）。</p>
+  </div>
+
+  <p>索引の条件だけを変えるときは、先に落としてから張る。
+  張ってから落とす順にすると、途中で同じ名前の索引が二つ要ることになり、
+  スキーマの正本と食い違う。
+  そのあいだ総なめになるだけなので、使い手が巡回しか居ない索引ならこれで足りる。</p>
+
   <h2>適用のタイミング</h2>
 
   <p>アプリケーションの起動時に自動で流さない。
@@ -249,7 +276,7 @@ ALTER TABLE threads VALIDATE CONSTRAINT threads_progress_range;</code></pre>
 
   <div class="sheet-foot">
     <span>開発と運用 / スキーマ移行</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

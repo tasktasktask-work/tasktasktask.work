@@ -43,17 +43,31 @@
   <p><strong>この機能が無いことで、できなくなる操作が一つもない。</strong>
   組織とプロジェクトのほうが先に要る。</p>
 
-  <h2>実装するとしたら</h2>
-  <p><code>/settings</code> に置く。組織の下ではない。
+  <h2>画面はもうある</h2>
+
+  <p>2026-09-08 に <code>/me</code> を作った。
+  <a href="../../features/notification/index.html">通知メール</a>を送るようになり、
+  止める手段の無いまま送り始めるわけにいかなくなったためである。</p>
+
+  <p>いま置いてあるのはメール通知の切り替え一つだけで、
+  残りはこの画面に足していくことになる。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>項目</th><th>いま</th><th>要ること</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">メール通知</td><td>ある</td><td><code>users.email_notifications_enabled</code> の切り替え</td></tr>
+      <tr><td class="nowrap">表示名</td><td>まだ</td><td>変えるとすべての組織での表示が変わる。それでよい</td></tr>
+      <tr><td class="nowrap">パスワード</td><td>まだ</td><td>現在のパスワードを要求する。持っていない人には要求しない</td></tr>
+      <tr><td class="nowrap">メールアドレス</td><td>まだ</td><td>変更後のアドレスへ確認のリンクを送ってから差し替える</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>置き場所は <code>/settings</code> ではなく <code>/me</code> にした。
+  組織の下でない点は変わらない。
   ひとりが複数の組織に所属するので、
   <code>/o/{slug}/</code> の下に置くと、どの組織で変えたのかという問いが生まれる。</p>
-
-  <ul>
-    <li><strong>表示名</strong> 変えるとすべての組織での表示が変わる。それでよい</li>
-    <li><strong>パスワード</strong> 現在のパスワードを要求する。持っていない人には要求しない</li>
-    <li><strong>メール通知</strong> <code>users.email_notifications_enabled</code> の切り替え</li>
-    <li><strong>メールアドレス</strong> 変更後のアドレスへ確認のリンクを送ってから差し替える</li>
-  </ul>
 
   <p>メールアドレスの変更だけは扱いが重い。
   アドレスは<a href="../../glossary.html#invitation">招待</a>の宛先であり、ログインの識別子でもある。
@@ -64,11 +78,12 @@
     <a class="card" href="../../features/authentication/index.html"><span class="card-no">FEATURE</span><p class="card-title">認証</p><p class="card-desc">パスワードとマジックリンク</p></a>
     <a class="card" href="../../database/users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">変える対象の列</p></a>
     <a class="card" href="../organization-signup/index.html"><span class="card-no">ISSUE</span><p class="card-title">組織を自分で作る</p><p class="card-desc">同じ経路で生じた課題</p></a>
+    <a class="card" href="../../ui/pages/me/index.html"><span class="card-no">/me</span><p class="card-title">アカウント</p><p class="card-desc">できている一枚</p></a>
   </div>
 
   <div class="sheet-foot">
     <span>課題 / アカウントの設定</span>
-    <span>最終更新 2026-09-07</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

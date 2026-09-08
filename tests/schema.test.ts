@@ -241,6 +241,26 @@ describe('通知', () => {
       );
     });
   });
+
+  it('メールの決着は一度きり', async () => {
+    await withRollback(async (c) => {
+      const f = await seed(c);
+      const k = await newThread(c, f, f.web, 'kadai', '検索APIの実装');
+      // 送ったのに諦めた、という行が作れると、届かなかった件を数えられなくなる
+      await rejects(
+        c,
+        () =>
+          c.query(
+            `INSERT INTO notifications
+               (organization_id, user_id, kind, thread_id, actor_user_id,
+                emailed_at, email_gave_up_at)
+             VALUES ($1,$2,'assigned',$3,$4, now(), now())`,
+            [f.org, f.ryo, k.id, f.asuka],
+          ),
+        '送ったのに諦めた',
+      );
+    });
+  });
 });
 
 describe('updated_at のトリガ', () => {

@@ -33,7 +33,7 @@
       <tr><td class="nowrap">DBアクセス</td><td><code>pg</code>（SQLを直接書く）</td><td><strong>ORM を使わない</strong></td></tr>
       <tr><td class="nowrap">スキーマ管理</td><td>Atlas</td><td>宣言的に定義する</td></tr>
       <tr><td class="nowrap">実行基盤</td><td>VPS + Docker Compose</td><td>稼働中の nginx-proxy と postgres に相乗りする</td></tr>
-      <tr><td class="nowrap">メール送信</td><td>Cloudflare Email Service</td><td>SMTP 経由。抽象を挟む</td></tr>
+      <tr><td class="nowrap">メール送信</td><td>Cloudflare Email Service</td><td><code>nodemailer</code> で SMTP。抽象を挟む</td></tr>
       <tr><td class="nowrap">画像処理</td><td>browser-image-compression / sharp</td><td>送信前の圧縮と、サーバー側の再エンコード</td></tr>
     </tbody>
   </table>
@@ -119,7 +119,22 @@ class ConsoleMailSender implements MailSender { /* 標準出力に書く */ }
 class SmtpMailSender implements MailSender { /* smtp.mx.cloudflare.net:465 */ }</code></pre>
 
   <p>SMTP で送るため、Cloudflare 固有の実装に縛られない。
-  別のサービスへ移すときも接続設定の差し替えで済む。</p>
+  別のサービスへ移すときも接続設定の差し替えで済む。
+  クライアントは <code>nodemailer</code> である。
+  Node に組み込みの SMTP クライアントは無く、自前で書くと認証方式と TLS と
+  MIME の組み立てを抱えることになる。</p>
+
+  <p>抽象は二つ目の役目も持っている。
+  引数で受け取る形にしてあるので、<a href="../../glossary.html#delivery-pass">巡回</a>のテストは
+  記録するだけの偽物を渡して呼べる。</p>
+
+  <div class="note">
+    <span class="note-label">送れなかった理由を、抽象の側で分けている</span>
+    <p><code>MailFailure</code> は恒久（宛先が無い）と一時（いまは受けられない）を持つ。
+    SMTP の 5xx と 4xx にあたる。</p>
+    <p>呼ぶ側がこの区別を持たないと、諦めるかもう一度試すかを回数だけで決めることになり、
+    <strong>送信先が数分止まっただけで、その間の通知がまとめて捨てられる。</strong></p>
+  </div>
 
   <div class="note">
     <span class="note-label">無料枠の上限を見込んでおく</span>
@@ -155,7 +170,7 @@ class SmtpMailSender implements MailSender { /* smtp.mx.cloudflare.net:465 */ }<
 
   <div class="sheet-foot">
     <span>開発と運用 / 技術スタック</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>アカウント | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock &#183; /me</p>
+  <h1 class="title">アカウント</h1>
+  <p class="lede">
+    置いてあるスイッチは一つだけである。
+    それでも画面を分けたのは、この値が組織の外側にあるからだ。
+  </p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/me</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="sp"></span>
+          <span class="hanko sm">田</span>
+          <button class="app-btn ghost">ログアウト</button>
+        </div>
+        <div class="app-main">
+          <div class="app-head">
+            <div><h2>アカウント</h2><div class="sub">田中 亮（ryo@example.com）</div></div>
+          </div>
+
+          <div class="app-props" style="max-width:34rem">
+            <div class="row">
+              <span class="k">通知メール</span>
+              <span class="v"><button class="app-btn">受け取っています</button></span>
+            </div>
+          </div>
+
+          <div class="app-note">
+            <p style="margin:0">この設定は、所属しているすべての組織に効きます。
+            きっかけごとの細かい切り替えは持っていません。
+            止めているあいだも、通知そのものは組織ごとの一覧に積まれ続けます。
+            ログイン用のリンクと招待は、この設定に関わらず届きます。</p>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>左帯が無い</h2>
+
+  <p>組織の中の画面には、プロジェクトが並ぶ左帯が付く。
+  この画面には付かない。組織に属していない人も、ここへ来られる必要があるからである。</p>
+
+  <p>招待を受け取る前の人も、最後の組織から抜けた人も、アカウントは持っている。
+  そのとき左帯に並べるものは一つも無い。</p>
+
+  <p>枠は<a href="../o/[slug]/index.html">組織の一覧</a>と同じものを使う。
+  ロゴを押すとそこへ戻る。</p>
+
+  <h2>なぜ組織の下に置かないか</h2>
+
+  <p>切り替える値は <code>users</code> にある。
+  所属しているすべての組織に効く。</p>
+
+  <div class="note decide">
+    <span class="note-label">URL は、その設定がどこまで効くかを語る</span>
+    <p><code>/o/{slug}/settings/me</code> に置くと、その組織だけの設定に見える。
+    三つの組織に居る人は三箇所を止めて回り、一つ見落として届き続ける。</p>
+    <p>実際には一箇所で全部止まる。
+    <strong>止めたつもりで届き続けるより、止めるつもりの無かったものまで止まるほうが、まだ気づける。</strong></p>
+  </div>
+
+  <p>左帯の「わたし」からもここへ来られる。
+  ただしリンクの行き先は組織の外へ出る。</p>
+
+  <h2>スイッチの押し方</h2>
+
+  <p>チェックと保存に分けていない。押した時点で切り替わる。</p>
+
+  <p>分けると、切ったつもりで保存を押していない状態が作れる。
+  止めたい人は、たいてい通知が届いた直後に苛立って開いている。</p>
+
+  <h2>ここに増えていくもの</h2>
+
+  <p>表示名の変更、パスワードの設定、退会。
+  <a href="../../../issues/account-settings/index.html">アカウントの設定</a>に置いてある分は、この画面に足していくことになる。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../../features/notification/index.html"><span class="card-no">FEATURE</span><p class="card-title">通知とウォッチ</p><p class="card-desc">このスイッチが効く先</p></a>
+    <a class="card" href="../../../issues/account-settings/index.html"><span class="card-no">ISSUE</span><p class="card-title">アカウントの設定</p><p class="card-desc">続きはここに</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / アカウント</span>
+    <span>最終更新 2026-09-08</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../sidebar.js" defer></script>
+</body>
+</html>

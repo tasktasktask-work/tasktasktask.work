@@ -65,6 +65,20 @@ docker compose up -d
 `migrate` は Atlas と Node を毎回立ち上げてデータベースを叩くため、
 回り続けると CPU を食い尽くす。`profiles` を付けてあるので `up -d` では起動しない。
 
+## メールの設定
+
+`.env` に四つ要る。詳しくは `.env.example` にある。
+
+| 名前 | 内容 |
+|------|------|
+| `MAIL_TRANSPORT` | 本番は `smtp`。`console` だと誰にも届かない |
+| `MAIL_FROM` | 差出人。受信箱は用意していない |
+| `SMTP_URL` | Cloudflare Email Service への接続先 |
+| `APP_ORIGIN` | メールに載せるリンクの組み立てに使う |
+
+通知メールは、`app` の中で60秒ごとに回る巡回が送る。
+cron も常駐プロセスも要らない代わりに、**`app` を二つに増やすと同じ通知が二通届く**。
+
 ## 気をつけること
 
 - **マイグレーションは `up -d` の前に流す。**
@@ -75,5 +89,6 @@ docker compose up -d
   片方だけ戻しても復旧しない
 - **イメージのアーキテクチャと VPS のアーキテクチャを揃える。**
   GitHub の runner は x86_64 である
+- **`app` は一つだけ動かす。** 通知メールの巡回がその前提で書いてある
 
 詳しくは [docs/devops/deployment](../docs/devops/deployment/index.html) にある。

@@ -26,6 +26,17 @@ CREATE TABLE notifications (
   -- メール送信は失敗しうるうえ、外部への呼び出しなので同期的に待たない。
   -- 行を先に作り、未送信のものを後から拾って送る。
   emailed_at      timestamptz,
+
+  -- 送信を試みた回数。送る前の取引で先に増やす。
+  -- 送ってから増やす形にすると、送信の途中でプロセスが落ちる束は
+  -- 回数が永久に 0 のまま、起動のたびに同じ場所で落ち続ける。
+  email_attempts  integer     NOT NULL DEFAULT 0,
+
+  -- 送るのを諦めた時刻。宛先が無い（SMTP の 5xx）か、試行が上限に達した。
+  -- emailed_at を代わりに埋める手もあるが、送っていないものを
+  -- 送ったことにすると、あとから届かなかった件を数えられない。
+  email_gave_up_at timestamptz,
+
   created_at      timestamptz NOT NULL DEFAULT now(),
 
   CONSTRAINT notifications_kind_valid
@@ -37,7 +48,11 @@ CREATE TABLE notifications (
 
   -- 自分の操作で自分に通知が来る状態を拒否する
   CONSTRAINT notifications_not_self
-    CHECK (actor_user_id IS DISTINCT FROM user_id)
+    CHECK (actor_user_id IS DISTINCT FROM user_id),
+
+  -- メールの決着は一度きり。送ったのに諦めた、という行は作れない
+  CONSTRAINT notifications_email_settled_once
+    CHECK (emailed_at IS NULL OR email_gave_up_at IS NULL)
 );
 
 CREATE INDEX notifications_inbox
@@ -46,5 +61,9 @@ CREATE INDEX notifications_inbox
 CREATE INDEX notifications_unread
   ON notifications (user_id) WHERE read_at IS NULL;
 
+-- 巡回が拾う行。古い順に送るので created_at で並べる。
+-- 諦めた行を条件から外しておかないと、二度と送らないものを毎分読み続ける。
+-- 上限の回数を述語に書かないのは、上限を変えるたびに移行が要るためである。
 CREATE INDEX notifications_pending_email
-  ON notifications (created_at) WHERE emailed_at IS NULL;
+  ON notifications (created_at)
+  WHERE emailed_at IS NULL AND email_gave_up_at IS NULL;

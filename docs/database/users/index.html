@@ -63,7 +63,7 @@ CREATE UNIQUE INDEX users_email_key
       <tr><td><code>password_hash</code></td><td>text</td><td>Argon2id のハッシュ。<strong>NULL を許す</strong></td></tr>
       <tr><td><code>failed_login_count</code></td><td>smallint</td><td>パスワード入力の連続失敗回数。成功で0に戻る</td></tr>
       <tr><td><code>locked_at</code></td><td>timestamptz</td><td><a href="../../glossary.html#account-lock">アカウントロック</a>の時刻。NULL ならロックされていない</td></tr>
-      <tr><td><code>email_notifications_enabled</code></td><td>boolean</td><td>メール通知を受け取るか。ユーザーが切り替える</td></tr>
+      <tr><td><code>email_notifications_enabled</code></td><td>boolean</td><td><a href="../../glossary.html#notification-mail">通知メール</a>を受け取るか。<code>/me</code> で切り替える</td></tr>
     </tbody>
   </table>
   </div>
@@ -123,7 +123,7 @@ CREATE UNIQUE INDEX users_email_key
 
   <div class="sheet-foot">
     <span>データベース / users</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

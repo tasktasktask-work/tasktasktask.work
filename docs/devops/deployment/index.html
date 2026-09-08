@@ -32,6 +32,7 @@
                                     │
                                     └── tasktasktask-work-app
                                           Next.js / :3000
+                                          通知メールの巡回（60秒ごと）
                                           ボリューム: ./data/attachments</pre>
 
   <p>ネットワークは二つに参加する。
@@ -41,6 +42,22 @@
 
   <p>ポートはホストに晒さない。<code>expose</code> だけを書き、
   nginx-proxy からのみ到達できるようにする。</p>
+
+  <h3>常駐も定期実行も無い</h3>
+
+  <p>cron の枠も、常駐プロセスの置き場も、この構成には無い。
+  <a href="../../glossary.html#delivery-pass">巡回</a>はアプリと同じプロセスで回している
+  （<code>src/instrumentation.ts</code>）。</p>
+
+  <div class="note warn">
+    <span class="note-label">app を二つに増やせない</span>
+    <p>巡回は行を掴むときに <code>FOR UPDATE SKIP LOCKED</code> を使うが、
+    ロックは掴む取引の終わりで放される。送るのはそのあとである。</p>
+    <p>したがって <strong>app を二つ動かすと、同じ通知が二通届きうる</strong>。
+    増やすときは、掴んだ印を行に持たせるところから直す必要がある。</p>
+    <p>期限が近い課題の通知も、同じ壁の前で止まっている
+    （<a href="../../issues/notification-enhancement/index.html">通知の拡張</a>）。</p>
+  </div>
 
   <h2>VPS に置くもの</h2>
 
@@ -247,7 +264,8 @@ docker compose up -d</code></pre>
     <tbody>
       <tr><td class="nowrap">ディスク使用量</td><td>添付が積み上がる。1ファイル10MBまでだが、合計の上限がない</td></tr>
       <tr><td class="nowrap">メール送信数</td><td>Cloudflare の無料枠は月3,000通。超えると<strong>ログインができなくなる</strong></td></tr>
-      <tr><td class="nowrap">未送信の通知</td><td><code>notifications.emailed_at</code> が NULL のまま溜まっていないか</td></tr>
+      <tr><td class="nowrap">未送信の通知</td><td><code>emailed_at</code> も <code>email_gave_up_at</code> も NULL の行が溜まっていないか</td></tr>
+      <tr><td class="nowrap">諦めた通知</td><td><code>email_attempts &gt; 0 AND email_gave_up_at IS NOT NULL</code> の件数。届かなかった分である</td></tr>
     </tbody>
   </table>
   </div>
@@ -266,7 +284,7 @@ docker compose up -d</code></pre>
 
   <div class="sheet-foot">
     <span>開発と運用 / デプロイ構成</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 
