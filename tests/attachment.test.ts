@@ -6,7 +6,7 @@ import { after, before, describe, it } from 'node:test';
 import sharp from 'sharp';
 import { reencode, withExtension } from '#features/attachment/image.ts';
 import { cleanName, describeProblem, readIncoming } from '#features/attachment/incoming.ts';
-import { BATCH_MAX, FILE_MAX } from '#features/attachment/limits.ts';
+import { BATCH_MAX, FILE_FIELD, FILE_MAX } from '#features/attachment/limits.ts';
 import {
   attachToThread,
   deleteAttachment,
@@ -333,14 +333,6 @@ describe('受け取る前に断る', () => {
     return data;
   };
 
-  it('何も選ばれていなければ、空の一覧が返る', async () => {
-    const result = await readIncoming(form([new File([], '')]));
-    assert.equal(result.ok, true);
-    if (result.ok) {
-      assert.equal(result.files.length, 0);
-    }
-  });
-
   it('1ファイルの上限を超えたものを断る', async () => {
     const big = new File([new Uint8Array(FILE_MAX + 1)], 'big.bin');
     const result = await readIncoming(form([big]));
@@ -363,11 +355,56 @@ describe('受け取る前に断る', () => {
     }
   });
 
-  it('中身が空のファイルを断る', async () => {
-    const result = await readIncoming(form([new File([], 'empty.txt')]));
-    assert.equal(result.ok, false);
-    if (!result.ok) {
-      assert.equal(result.reason, 'empty-file');
+  /*
+   * 何も選ばずに投稿しても、ファイルの欄は送られてくる。
+   * 届く形は一つではない。ここを断ると、添付を付けないコメントが
+   * 一つも投稿できなくなる（2026-09-08 に本番で踏んだ）。
+   */
+  it('何も選んでいない欄は、そのまま通す', async () => {
+    const shapes: [string, File][] = [
+      ['名前の無い File', new File([], '', { type: 'application/octet-stream' })],
+      ['名前の無い File（種別も無い）', new File([], '')],
+      ['中身の無い File（名前はある）', new File([], 'empty.txt')],
+    ];
+    for (const [label, file] of shapes) {
+      const result = await readIncoming(form([file]));
+      assert.equal(result.ok, true, label);
+      if (result.ok) {
+        assert.equal(result.files.length, 0, label);
+      }
+    }
+  });
+
+  it('名前を失って blob になった欄も、そのまま通す', async () => {
+    /*
+     * Blob を FormData に入れると、仕様どおり blob という名前が付く。
+     * 符号化の途中で File が Blob になると、この形で届く。
+     */
+    const data = new FormData();
+    data.append(FILE_FIELD, new Blob([]));
+    const entry = data.getAll(FILE_FIELD)[0] as File;
+    assert.equal(entry.name, 'blob', '前提が変わっている');
+    assert.equal(entry.size, 0);
+
+    const result = await readIncoming(data);
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.files.length, 0);
+    }
+  });
+
+  it('中身のあるファイルは、空の欄と一緒に来ても拾う', async () => {
+    const data = new FormData();
+    data.append(FILE_FIELD, new Blob([]));
+    data.append(FILE_FIELD, new File([Buffer.from('こんにちは')], 'memo.txt'));
+
+    const result = await readIncoming(data);
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.deepEqual(
+        result.files.map((f) => f.filename),
+        ['memo.txt'],
+      );
     }
   });
 

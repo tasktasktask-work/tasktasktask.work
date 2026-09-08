@@ -14,7 +14,7 @@ export type Incoming = {
   readonly bytes: Buffer;
 };
 
-export type IncomingProblem = 'too-large' | 'batch-too-large' | 'empty-file' | 'bad-name';
+export type IncomingProblem = 'too-large' | 'batch-too-large' | 'bad-name';
 
 /** 受け取る側と作り直す側を合わせた、断る理由の全体 */
 export type FileProblem = IncomingProblem | 'reencoded-too-large';
@@ -71,14 +71,29 @@ export function cleanName(raw: string): string | null {
 /**
  * フォームからファイルを取り出す。
  *
- * 空のファイル欄は File として届き、大きさが 0 になる。
- * これを弾くと「何も選ばずに投稿する」が通らなくなるので、先に落とす。
+ * 中身の無いものは、選ばれなかったものとして落とす。
+ *
+ * 何も選ばずに投稿しても、ファイルの欄は送られてくる。
+ * そのとき届く形は一つではない。名前の無い File のこともあれば、
+ * 名前を失って Blob になっていることもある。
+ * Blob を FormData に入れると、仕様どおり blob という名前が付く
+ * （https://xhr.spec.whatwg.org/#dom-formdata-append）。
+ *
+ * つまり「何も選んでいない」と「空のファイルを選んだ」は、
+ * ここへ届いた時点では見分けられない。名前が残っていないためである。
+ * 断るほうを選ぶと、添付を付けないコメントが一つも投稿できなくなる。
+ *
+ * 実際にそうなった。コメントを書くたびに
+ * 「blob は中身が空です」と出て、投稿できなかった（2026-09-08 に本番で踏んだ）。
+ *
+ * 何も付かなかったことは、付ける側の画面が別に伝える。
+ * スレッドへ添付する画面は「ファイルを選んでください」と返す。
  */
 export async function readIncoming(form: FormData): Promise<IncomingResult> {
   const entries = form
     .getAll(FILE_FIELD)
     .filter((value): value is File => value instanceof File);
-  const chosen = entries.filter((file) => file.size > 0 || file.name !== '');
+  const chosen = entries.filter((file) => file.size > 0);
 
   let total = 0;
   const files: Incoming[] = [];
@@ -87,9 +102,6 @@ export async function readIncoming(form: FormData): Promise<IncomingResult> {
     const name = cleanName(file.name);
     if (name === null) {
       return { ok: false, reason: 'bad-name', filename: file.name };
-    }
-    if (file.size === 0) {
-      return { ok: false, reason: 'empty-file', filename: name };
     }
     if (file.size > FILE_MAX) {
       return { ok: false, reason: 'too-large', filename: name };
@@ -122,8 +134,6 @@ export function describeProblem(reason: FileProblem, filename: string): string {
       return `${filename} が ${formatBytes(FILE_MAX)} を超えています`;
     case 'batch-too-large':
       return `一度に送れるのは合計 ${formatBytes(BATCH_MAX)} までです。何回かに分けてください`;
-    case 'empty-file':
-      return `${filename} は中身が空です`;
     case 'bad-name':
       return 'ファイル名が扱えません';
     case 'reencoded-too-large':
