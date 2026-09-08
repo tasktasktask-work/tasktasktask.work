@@ -1,3 +1,5 @@
+import { AttachmentList } from '#features/attachment/AttachmentList.tsx';
+import type { AttachmentRow } from '#features/attachment/queries.ts';
 import { formatDateTime } from '#lib/datetime.ts';
 import { prepare } from '#lib/markdown.ts';
 import { Markdown } from './Markdown.tsx';
@@ -22,14 +24,19 @@ export type CommentTarget = {
 
 export function CommentList({
   comments,
+  attachments,
   target,
   canWrite,
+  viewer,
   timezone,
 }: {
   comments: readonly CommentRow[];
+  /** コメントの id ごとの添付。スレッドぶんを一度に引いてある */
+  attachments: ReadonlyMap<string, AttachmentRow[]>;
   target: CommentTarget;
   /** 畳んだスレッドではチェックボックスも押せない */
   canWrite: boolean;
+  viewer: { userId: string; isOrgAdmin: boolean };
   timezone: string;
 }) {
   return (
@@ -68,6 +75,17 @@ export function CommentList({
                 />
               </div>
             )}
+
+            {/* 消されたコメントの添付は問い合わせの側で落ちている。
+                コメントが見えないのに添付だけ残る形にしない */}
+            <AttachmentList
+              attachments={attachments.get(comment.id) ?? []}
+              slug={target.slug}
+              target={target}
+              viewerUserId={viewer.userId}
+              isOrgAdmin={viewer.isOrgAdmin}
+              canWrite={canWrite}
+            />
           </div>
         </div>
       ))}

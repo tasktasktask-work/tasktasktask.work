@@ -229,11 +229,16 @@ docker compose up -d</code></pre>
   <div class="note decide">
     <span class="note-label">開発では通り、本番でだけ落ちる</span>
     <p>nginx の <code>client_max_body_size</code> は既定 1MB である。
-    添付は1ファイル10MBまで許しているので、
+    添付は一度の送信で合計30MBまで許しているので、
     <strong>そのままだと本番でだけ 413 で落ちる</strong>。</p>
     <p>nginx-proxy はコンテナ側の <code>CLIENT_MAX_BODY_SIZE</code> を読んで
-    そのバーチャルホストの設定に反映するので、<code>compose.yaml</code> で <code>12m</code> を指定してある。
-    10MB そのものではないのは、多部分形式の包みぶんを見込んでいるためである。</p>
+    そのバーチャルホストの設定に反映するので、<code>compose.yaml</code> で <code>34m</code> を指定してある。
+    30MB そのものではないのは、多部分形式の包みぶんを見込んでいるためである。</p>
+    <p>上限は三箇所にある。ここと、
+    <code>next.config.ts</code> の <code>bodySizeLimit</code>（<code>32mb</code>）と、
+    <a href="../../features/attachment/index.html">機能の側の定数</a>（30MB）である。
+    外側ほど大きくしてある。逆にすると、内側が断る前に外側が切ることになり、
+    利用者には理由の分からない失敗として届く。</p>
   </div>
 
   <h2>バックアップ</h2>
@@ -244,6 +249,7 @@ docker compose up -d</code></pre>
     <tbody>
       <tr><td class="nowrap">PostgreSQL</td><td><code>pg_dump</code> を圧縮して外部へ転送</td><td>日次</td></tr>
       <tr><td class="nowrap"><strong>data/attachments</strong></td><td>ディレクトリを同期して外部へ転送</td><td>日次</td></tr>
+      <tr><td class="nowrap">組織ごとの内訳</td><td><code>du -sh data/attachments/*</code>（一段目が組織のid）</td><td>必要なとき</td></tr>
     </tbody>
   </table>
   </div>

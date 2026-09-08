@@ -688,14 +688,94 @@
     すべてのファイルを、必ずダウンロードとして返す。
     ブラウザが中身を見て勝手に解釈することもなく、
     レスポンスにはスクリプトの実行を禁じる指示も添える。
-    画面に表示する画像だけは、サーバー側で読み直して書き出し直す。
+    画面に表示する画像だけは、<a href="#reencode">再エンコード</a>した出力を出す。
     読めなかったものは画像として扱わず、ダウンロードできるだけのファイルになる。</p>
+    <p>付けられる場所は二つある。スレッドの本文と、コメントである。
+    コメントに付けるものは本文と同じ送信で入り、
+    書くのをやめた人のファイルだけが宙に残ることがない。
+    スレッドを立てる画面には欄を置いていない。</p>
+    <p>一度の送信で送れるのは合計30MBまでとする。
+    1ファイルの上限とは別の枠で、こちらはサーバーが受け取りを丸ごと
+    メモリに載せるために要る。</p>
+    <p>消せるのは上げた本人と<a href="#org-admin">組織管理者</a>だけで、
+    消すとファイルの実体も一緒に消える。取り消せないので押しボタンは二度押しにしてある。
+    行のほうは残り、誰がいつ消したかを引ける。
+    <a href="#archive">アーカイブ</a>済みのスレッドでは消せない。
+    畳んだものへの書き込みを一律で止める線に揃えてある。</p>
     <div class="dialogue">
       <p><span class="who">PM</span><span>実行ファイルは弾いてくれるんですよね。</span></p>
       <p><span class="who">開発者</span><span>弾きません。拡張子を変えたり圧縮したりすれば通ってしまうので、弾いているつもりになるほうが危ないと考えました。中身を検査するならウイルススキャンを入れる必要があります。</span></p>
+      <p><span class="who">PM</span><span>間違えて社外秘を貼ったら、自分で消せますか。</span></p>
+      <p><span class="who">開発者</span><span>貼った本人と組織管理者が消せます。実体ごと消えます。ただし畳んだスレッドでは消せないので、そのときは管理者に畳みを解いてもらうことになります。</span></p>
     </div>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#comment">コメント</a><a href="#thread">スレッド</a></div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#reencode">再エンコード</a><a href="#storage-key">保存先のキー</a><a href="#attachment-usage">添付の合計</a><a href="#comment">コメント</a><a href="#thread">スレッド</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/attachment/index.html">添付ファイル</a></div>
+  </article>
+
+  <article class="term" id="reencode">
+    <h3>再エンコード<span class="reading">re-encode</span></h3>
+    <p>上げられた画像をサーバー側で読み直し、書き出し直すことを<strong>再エンコード</strong>と呼ぶ。
+    保存するのはこの出力だけで、原本は残さない。</p>
+    <p>形式のホワイトリストは持たない。読めたかどうかだけを記録する。
+    デコーダそのものが判定器として働くので、維持すべきリストがどこにも存在しない。
+    読めれば画面にそのまま出し、読めなければダウンロードできるだけの
+    <a href="#attachment">添付ファイル</a>になる。</p>
+    <p>出力は二種類だけである。透明を持つものは PNG、持たないものは JPEG になる。
+    長辺は縮めない。残るのがこの一枚だけなので、縮めた分は取り戻せない。
+    貼られる画像の大半は画面の写しで、そこに求められるのは文字が読めることである。</p>
+    <p>作り直した結果として、埋め込まれたスクリプトも撮影地点の位置情報も構造的に消える。
+    アニメーションは保たない。動く GIF は一枚目だけの静止画になる。
+    中身の形式が変わるので、表示用の名前の拡張子も出力に合わせて付け替える。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>SVG にスクリプトを埋めて貼られたらどうなりますか。</span></p>
+      <p><span class="who">開発者</span><span>読み込んで PNG として書き出すので、出てくるのは点の並びです。スクリプトは残りようがありません。</span></p>
+      <p><span class="who">PM</span><span>写真の位置情報は消えると説明していいですか。</span></p>
+      <p><span class="who">開発者</span><span>はい。原本を保存しないので消えます。逆に言うと、原本が要る使い方には向きません。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#attachment">添付ファイル</a><a href="#storage-key">保存先のキー</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/attachment/index.html">添付ファイル</a></div>
+  </article>
+
+  <article class="term" id="storage-key">
+    <h3>保存先のキー<span class="reading">storage key</span></h3>
+    <p><a href="#attachment">添付ファイル</a>の実体がどこにあるかを指す、生成した文字列を
+    <strong>保存先のキー</strong>と呼ぶ。利用者の入力を一文字も含まない。</p>
+    <p>上げた人が付けた名前をそのままパスに使わない理由は二つある。
+    <code>../../</code> を含む名前でディレクトリの外へ書けてしまうことと、
+    右横書きの制御文字を混ぜて <code>report.exe.jpg</code> のように見せかけられることである。
+    表示する名前は別に持ち、画面に出すときに逃がす。</p>
+    <p>形は <code>{組織のid}/{2文字}/{uuid}</code> である。
+    組織で一段掘るのは、容量を組織ごとに数えられるようにするためと、
+    組織を消すときの片付けを一箇所で済ませるためである。
+    さらに二文字で掘るのは、一つのディレクトリに数万件を並べると走査が効かなくなるためである。</p>
+    <p><a href="#reencode">再エンコード</a>した画像にだけ拡張子が付く。
+    配信のときの種別はこの拡張子から決まるので、
+    利用者由来の文字列がヘッダに回り込む経路が存在しない。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>ダウンロードすると元の名前で保存されますよね。</span></p>
+      <p><span class="who">開発者</span><span>されます。名前は別に持っていて、返すときにだけ添えます。ファイルの置き場所そのものには使いません。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#attachment">添付ファイル</a><a href="#reencode">再エンコード</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/attachment/index.html">添付ファイル</a></div>
+  </article>
+
+  <article class="term" id="attachment-usage">
+    <h3>添付の合計<span class="reading">attachment usage</span></h3>
+    <p>組織の設定画面に出る、<a href="#attachment">添付ファイル</a>の総量と件数を
+    <strong>添付の合計</strong>と呼ぶ。見られるのは<a href="#org-admin">組織管理者</a>だけである。</p>
+    <p>組織あたりの上限は持たない。課金の形が決まっていない段階で数字を置くと、
+    その数字がそのまま仕様になる。いま要るのは上限より、埋まりかけたことに気づく手段である。</p>
+    <p>数えるのは組織のすべての添付で、自分に見えない
+    <a href="#private-project">非公開プロジェクト</a>のぶんも含む。
+    <a href="#tag-usage">使用数</a>と同じ考え方で、
+    見える範囲に絞ると、ディスクを実際に食っている量より少ない数を見せることになる。</p>
+    <p>消した添付は数に入らない。実体がもう無いためである。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>使いすぎたら止まりますか。</span></p>
+      <p><span class="who">開発者</span><span>止まりません。上限を置いていないので、増え続けます。設定画面の数字が、気づくための唯一の手掛かりです。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#attachment">添付ファイル</a><a href="#tag-usage">使用数</a><a href="#org-admin">組織管理者</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/attachment/index.html">添付ファイル</a>／<a href="features/organization/index.html">組織</a></div>
   </article>
 
   <article class="term" id="archive">

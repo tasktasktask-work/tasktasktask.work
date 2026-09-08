@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { formatBytes } from '#features/attachment/limits.ts';
+import { organizationUsage } from '#features/attachment/queries.ts';
 import { LoginScreen } from '#features/authentication/LoginScreen.tsx';
 import { OrgShell } from '#features/organization/OrgShell.tsx';
 import { getOrganization } from '#features/organization/queries.ts';
@@ -25,9 +27,10 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
     notFound();
   }
 
-  const [organization, links] = await Promise.all([
+  const [organization, links, usage] = await Promise.all([
     getOrganization(found.scope),
     listProjectLinks(found.scope),
+    organizationUsage(found.scope),
   ]);
 
   return (
@@ -67,6 +70,17 @@ export default async function SettingsPage({ params }: { params: Promise<{ slug:
           <span className="k">メンバー</span>
           <span className="v">{organization.memberCount} 人</span>
         </div>
+        {/* 上限は持たない。数えるのは、埋まりかけたことに気づくためである。
+            ディスクの監視は「もう危ない」ことしか教えず、
+            どの組織が食っているかは、そのとき調べ直すことになる */}
+        {usage ? (
+          <div className="row">
+            <span className="k">添付</span>
+            <span className="v">
+              {formatBytes(usage.bytes)} / {usage.count} 件
+            </span>
+          </div>
+        ) : null}
       </div>
 
       <div className="app-note">

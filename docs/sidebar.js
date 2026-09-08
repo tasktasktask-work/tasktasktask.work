@@ -125,6 +125,7 @@
         { path: "issues/full-text-search/index.html",          label: "全文検索", d: 2 },
         { path: "issues/virus-scan/index.html",                label: "ウイルススキャン", d: 2 },
         { path: "issues/origin-encryption/index.html",         label: "オリジンまでの経路", d: 2 },
+        { path: "issues/attachment-orphans/index.html",        label: "行の無いファイル", d: 2 },
         { path: "issues/audit-log/index.html",                 label: "監査ログ", d: 2 },
         { path: "issues/i18n/index.html",                      label: "多言語対応", d: 2 },
         { path: "issues/billing/index.html",                   label: "課金とプラン", d: 2 }
@@ -133,14 +134,14 @@
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 14,
+      sessionTotal: 15,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260908-1516-attachments/index.html", label: "2026-09-08 添付ファイル", d: 2 },
         { path: "sessions/20260908-1113-tags/index.html", label: "2026-09-08 タグ", d: 2 },
         { path: "sessions/20260908-0943-notification-mail/index.html", label: "2026-09-08 通知メール", d: 2 },
         { path: "sessions/20260908-0028-notifications/index.html", label: "2026-09-08 通知", d: 2 },
-        { path: "sessions/20260907-2320-comments/index.html", label: "2026-09-07 コメント", d: 2 },
-        { path: "sessions/20260907-1920-threads/index.html", label: "2026-09-07 スレッド", d: 2 }
+        { path: "sessions/20260907-2320-comments/index.html", label: "2026-09-07 コメント", d: 2 }
       ]
     }
   ];

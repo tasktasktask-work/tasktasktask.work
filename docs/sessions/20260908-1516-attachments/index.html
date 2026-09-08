@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>添付ファイルを上げ下げできるようにした | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-08 15:16</p>
+  <h1 class="title">添付ファイルを上げ下げできるようにした</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    設計だけが先に済んでいた機能である。
+    形式を検査しない理由も、配信の四つのヘッダも、
+    <code>attachments</code> の列も、置き場のマウントも用意してあった。
+    <code>src/features/attachment/</code> にあったのは README 一枚だけだった。
+  </p>
+
+  <h2>読む側も書く側も無かった</h2>
+
+  <p>タグのときとは形が違った。あちらは読み取りだけが先にできていた。
+  こちらは両方とも無い。あるのは決定と、その決定を書き留めた文書である。</p>
+
+  <p>だから今回の作業の大半は、決めてあったことを裏切らずに書くことだった。
+  一つだけ、書いてみて初めて食い違いが見つかった箇所がある。</p>
+
+  <h2>ブラウザ側の圧縮が、決定と噛み合っていなかった</h2>
+
+  <p>機能ページには「アップロード前に <code>browser-image-compression</code> で圧縮する方針は残す」とあった。
+  一方でこのセッションでは、サーバー側で長辺を縮めないと決めた。
+  貼られる画像の大半は画面の写しで、要件は文字が読めることだからである。</p>
+
+  <p><strong>ライブラリの主な効き目は長辺の縮小である。</strong>
+  ブラウザ側で縮めて送れば、サーバーが受け取る時点で既に原寸ではない。
+  「サーバーは縮めない」と決めても、原寸は守られない。</p>
+
+  <p>触るのを品質だけに限り、PNG には手を付けないことにした。
+  そのうえで、常に圧縮するのではなく 10MB を超えたものだけを縮める。
+  常に縮めると 1MB の写真も劣化する。得るのは上りの数百ミリ秒である。</p>
+
+  <div class="note warn">
+    <span class="note-label">同じファイルが、ブラウザによって別の扱いになった</span>
+    <p>この決定には副産物がある。iPhone の HEIC はサーバー側のデコーダが読めない。
+    ところが Safari の canvas は読める。</p>
+    <p>圧縮が働く大きさなら、Safari から貼った写真は JPEG になって届き、画像として扱われる。
+    Chrome から同じ写真を貼ると、ダウンロードできるだけの添付になる。
+    受け入れた差である。揃えるには形式ごとの経路を増やすことになる。</p>
+  </div>
+
+  <h2>取り消せない操作が二つ増えた</h2>
+
+  <p>添付を消すと、行だけでなくファイルの実体も消える。
+  消す動機の大半は「見えてはいけないものが置いてある」で、
+  行だけ落として実体を残すと目的を果たさない。</p>
+
+  <p>もう一つは<a href="../../glossary.html#reencode">再エンコード</a>である。
+  保存するのは作り直した出力だけで、原本は残さない。
+  機能ページが「Exif の位置情報も構造的に消える」と書いている以上、
+  原本を並べて残せばその文が嘘になる。</p>
+
+  <p>どちらも取り消せない。だから消す押しボタンは二度押しにした。
+  タグを消すときと同じ形である。取り消せない操作の見せ方を、機能ごとに変える理由がない。</p>
+
+  <h2>畳んだ後は、貼った本人には消せない</h2>
+
+  <p>ここは一貫性を取って、使い勝手を落とした。</p>
+
+  <p>アーカイブ済みのスレッドでは添付を消せない。
+  畳んだものへの書き込みを一律で止める線に揃えてある。
+  畳みを解けるのは管理者だけなので、貼った本人には手が無い場面が出る。</p>
+
+  <p>逆の選択もありえた。「アーカイブは書き足せないことであって、消せないことではない」
+  という理屈は立つ。流出しているファイルを残す理由にはならない、とも言える。
+  それでも揃えたのは、例外を一つ開けると、
+  次に「これも例外でいいのでは」と問われたときに引く線が無くなるからである。</p>
+
+  <h2>決めたこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>論点</th><th>決定</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">画像を読む道具</td><td><code>sharp</code> を足す</td><td>読み直せないと <code>is_image</code> が常に偽になり、画面の写しが開けない</td></tr>
+      <tr><td class="nowrap">上げる経路</td><td>サーバーアクション</td><td>絞り込みも投稿も素のフォームで動く。添付だけ JavaScript 必須にすると経路が二本になる</td></tr>
+      <tr><td class="nowrap">付けられる場所</td><td>本文とコメント</td><td>仕様書はコメントに混ぜると流れて探せなくなる</td></tr>
+      <tr><td class="nowrap">立てる画面</td><td>置かない</td><td>一つの取引に 30MB の書き込みを足すと、失敗時にファイルの選び直しまで巻き込む</td></tr>
+      <tr><td class="nowrap">一度の送信</td><td>合計 30MB</td><td>本体は丸ごとメモリに載る。この数字が同時1件あたりの消費になる</td></tr>
+      <tr><td class="nowrap">消せる人</td><td>上げた本人と組織管理者</td><td>社外秘を貼った本人が、管理者を捕まえるまで消せないのは回らない</td></tr>
+      <tr><td class="nowrap">消したとき</td><td>実体も消す</td><td>行だけ消しても、見えてはいけないものは置かれたまま</td></tr>
+      <tr><td class="nowrap">畳んだ後</td><td>消せない</td><td>書き込みを一律で止める線に揃える</td></tr>
+      <tr><td class="nowrap">誰が消したか</td><td>列を足す</td><td>消せる人が二通りあるのはここだけ。立場から推測できない</td></tr>
+      <tr><td class="nowrap">組織あたりの総量</td><td>上限なし</td><td>課金が決まる前に数字を置くと、その数字が仕様になる</td></tr>
+      <tr><td class="nowrap">気づく手段</td><td>設定画面に合計</td><td>ディスクの監視は「もう危ない」ことしか教えない</td></tr>
+      <tr><td class="nowrap">保存先の形</td><td><code>{組織}/{2文字}/{uuid}</code></td><td>平らに置くと数万件で走査が効かない。組織で掘ると容量を数えられる</td></tr>
+      <tr><td class="nowrap">保存するもの</td><td>作り直した出力だけ</td><td>原本を残すと「位置情報が消える」が嘘になる</td></tr>
+      <tr><td class="nowrap">出力の形式</td><td>透明なら PNG、他は JPEG</td><td>形式を増やすと、そのどれもが安全であることを個別に確かめる対象になる</td></tr>
+      <tr><td class="nowrap">長辺</td><td>縮めない</td><td>残るのが一枚だけなので、縮めた分は取り戻せない</td></tr>
+      <tr><td class="nowrap">アニメーション</td><td>一枚目だけ</td><td>動くまま保つには GIF の経路を別に作ることになる</td></tr>
+      <tr><td class="nowrap">名前の拡張子</td><td>出力に合わせる</td><td><code>shot.gif</code> の中身が PNG だと、ダウンロードした先で開けない</td></tr>
+      <tr><td class="nowrap">画像のキャッシュ</td><td><code>max-age=600</code></td><td><code>no-store</code> だと、開くたびに貼られた画像を全部取り直す</td></tr>
+      <tr><td class="nowrap">本文の無いコメント</td><td>許さない</td><td>緩めると「本文も添付も無いコメント」を止める場所が SQL から消える</td></tr>
+      <tr><td class="nowrap">ブラウザ側の圧縮</td><td>超えたときだけ</td><td>常に縮めると、1MB の写真も元に戻せない形で劣化する</td></tr>
+      <tr><td class="nowrap">圧縮が触るもの</td><td>品質だけ</td><td>長辺を触ると、サーバーで縮めないと決めた意味が消える</td></tr>
+      <tr><td class="nowrap">収まらないとき</td><td>送る前に止める</td><td>上りに数十秒かけたあとで断られる形にしない</td></tr>
+      <tr><td class="nowrap">配信の URL</td><td><code>/o/{slug}/a/{id}</code></td><td>判定に slug は使わないが、後から配信の前段で組織ごとに切り分けられる</td></tr>
+      <tr><td class="nowrap">行とファイルの順</td><td>行が先</td><td>実体が先だと、行を入れる側が落ちたときに消す処理まで届かない</td></tr>
+      <tr><td class="nowrap">通知</td><td>飛ばさない</td><td>コメントの添付は既にコメントの通知で届く</td></tr>
+      <tr><td class="nowrap">進捗</td><td>割合を出さない</td><td>上りの進捗には XHR が要り、一本にした経路がもう一本増える</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>模組が互いを呼びそうになった。前と同じ形で</h2>
+
+  <p>コメントを投稿するとき、添付は同じ取引で入る。
+  つまり <code>#features/comment/queries.ts</code> が添付側を呼ぶ。
+  一方で添付側は、書き込みの可否を判定するために <code>THREAD_WRITABLE</code> を読む。</p>
+
+  <p><a href="../../devops/coding-conventions/index.html#module-cycle">タグのときに決めた形</a>をそのまま当てた。
+  行を入れて実体を書くだけの部分を <code>store.ts</code> へ分け、そこには判定を置かない。
+  寸法の定数も <code>limits.ts</code> へ分けた。
+  画面の側でも上限の数字が要るので、<code>queries.ts</code> を読ませると
+  <code>pg</code> がブラウザ向けの束に入る。</p>
+
+  <p>もう一段の分割が要ることは、書いてから分かった。
+  <strong>再エンコードを取引の中でやると、10MB の画像を読み直すあいだ行を押さえたままになる。</strong>
+  作り直しを <code>prepareAttachments</code> として取引の外へ出し、
+  取引の中では作り終えた中身を入れるだけにした。</p>
+
+  <p>この分割には別の効き目もあった。
+  透明を持つ画像を PNG で書き出すと、元より大きくなることがある。
+  これを取引の中で見つけると、上限の制約に当たってコメントごと巻き戻る。
+  外に出したので、断る文面を返すだけで済む。</p>
+
+  <h2>並び順が、偶然に頼っていた</h2>
+
+  <p>テストが一度だけ落ちた。二つ付けた添付の並びが入れ替わっていた。</p>
+
+  <p>原因は <code>created_at</code> の既定値である。
+  <code>now()</code> は取引の開始時刻を返すので、一度の送信で入れた行は全部同じ時刻になる。
+  そうなると並びは第二の鍵であるランダムな <code>id</code> で決まり、選んだ順とは無関係になる。</p>
+
+  <p>挿入時に <code>clock_timestamp()</code> を明示して入れることにした。
+  こちらは呼ばれた瞬間の時刻を返すので、同じ取引の中でも行ごとに違う。</p>
+
+  <p>テストのほうも直した。並びを見るだけでは、
+  ランダムな <code>id</code> がたまたま揃っただけの回に通ってしまう。
+  四行の <code>created_at</code> が全部違うことを、別に確かめている。</p>
+
+  <h2>確かめたこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>確認</th><th>結果</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">テスト</td><td>423件すべて通過（添付49件を追加）</td></tr>
+      <tr><td class="nowrap">ミューテーション</td><td>判定を21か所壊し、21か所とも捕捉</td></tr>
+      <tr><td class="nowrap">配信ヘッダの改変</td><td>4か所のうち3か所を捕捉（残り1件は後述）</td></tr>
+      <tr><td class="nowrap">画面の通し確認</td><td>37件すべて通過。サーバのエラーなし</td></tr>
+      <tr><td class="nowrap"><code>pnpm check</code></td><td>型・整形・共有スタイル・移行の検査、すべて通過</td></tr>
+      <tr><td class="nowrap">ビルド</td><td>17経路（<code>/o/[slug]/a/[id]</code> を追加）</td></tr>
+      <tr><td class="nowrap"><code>sharp</code> の同梱</td><td><code>standalone</code> の出力にネイティブの実体まで入ることを確認</td></tr>
+      <tr><td class="nowrap">移行の再生</td><td>空のデータベースに5本すべてを流し直して確認</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>配信の経路は、ヘッダを壊して通し確認に当てた。
+  「常にインライン表示する」「<code>sandbox</code> の CSP を外す」「ログインを見ない」は、
+  いずれも通し確認が落ちた。</p>
+
+  <h2>自動では確かめていないところ</h2>
+
+  <p><strong><code>nosniff</code> の一行を消しても、何も落ちない。</strong>
+  <code>next.config.ts</code> が全経路に同じヘッダを付けているためである。
+  実際に外して当ててみたが素通りした。
+  片方を消しても壊れないので、この欠落だけは捕まえられない。
+  配信の経路にも書いてあるのは、守っているものを一枚の中で読み切れるようにするためである。</p>
+
+  <p>ブラウザ側の圧縮も、自動では確かめていない。
+  <code>DataTransfer</code> で欄の中身を差し替える処理は、実物のブラウザでしか動かない。
+  サーバー側は「原本がそのまま届いた」場合を前提に書いてあり、そちらは確かめてある。</p>
+
+  <p>二度押しの分岐も、タグのときと同じ理由で確かめていない。
+  サーバーアクションは <code>cookies()</code> を読むので、テストから呼べない。</p>
+
+  <h2>直したもの</h2>
+
+  <ul>
+    <li>機能ページの「ブラウザ側で圧縮してから送る」を、上限を超えたときだけに書き換えた</li>
+    <li>スレッド詳細の見本から「添付の欄は出ない」という断りを消した</li>
+    <li><code>deploy/compose.yaml</code> の <code>CLIENT_MAX_BODY_SIZE</code> を 12m から 34m へ上げた</li>
+  </ul>
+
+  <h2>次にやること</h2>
+
+  <p>本番への反映が溜まっている。
+  <code>20260907135543</code> 以降の四つの移行がまだ当たっていない。
+  そのうちの一つに <code>CREATE INDEX CONCURRENTLY</code> が入るので、
+  <code>docker compose run --rm migrate</code> がトランザクションを張らないことを、
+  本物のデータベースで初めて確かめることになる。</p>
+
+  <p>あわせて <code>deploy/</code> の二つのファイルを VPS へ写す必要がある。
+  <code>CLIENT_MAX_BODY_SIZE</code> を上げないと、大きい添付だけが本番で 413 になる。</p>
+
+  <p>機能としては<a href="../../features/gantt/index.html">ガント</a>が残っている。
+  見本はあるが、札は外したままである。</p>
+
+  <h2>関連するドキュメント</h2>
+  <div class="cards">
+    <a class="card" href="../../features/attachment/index.html"><span class="card-no">FEATURE</span><p class="card-title">添付ファイル</p><p class="card-desc">検査ではなく配信の仕方で守る</p></a>
+    <a class="card" href="../../database/attachments/index.html"><span class="card-no">TABLE</span><p class="card-title">attachments</p><p class="card-desc">在り処と、元の名前</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html"><span class="card-no">PAGE</span><p class="card-title">スレッド詳細</p><p class="card-desc">添付の一覧と投稿</p></a>
+    <a class="card" href="../../issues/attachment-orphans/index.html"><span class="card-no">ISSUE</span><p class="card-title">行の無いファイル</p><p class="card-desc">閉じられなかった窓</p></a>
+    <a class="card" href="../../glossary.html#reencode"><span class="card-no">用語</span><p class="card-title">再エンコード</p><p class="card-desc">デコーダそのものが判定器になる</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 添付ファイル</span>
+    <span>2026-09-08</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

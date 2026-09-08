@@ -79,6 +79,34 @@
                 <a href="#">関連する課題を作成する</a> / <a href="#">議論</a> / <a href="#">質問</a>
               </p>
 
+              <h3 class="app-section">添付 &#160;<span style="color:var(--ink-faint);font-weight:400">2件</span></h3>
+              <div class="p-attach">
+                <div class="item">
+                  <a href="#"><img src="data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='170'%3E%3Crect width='420' height='170' fill='%23f2efe9'/%3E%3Crect x='0' y='0' width='420' height='26' fill='%232c4a75'/%3E%3Ctext x='12' y='18' font-family='monospace' font-size='12' fill='%23fff'%3E/api/search?q=%E6%A4%9C%E7%B4%A2%3C/text%3E%3Ctext x='12' y='58' font-family='monospace' font-size='13' fill='%23c8402c'%3E500 Internal Server Error%3C/text%3E%3Ctext x='12' y='84' font-family='monospace' font-size='11' fill='%233a3a3a'%3Eat normalize (search/query.ts:88)%3C/text%3E%3Ctext x='12' y='104' font-family='monospace' font-size='11' fill='%233a3a3a'%3Eat handler (search/route.ts:21)%3C/text%3E%3Ctext x='12' y='136' font-family='monospace' font-size='11' fill='%237d8792'%3E%E5%85%A8%E8%A7%92%E3%81%AE%E5%95%8F%E5%90%88%E3%81%9B%E3%81%A7%E8%90%BD%E3%81%A1%E3%82%8B%3C/text%3E%3C/svg%3E" alt="500 のスクリーンショット"></a>
+                  <p class="line">
+                    <a class="name" href="#">error-500.png</a>
+                    <span class="size">148 KB</span>
+                    <button class="drop" type="button">消す</button>
+                  </p>
+                </div>
+                <div class="item">
+                  <p class="line">
+                    <a class="name" href="#">&#128206; search-api-design.pdf</a>
+                    <span class="size">240 KB</span>
+                    <button class="drop" type="button">消す</button>
+                  </p>
+                </div>
+              </div>
+
+              <form class="app-form"><div class="line">
+                <div class="p-attach-pick">
+                  <input type="file" multiple>
+                  <p class="note">1ファイル 10.0 MB、一度に合計 30.0 MB まで。形式は問いません</p>
+                </div>
+                <span style="flex:1"></span>
+                <button class="app-btn ghost">添付する</button>
+              </div></form>
+
               <h3 class="app-section">子スレッド &#160;<span style="color:var(--ink-faint);font-weight:400">1件</span></h3>
               <div class="p-list" style="margin-bottom:1.6rem">
                 <div class="p-row">
@@ -116,7 +144,15 @@
                         <li><input type="checkbox" checked> 仕様を書く</li>
                         <li><input type="checkbox"> 実装する</li>
                       </ul>
-                      <p style="font-size:.8rem"><a href="#" style="color:var(--ai)">&#128206; search-api-design.pdf</a> <span style="color:var(--ink-faint)">240 KB</span></p>
+                    </div>
+                    <div class="p-attach">
+                      <div class="item">
+                        <p class="line">
+                          <a class="name" href="#">&#128206; check-list.csv</a>
+                          <span class="size">3 KB</span>
+                          <button class="drop" type="button">消す</button>
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -133,7 +169,10 @@
                 <textarea placeholder="コメントを書く（Markdown が使えます。@ で人を指名できます）"></textarea>
                 <div class="foot">
                   <button class="app-btn">投稿する</button>
-                  <button class="app-btn ghost">&#128206; ファイルを添付</button>
+                  <div class="p-attach-pick">
+                    <input type="file" multiple>
+                    <p class="note">1ファイル 10.0 MB、一度に合計 30.0 MB まで</p>
+                  </div>
                   <span class="sp" style="flex:1"></span>
                   <span class="warn-inline">&#9888; 投稿したコメントは編集も削除もできません</span>
                 </div>
@@ -307,13 +346,29 @@
 
   <div class="note warn">
     <span class="note-label">この見本にはまだ動かない部分がある</span>
-    <p>タグ、ウォッチ、添付は、それぞれ別の機能として作っていない。
-    実際の画面には、いまその欄が出ない。
-    上に描いてある <strong>&#128206; のリンクと「ファイルを添付」の押しボタンも出ない。</strong></p>
-    <p>コメントを消す動線も出していない。
+    <p>コメントを消す動線は出していない。
     <a href="../../../../../../../../features/comment/index.html">組織管理者だけが消せる</a>と決めてあるが、
     押す前に何を確かめさせるかを決めていない。</p>
   </div>
+
+  <h2>添付の並べ方</h2>
+
+  <p><a href="../../../../../../../../glossary.html#reencode">再エンコード</a>できた画像は、
+  そのまま並べる。名前の行だけにすると、中身を確かめるための往復が読む人の数だけ起きる。
+  押すと新しいタブで開く。拡大も保存も、ブラウザのものがそのまま使える。</p>
+
+  <p>読めなかったファイルは、名前と大きさの行だけになる。
+  画像の下にも同じ行が付く。名前と大きさはどのみち出す必要があり、
+  消す押しボタンの置き場も要るためである。
+  画像の上に重ねると、画像そのものを押したいときと当たる。</p>
+
+  <p>並ぶのは付けた順である。
+  新しいものを上にすると、本文やコメントの中で「上の画像が」と書かれたときに、
+  その指し先が後から動く。</p>
+
+  <p>消す押しボタンが出るのは、上げた本人と
+  <a href="../../../../../../../../glossary.html#org-admin">組織管理者</a>にだけである。
+  一度押すと「本当に消す」に変わる。実体ごと消えて取り消せない。</p>
 
   <h2>アーカイブされている場合</h2>
 

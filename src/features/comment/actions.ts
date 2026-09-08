@@ -2,6 +2,8 @@
 
 import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
+import { describeProblem, readIncoming } from '#features/attachment/incoming.ts';
+import { prepareAttachments } from '#features/attachment/store.ts';
 import { currentScope } from '#features/organization/scope.ts';
 import { resolveProject } from '#features/project/queries.ts';
 import { resolveThread } from '#features/thread/queries.ts';
@@ -75,22 +77,46 @@ function refresh(slug: string, key: string, number: number): void {
 
 const postForm = target.extend({ body: z.string().min(1, '本文を入力してください') });
 
+/**
+ * コメントを投稿する。添付があれば同じ取引で付ける。
+ *
+ * 本文は空にできない（comments_body_not_blank）。
+ * 画像だけを貼れるようにする案は採らなかった。
+ * 緩めた先で本当に禁じたいのは「本文も添付も無いコメント」だが、
+ * 添付は別のテーブルにあるので、その条件は CHECK では書けない。
+ */
 export async function postCommentAction(
   _prev: CommentActionState,
   form: FormData,
 ): Promise<CommentActionState> {
-  const parsed = postForm.safeParse(Object.fromEntries(form));
+  const parsed = postForm.safeParse({
+    slug: form.get('slug'),
+    key: form.get('key'),
+    number: form.get('number'),
+    body: form.get('body'),
+  });
   if (!parsed.success) {
     return { error: z.prettifyError(parsed.error) };
   }
   const { slug, key, number, body } = parsed.data;
+
+  const incoming = await readIncoming(form);
+  if (!incoming.ok) {
+    return { error: describeProblem(incoming.reason, incoming.filename) };
+  }
 
   const here = await locate(slug, key, number);
   if (!here) {
     return { error: '操作する権限がありません' };
   }
 
-  const result = await postComment(here.scope, here.threadId, body);
+  // 作り直しは取引の外で行う。読み直して書き出すのに数秒かかる
+  const prepared = await prepareAttachments(here.scope.organizationId, incoming.files);
+  if (!prepared.ok) {
+    return { error: describeProblem(prepared.reason, prepared.filename) };
+  }
+
+  const result = await postComment(here.scope, here.threadId, body, prepared.prepared);
   if (!result.ok) {
     return { error: say(result.reason) };
   }

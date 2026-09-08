@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { AttachmentList } from '#features/attachment/AttachmentList.tsx';
+import { listCommentAttachments, listThreadAttachments } from '#features/attachment/queries.ts';
+import { ThreadAttachForm } from '#features/attachment/ThreadAttachForm.tsx';
 import { LoginScreen } from '#features/authentication/LoginScreen.tsx';
 import { CommentForm } from '#features/comment/CommentForm.tsx';
 import { CommentList } from '#features/comment/CommentList.tsx';
@@ -86,14 +89,26 @@ export default async function ThreadPage({
     return notFound();
   }
 
-  const [children, comments, candidates, watching, attachedTags, allTags] = await Promise.all([
+  const [
+    children,
+    comments,
+    candidates,
+    watching,
+    attachedTags,
+    allTags,
+    bodyFiles,
+    commentFiles,
+  ] = await Promise.all([
     listChildren(scope, thread.id),
     listComments(scope, thread.id),
     listMentionCandidates(scope, project.id),
     isWatching(scope, thread.id),
     listThreadTags(scope, thread.id),
     listTags(scope),
+    listThreadAttachments(scope, thread.id),
+    listCommentAttachments(scope, thread.id),
   ]);
+  const viewer = { userId: scope.userId, isOrgAdmin: scope.isOrgAdmin };
   const label = threadLabel(project.key, thread.number);
   const canWrite = writable(thread);
   const target = { slug, projectKey: project.key, number: thread.number };
@@ -221,6 +236,32 @@ export default async function ThreadPage({
             </p>
           ) : null}
 
+          {/* 添付は本文の側の情報である。
+              コメントに混ぜると、仕様書や画面の写しが流れて探せなくなる */}
+          {bodyFiles.length > 0 || canWrite ? (
+            <>
+              <h3 className="app-section">
+                添付{' '}
+                <span style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>
+                  {bodyFiles.length}件
+                </span>
+              </h3>
+
+              <AttachmentList
+                attachments={bodyFiles}
+                slug={slug}
+                target={target}
+                viewerUserId={viewer.userId}
+                isOrgAdmin={viewer.isOrgAdmin}
+                canWrite={canWrite}
+              />
+
+              {canWrite ? (
+                <ThreadAttachForm slug={slug} projectKey={project.key} number={thread.number} />
+              ) : null}
+            </>
+          ) : null}
+
           <h3 className="app-section">
             子スレッド{' '}
             <span style={{ color: 'var(--ink-faint)', fontWeight: 400 }}>
@@ -251,8 +292,10 @@ export default async function ThreadPage({
           ) : (
             <CommentList
               comments={comments}
+              attachments={commentFiles}
               target={target}
               canWrite={canWrite}
+              viewer={viewer}
               timezone={scope.timezone}
             />
           )}

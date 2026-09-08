@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import { z } from 'zod';
+import { type Prepared, storeAttachments } from '#features/attachment/store.ts';
 import { notifyUsers, notifyWatchers } from '#features/notification/queries.ts';
 import { THREAD_WRITABLE } from '#features/thread/queries.ts';
 import {
@@ -163,11 +164,16 @@ export type PostResult = { ok: true; id: string } | { ok: false; reason: Comment
  * 指名の解決と通知の作成を、投稿と同じトランザクションに入れる。
  * 分けると、コメントは残ったのに通知だけ飛ばなかった状態が起きる。
  * 相手はメンションで気づく前提なので、それは気づけないのと同じである。
+ *
+ * 添付も同じ取引に入れる。先に上げて後から本文を送る形にすると、
+ * 本文を書くのをやめた人のファイルだけが、どこにも出ないまま残る。
+ * 渡ってくるのは作り直し済みの中身である（作り直しは取引の外で行う）。
  */
 export async function postComment(
   scope: OrgScope,
   threadId: string,
   body: string,
+  attachments: readonly Prepared[] = [],
 ): Promise<PostResult> {
   const text = body.trim();
   if (text === '') {
@@ -218,6 +224,14 @@ export async function postComment(
         [commentId, starts, ends, users],
       );
     }
+
+    await storeAttachments(
+      client,
+      scope.organizationId,
+      scope.userId,
+      { commentId },
+      attachments,
+    );
 
     /*
      * 通知は二種類できる。指名された人と、ウォッチしている人である。

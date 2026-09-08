@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>行の無いファイル | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 低</p>
+  <h1 class="title">行の無いファイル</h1>
+
+  <h2>概要</h2>
+
+  <p>データベースとファイルシステムは同じ取引に入らない。
+  <a href="../../features/attachment/index.html">添付ファイル</a>を保存するとき、
+  必ずどちらかが先になる。</p>
+
+  <p>いまは行を先に入れ、次に実体を書き、最後にコミットしている。
+  途中で落ちれば、この呼び出しで書いたぶんの実体を消してから投げ直す。
+  それでも「実体は書けたが、コミットで落ちた」窓だけは閉じられない。</p>
+
+  <p>そこに残るのは、どの行からも指されていないファイルである。
+  誰にも見えず、消す手立ても画面には無く、容量だけを食い続ける。</p>
+
+  <h2>先送りとした理由</h2>
+
+  <p>先に閉じるべき窓ではないと判断した。</p>
+
+  <p>まず、起きる条件が狭い。
+  実体の書き込みが終わってからコミットが返るまでのあいだに、
+  プロセスかデータベースへの接続が落ちる必要がある。</p>
+
+  <p>次に、被害が容量だけである。
+  誰にも見えないので、情報が漏れることも、画面が壊れることもない。
+  <a href="../../glossary.html#attachment-usage">添付の合計</a>は
+  行を数えるので、この分は数字にも出ない。
+  つまり気づくのはディスクが埋まってからになる。ここだけが痛い。</p>
+
+  <p>逆順にする手もある。実体を先に書き、行が入らなければ消す。
+  こちらは「行を入れる側が落ちた」ときに消す処理まで届かないので、
+  窓はむしろ広がる。順序を変えても消えない性質の問題である。</p>
+
+  <h2>再検討のきっかけ</h2>
+
+  <ul>
+    <li>ディスクの使用量と、<code>attachments</code> の合計が目に見えて食い違ったとき</li>
+    <li>アプリの異常終了が日常的に起きるようになったとき</li>
+    <li>保存先をオブジェクトストレージへ移すとき（同じ問題が別の形で出る）</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+
+  <p>置き場を走査し、<code>attachments</code> のどの行からも指されていないキーを探す。
+  見つけたものをすぐ消さず、一定の時間を置いてから消す。
+  いま書いている最中のファイルを、掃除が追い越して消してしまうためである。</p>
+
+  <pre><code>-- 置き場にあるキーの一覧を作ってから
+SELECT storage_key FROM attachments;
+-- 差集合のうち、更新から24時間が経ったものだけを消す</code></pre>
+
+  <p>走らせる間隔は、日に一度で足りる。
+  <a href="../../glossary.html#delivery-pass">巡回</a>のような分単位の仕掛けは要らない。</p>
+
+  <p>複数のインスタンスで動かすときは、掃除が二重に走らないようにする必要がある。
+  これは<a href="../notification-enhancement/index.html">通知の拡張</a>で
+  期限通知に必要になる仕掛けと同じものである。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../features/attachment/index.html"><span class="card-no">FEATURE</span><p class="card-title">添付ファイル</p><p class="card-desc">行と実体のどちらを先に書くか</p></a>
+    <a class="card" href="../../database/attachments/index.html"><span class="card-no">TABLE</span><p class="card-title">attachments</p><p class="card-desc">指す側の行</p></a>
+    <a class="card" href="../../devops/deployment/index.html"><span class="card-no">DEVOPS</span><p class="card-title">デプロイ構成</p><p class="card-desc">置き場とバックアップ</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / 行の無いファイル</span>
+    <span>最終更新 2026-09-08</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

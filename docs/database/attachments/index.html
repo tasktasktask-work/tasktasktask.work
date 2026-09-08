@@ -39,6 +39,7 @@
   declared_type      text,
   is_image           boolean     NOT NULL DEFAULT false,
   uploaded_by_user_id uuid       NOT NULL REFERENCES users(id),
+  deleted_by_user_id uuid        REFERENCES users(id),
   deleted_at         timestamptz,
   created_at         timestamptz NOT NULL DEFAULT now(),
 
@@ -47,7 +48,12 @@
     CHECK ((thread_id IS NULL) &lt;&gt; (comment_id IS NULL)),
 
   CONSTRAINT attachments_size_limit
-    CHECK (byte_size &gt; 0 AND byte_size &lt;= 10 * 1024 * 1024)
+    CHECK (byte_size &gt; 0 AND byte_size &lt;= 10 * 1024 * 1024),
+  CONSTRAINT attachments_filename_length
+    CHECK (btrim(original_filename) &lt;&gt; '' AND length(original_filename) &lt;= 255),
+  -- 消した時刻と消した人は、必ず揃って埋まる
+  CONSTRAINT attachments_deleted_together
+    CHECK ((deleted_at IS NULL) = (deleted_by_user_id IS NULL))
 );
 
 CREATE UNIQUE INDEX attachments_storage_key_uniq ON attachments (storage_key);
@@ -63,7 +69,9 @@ CREATE INDEX attachments_by_comment ON attachments (comment_id) WHERE deleted_at
       <tr><td><code>original_filename</code></td><td>text</td><td>表示用。<strong>パスには使わない。</strong>画面に出すときはエスケープする</td></tr>
       <tr><td><code>byte_size</code></td><td>bigint</td><td>10MB を上限とする</td></tr>
       <tr><td><code>declared_type</code></td><td>text</td><td>アップロード時にブラウザが申告した MIME タイプ。<strong>記録のみで、配信には使わない</strong></td></tr>
-      <tr><td><code>is_image</code></td><td>boolean</td><td>サーバー側の再エンコードに成功したか。真ならインライン表示する</td></tr>
+      <tr><td><code>is_image</code></td><td>boolean</td><td>サーバー側の<a href="../../glossary.html#reencode">再エンコード</a>に成功したか。真ならインライン表示する</td></tr>
+      <tr><td><code>deleted_by_user_id</code></td><td>uuid</td><td>消した人。他のテーブルには無い列である</td></tr>
+      <tr><td><code>created_at</code></td><td>timestamptz</td><td>既定ではなく <code>clock_timestamp()</code> を入れる</td></tr>
     </tbody>
   </table>
   </div>
@@ -74,6 +82,34 @@ CREATE INDEX attachments_by_comment ON attachments (comment_id) WHERE deleted_at
   <code>text/html</code> と申告されたファイルがブラウザで解釈されうる。</p>
   <p>配信は常に <code>application/octet-stream</code> で行い、
   この列は「何のつもりで送られたか」を後から調べるためだけに持つ。</p>
+
+  <h3>消した人の列が、ここにだけある</h3>
+
+  <p><code>deleted_by_user_id</code> を持つテーブルは、いまのところこれだけである。
+  他はどれも <code>deleted_at</code> しか持たない。</p>
+
+  <p>消せる人が二通りあるのがここだけだからである。
+  タグもスレッドも、消せるのは決まった立場の人だけで、
+  行が消えていれば誰が消したかは立場から分かる。
+  添付は、上げた本人と<a href="../../glossary.html#org-admin">組織管理者</a>のどちらもが消せる。
+  貼った画像が消えている理由を尋ねられたとき、
+  自分で消したのか管理者が消したのかが分からないと、一次調査の入口が無い。</p>
+
+  <p><code>attachments_deleted_together</code> は、この二つが揃って埋まることを保証する。
+  片方だけの行を許すと、消えているのに誰が消したか分からない行を作れてしまう。</p>
+
+  <h3>created_at に取引の時刻を入れない</h3>
+
+  <p>既定の <code>now()</code> は取引の開始時刻を返す。
+  つまり一度の送信で三枚入れると、三行とも同じ時刻になる。</p>
+
+  <p>添付は付けた順に並べる。本文やコメントの中で「上の画像が」と書かれたときに、
+  その指し先が後から動かないようにするためである。
+  時刻が全部同じだと、並びは第二の鍵であるランダムな <code>id</code> で決まり、
+  選んだ順とは無関係になる。</p>
+
+  <p>そこで挿入時に <code>clock_timestamp()</code> を明示して入れる。
+  こちらは呼ばれた瞬間の時刻を返すので、同じ取引の中でも行ごとに違う値になる。</p>
 
   <h3>is_image が判定のすべて</h3>
   <p>形式のホワイトリストは持たない。
@@ -120,7 +156,7 @@ comments ──&lt; attachments
 
   <div class="sheet-foot">
     <span>データベース / attachments</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-08</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

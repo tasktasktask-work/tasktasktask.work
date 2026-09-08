@@ -1,6 +1,8 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
+import { AttachmentPicker } from '#features/attachment/AttachmentPicker.tsx';
+import { BATCH_MAX, FILE_MAX, formatBytes } from '#features/attachment/limits.ts';
 import type { Candidate } from '#lib/markdown.ts';
 import { type CommentActionState, postCommentAction } from './actions.ts';
 
@@ -146,8 +148,14 @@ export function CommentForm({
 
         <div className="foot">
           <button className="app-btn" type="submit" disabled={sending}>
-            {sending ? '投稿中…' : '投稿する'}
+            {sending ? '送っています…' : '投稿する'}
           </button>
+          {/* 添付は本文と同じ送信で付く。
+              先に上げて後から本文を送る形にすると、書くのをやめた人の
+              ファイルだけが、どこにも出ないまま残る */}
+          <AttachmentPicker
+            hint={`1ファイル ${formatBytes(FILE_MAX)}、一度に合計 ${formatBytes(BATCH_MAX)} まで`}
+          />
           <span style={{ flex: 1 }} />
           <span className="warn-inline">⚠ 投稿したコメントは編集も削除もできません</span>
         </div>

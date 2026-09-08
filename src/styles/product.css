@@ -462,3 +462,35 @@
 }
 .p-tag-pick .err { font-size: .74rem; color: var(--ki); }
 .p-tag-pick .err a { color: var(--ai); }
+
+/* 添付。画像はそのまま並べ、その下に名前と大きさの行が付く */
+.p-attach { display: flex; flex-direction: column; gap: .1rem; margin: .2rem 0 .9rem; }
+.p-attach form { display: contents; }
+.p-attach .item { padding: .35rem 0; }
+.p-attach .item img {
+  display: block; max-width: 100%; max-height: 22rem;
+  border: 1px solid var(--rule); background: var(--paper); padding: .25rem;
+}
+.p-attach .line {
+  display: flex; align-items: baseline; gap: .5rem; flex-wrap: wrap;
+  margin: .3rem 0 0; font-size: .78rem;
+}
+.p-attach .name { color: var(--ai); text-decoration: none; word-break: break-all; }
+.p-attach .name:hover { text-decoration: underline; }
+.p-attach .size { font-family: var(--font-mono); font-size: .7rem; color: var(--ink-faint); }
+.p-attach .drop {
+  border: 0; background: none; padding: 0; cursor: pointer;
+  font: inherit; font-size: .72rem; color: var(--ink-faint);
+}
+.p-attach .drop:hover { color: var(--shu); }
+.p-attach .err { font-size: .76rem; color: var(--ki); margin: 0 0 .3rem; }
+.p-attach .note { font-size: .76rem; color: var(--ink-soft); margin: 0 0 .3rem; }
+
+/* ファイルを選ぶ欄。投稿欄の足元と、本文の添付の両方に置く */
+.p-attach-pick { display: flex; flex-direction: column; gap: .25rem; min-width: 0; }
+.p-attach-pick input[type="file"] { font-size: .76rem; color: var(--ink-soft); max-width: 20rem; }
+.p-attach-pick .note { margin: 0; font-size: .72rem; color: var(--ink-faint); }
+.p-attach-pick .err { margin: 0; font-size: .74rem; color: var(--ki); }
+.p-attach-pick .picked { margin: 0; padding: 0; list-style: none; font-size: .74rem; }
+.p-attach-pick .picked li { color: var(--ink-soft); word-break: break-all; }
+.p-attach-pick .picked .size { font-family: var(--font-mono); font-size: .68rem; color: var(--ink-faint); }

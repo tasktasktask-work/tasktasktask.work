@@ -27,9 +27,9 @@ services:
       VIRTUAL_HOST: tasktasktask.work
       VIRTUAL_PORT: "3000"
 
-      # nginx の既定は 1MB。添付は1ファイル10MBまで許すので、
+      # nginx の既定は 1MB。添付は一度の送信で合計30MBまで許すので、
       # ここを上げておかないと本番でだけ 413 になる。
-      CLIENT_MAX_BODY_SIZE: 12m
+      CLIENT_MAX_BODY_SIZE: 34m
 
       NODE_ENV: production
       ATTACHMENTS_DIR: /var/lib/task3/attachments

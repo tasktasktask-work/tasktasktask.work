@@ -27,11 +27,13 @@
   },
   "dependencies": {
     "@node-rs/argon2": "^2.2.0",
+    "browser-image-compression": "^2.0.2",
     "next": "^16.3.4",
     "nodemailer": "^10.0.1",
     "pg": "^8.13.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "sharp": "^0.35.4",
     "streamdown": "^2.6.0",
     "zod": "^4.5.4"
   },

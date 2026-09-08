@@ -98,6 +98,11 @@ CREATE TABLE attachments (
   is_image            boolean     NOT NULL DEFAULT false,
 
   uploaded_by_user_id uuid        NOT NULL REFERENCES users(id),
+
+  -- 消した人。他のテーブルには無い列である。
+  -- 消せるのが上げた本人と組織管理者の二通りあるのはここだけで、
+  -- 「自分で消したのか、管理者に消されたのか」は行を見ないと分からない。
+  deleted_by_user_id  uuid        REFERENCES users(id),
   deleted_at          timestamptz,
   created_at          timestamptz NOT NULL DEFAULT now(),
 
@@ -105,7 +110,16 @@ CREATE TABLE attachments (
     CHECK ((thread_id IS NULL) <> (comment_id IS NULL)),
 
   CONSTRAINT attachments_size_limit
-    CHECK (byte_size > 0 AND byte_size <= 10 * 1024 * 1024)
+    CHECK (byte_size > 0 AND byte_size <= 10 * 1024 * 1024),
+
+  -- 表示用の名前も、他の名前と同じくスキーマ側で長さを止める。
+  CONSTRAINT attachments_filename_length
+    CHECK (btrim(original_filename) <> '' AND length(original_filename) <= 255),
+
+  -- 消した時刻と消した人は、必ず揃って埋まる。
+  -- 片方だけの行を許すと、消えているのに誰が消したか分からない行が作れる。
+  CONSTRAINT attachments_deleted_together
+    CHECK ((deleted_at IS NULL) = (deleted_by_user_id IS NULL))
 );
 
 CREATE UNIQUE INDEX attachments_storage_key_uniq ON attachments (storage_key);
