@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { useField } from '#lib/field.tsx';
 import {
   changeVisibilityAction,
   deleteProjectAction,
@@ -31,6 +32,8 @@ export function RenameProjectForm({
   description: string;
 }) {
   const [state, action, saving] = useActionState(renameProjectAction, empty);
+  const [value, setValue, nameSettled] = useField(name);
+  const [note, setNote, noteSettled] = useField(description);
 
   return (
     <form className="app-form" action={action}>
@@ -38,7 +41,9 @@ export function RenameProjectForm({
       <input type="hidden" name="key" value={projectKey} />
 
       {state.error ? <div className="app-note warn">{state.error}</div> : null}
-      {state.notice ? <div className="app-note ok">{state.notice}</div> : null}
+      {state.notice && nameSettled && noteSettled ? (
+        <div className="app-note ok">{state.notice}</div>
+      ) : null}
 
       <div className="line">
         <div className="auth-field" style={{ marginBottom: 0, flex: '0 1 10rem' }}>
@@ -47,7 +52,14 @@ export function RenameProjectForm({
         </div>
         <div className="auth-field" style={{ marginBottom: 0 }}>
           <label htmlFor="settings-name">プロジェクト名</label>
-          <input id="settings-name" name="name" type="text" defaultValue={name} required />
+          <input
+            id="settings-name"
+            name="name"
+            type="text"
+            value={value}
+            onChange={(event) => setValue(event.target.value)}
+            required
+          />
         </div>
       </div>
 
@@ -63,7 +75,8 @@ export function RenameProjectForm({
             id="settings-description"
             name="description"
             type="text"
-            defaultValue={description}
+            value={note}
+            onChange={(event) => setNote(event.target.value)}
           />
         </div>
         <button className="app-btn" type="submit" disabled={saving}>

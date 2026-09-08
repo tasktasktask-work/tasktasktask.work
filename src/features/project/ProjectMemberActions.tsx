@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { Told, useField } from '#lib/field.tsx';
 import {
   addProjectMemberAction,
   type ProjectActionState,
@@ -83,20 +84,27 @@ export function ChangeMemberRoleForm({
   isAdmin: boolean;
 }) {
   const [state, action, saving] = useActionState(addProjectMemberAction, empty);
+  const [value, setValue, settled] = useField(String(isAdmin));
 
   return (
     <form action={action}>
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="key" value={projectKey} />
       <input type="hidden" name="userId" value={userId} />
-      <select name="isAdmin" defaultValue={String(isAdmin)} disabled={saving} aria-label="権限">
+      <select
+        name="isAdmin"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        disabled={saving}
+        aria-label="権限"
+      >
         <option value="false">メンバー</option>
         <option value="true">プロジェクト管理者</option>
       </select>
       <button className="app-btn ghost" type="submit" disabled={saving}>
         変更
       </button>
-      {state.error ? <span className="err">{state.error}</span> : null}
+      <Told state={state} settled={settled} />
     </form>
   );
 }

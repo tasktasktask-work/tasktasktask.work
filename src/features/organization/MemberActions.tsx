@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { Told, useField } from '#lib/field.tsx';
 import {
   changeRoleAction,
   type OrgActionState,
@@ -30,12 +31,19 @@ export function RoleForm({
   self: boolean;
 }) {
   const [state, action, saving] = useActionState(changeRoleAction, empty);
+  const [value, setValue, settled] = useField(role);
 
   return (
     <form action={action}>
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="userId" value={userId} />
-      <select name="role" defaultValue={role} disabled={saving} aria-label="役割">
+      <select
+        name="role"
+        value={value}
+        onChange={(event) => setValue(event.target.value as 'admin' | 'member')}
+        disabled={saving}
+        aria-label="役割"
+      >
         <option value="member">メンバー</option>
         <option value="admin">組織管理者</option>
       </select>
@@ -47,7 +55,7 @@ export function RoleForm({
           あなた
         </span>
       ) : null}
-      {state.error ? <span className="err">{state.error}</span> : null}
+      <Told state={state} settled={settled} />
     </form>
   );
 }

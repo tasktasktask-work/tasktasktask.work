@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { useField } from '#lib/field.tsx';
 import {
   deleteThreadAction,
   editThreadTextAction,
@@ -38,6 +39,8 @@ export function ThreadTextForm({
   body: string;
 }) {
   const [state, action, saving] = useActionState(editThreadTextAction, empty);
+  const [heading, setHeading, headingSettled] = useField(title);
+  const [text, setText, textSettled] = useField(body);
 
   return (
     <details className="app-disclosure" open={Boolean(state.error)}>
@@ -47,16 +50,31 @@ export function ThreadTextForm({
         {hidden(target)}
 
         {state.error ? <div className="app-note warn">{state.error}</div> : null}
-        {state.notice ? <div className="app-note ok">{state.notice}</div> : null}
+        {state.notice && headingSettled && textSettled ? (
+          <div className="app-note ok">{state.notice}</div>
+        ) : null}
 
         <div className="auth-field">
           <label htmlFor="edit-title">タイトル</label>
-          <input id="edit-title" name="title" type="text" defaultValue={title} required />
+          <input
+            id="edit-title"
+            name="title"
+            type="text"
+            value={heading}
+            onChange={(event) => setHeading(event.target.value)}
+            required
+          />
         </div>
 
         <div className="auth-field">
           <label htmlFor="edit-body">本文</label>
-          <textarea id="edit-body" name="body" rows={12} defaultValue={body} />
+          <textarea
+            id="edit-body"
+            name="body"
+            rows={12}
+            value={text}
+            onChange={(event) => setText(event.target.value)}
+          />
         </div>
 
         <p className="app-hint">

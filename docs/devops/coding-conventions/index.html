@@ -664,6 +664,46 @@ import { LoginForm } from '#features/authentication/LoginForm.tsx';</code></pre>
   <a href="../../glossary.html#magic-link">マジックリンク</a>の一度きりといった、
   間違えると締め出しか乗っ取りに直結する振る舞いを、実データベースに対して試せるようになっている。</p>
 
+  <h2 id="editing-fields">すでにある値を書き換える欄は、値を画面の側で持つ</h2>
+
+  <p>フォームに <code>action</code> を渡すと、React はその処理が終わったあとに
+  <strong>フォームを自動で戻す。</strong>戻し先は、組み立てたときの既定値である。</p>
+
+  <p>新しく書く画面ではこれでよい。投稿し終えた欄は空に戻ってほしい。
+  困るのは、すでにある値を書き換える画面のほうである。</p>
+
+<pre><code>// これだと、保存できているのに欄だけが元へ戻る
+&lt;select name="assignee" defaultValue={assigneeUserId ?? ''}&gt;</code></pre>
+
+  <p>保存そのものは通り、データベースも書き換わる。
+  戻るのは画面だけなので、読み込み直すまで気づけない。
+  「保存できていないのか、表示だけの話なのか」が使う側からは分からない。</p>
+
+<pre><code>// 値を画面の側で持ち、サーバ側が動いたら合わせ直す
+const [value, setValue, settled] = useField(assigneeUserId ?? '');
+
+&lt;select name="assignee" value={value} onChange={(e) =&gt; setValue(e.target.value)}&gt;</code></pre>
+
+  <p><code>useField</code> は <code>src/lib/field.tsx</code> にある。
+  三つめに返るのは「見えている値が、保存されている値と揃っているか」で、
+  保存できたことを知らせてよいかの判断に使う。</p>
+
+  <div class="note warn">
+    <span class="note-label">知らせは、揃っているあいだだけ出す</span>
+    <p>「保存しました」を出しっぱなしにすると、続けて欄をいじったときに
+    <strong>保存していない値の横に「保存しました」が残る。</strong></p>
+    <p>同じ判断を <code>Told</code> にまとめてある。
+    <code>settled</code> が偽のあいだは知らせを出さない。
+    失敗の知らせは、揃っているかに関わらず出す。</p>
+  </div>
+
+  <p><code>defaultValue</code> を使ってよいのは、戻るのが正しい欄だけである。
+  新しく作るフォームの初期値、招待の役割、追加する人の選択欄がこれにあたる。</p>
+
+  <p>この形は2026-09-08に本番で踏んだ。
+  スレッドの担当者を変えると、保存はされるのに選択欄が元へ戻っていた。
+  同じ書き方が7箇所にあり、まとめて直した。</p>
+
   <h2>命名</h2>
 
   <div class="table-scroll">

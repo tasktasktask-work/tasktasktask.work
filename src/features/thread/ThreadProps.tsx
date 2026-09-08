@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { Told, useField } from '#lib/field.tsx';
 import {
   setAssigneeAction,
   setParentAction,
@@ -45,6 +46,7 @@ export function ProgressForm({
   binary: boolean;
 }) {
   const [state, action, saving] = useActionState(setProgressAction, empty);
+  const [value, setValue, settled] = useField(progress);
 
   if (binary) {
     const next = progress === 100 ? 0 : 100;
@@ -58,7 +60,8 @@ export function ProgressForm({
         <button className="app-btn ghost" type="submit" disabled={saving}>
           {next === 100 ? 'クローズする' : '開け直す'}
         </button>
-        {state.error ? <span className="err">{state.error}</span> : null}
+        {/* 押した結果は札そのものに出るので、揃っているかは見ない */}
+        <Told state={state} settled={true} />
       </form>
     );
   }
@@ -72,7 +75,8 @@ export function ProgressForm({
         min={0}
         max={100}
         step={1}
-        defaultValue={progress}
+        value={value}
+        onChange={(event) => setValue(Number(event.target.value))}
         list="progress-values"
         aria-label="進捗率"
         style={{ width: '4.5rem' }}
@@ -89,7 +93,7 @@ export function ProgressForm({
       <button className="app-btn ghost" type="submit" disabled={saving}>
         保存
       </button>
-      {state.error ? <span className="err">{state.error}</span> : null}
+      <Told state={state} settled={settled} />
     </form>
   );
 }
@@ -104,11 +108,17 @@ export function AssigneeForm({
   members: { userId: string; displayName: string }[];
 }) {
   const [state, action, saving] = useActionState(setAssigneeAction, empty);
+  const [value, setValue, settled] = useField(assigneeUserId ?? '');
 
   return (
     <form action={action}>
       {hidden(target)}
-      <select name="assignee" defaultValue={assigneeUserId ?? ''} aria-label="担当者">
+      <select
+        name="assignee"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        aria-label="担当者"
+      >
         <option value="">未設定</option>
         {members.map((member) => (
           <option key={member.userId} value={member.userId}>
@@ -119,7 +129,7 @@ export function AssigneeForm({
       <button className="app-btn ghost" type="submit" disabled={saving}>
         変更
       </button>
-      {state.error ? <span className="err">{state.error}</span> : null}
+      <Told state={state} settled={settled} />
     </form>
   );
 }
@@ -141,6 +151,8 @@ export function PeriodForm({
   endsOn: string | null;
 }) {
   const [state, action, saving] = useActionState(setPeriodAction, empty);
+  const [from, setFrom, fromSettled] = useField(startsOn ?? '');
+  const [to, setTo, toSettled] = useField(endsOn ?? '');
 
   return (
     <form action={action}>
@@ -148,21 +160,23 @@ export function PeriodForm({
       <input
         type="date"
         name="startsOn"
-        defaultValue={startsOn ?? ''}
+        value={from}
+        onChange={(event) => setFrom(event.target.value)}
         aria-label="開始日"
         style={{ width: '8.2rem' }}
       />
       <input
         type="date"
         name="endsOn"
-        defaultValue={endsOn ?? ''}
+        value={to}
+        onChange={(event) => setTo(event.target.value)}
         aria-label="終了日"
         style={{ width: '8.2rem' }}
       />
       <button className="app-btn ghost" type="submit" disabled={saving}>
         保存
       </button>
-      {state.error ? <span className="err">{state.error}</span> : null}
+      <Told state={state} settled={fromSettled && toSettled} />
     </form>
   );
 }
@@ -181,6 +195,9 @@ export function ParentForm({
   parentNumber: number | null;
 }) {
   const [state, action, saving] = useActionState(setParentAction, empty);
+  const [value, setValue, settled] = useField(
+    parentNumber === null ? '' : `${target.projectKey}-${parentNumber}`,
+  );
 
   return (
     <form action={action}>
@@ -188,7 +205,8 @@ export function ParentForm({
       <input
         type="text"
         name="parent"
-        defaultValue={parentNumber === null ? '' : `${target.projectKey}-${parentNumber}`}
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
         placeholder={`${target.projectKey}-3`}
         aria-label="親スレッド"
         style={{ width: '7rem' }}
@@ -196,7 +214,7 @@ export function ParentForm({
       <button className="app-btn ghost" type="submit" disabled={saving}>
         保存
       </button>
-      {state.error ? <span className="err">{state.error}</span> : null}
+      <Told state={state} settled={settled} />
     </form>
   );
 }

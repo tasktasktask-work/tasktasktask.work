@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import { Told, useField } from '#lib/field.tsx';
 import {
   createTagAction,
   deleteTagAction,
@@ -51,6 +52,7 @@ export function NewTagForm({ slug }: { slug: string }) {
 
 export function TagRowForms({ slug, tag }: { slug: string; tag: TagAdminRow }) {
   const [save, saveAction, saving] = useActionState(updateTagAction, empty);
+  const [name, setName, settled] = useField(tag.name);
   const [drop, dropAction, dropping] = useActionState(deleteTagAction, empty);
 
   return (
@@ -63,13 +65,15 @@ export function TagRowForms({ slug, tag }: { slug: string; tag: TagAdminRow }) {
           name="name"
           required
           maxLength={NAME_MAX}
-          defaultValue={tag.name}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
           aria-label={`${tag.name} の名前`}
         />
         <ColorSwatches colors={TAG_COLORS} name="color" selected={tag.color} />
         <button className="app-btn ghost" type="submit" disabled={saving}>
           保存
         </button>
+        <Told state={save} settled={settled} />
       </form>
 
       <span className="sp" style={{ flex: 1 }} />
