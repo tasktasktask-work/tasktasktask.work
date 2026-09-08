@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { Told, useField } from '#lib/field.tsx';
+import { Told, useField, withoutReset } from '#lib/field.tsx';
 import {
   createTagAction,
   deleteTagAction,
@@ -57,7 +57,7 @@ export function TagRowForms({ slug, tag }: { slug: string; tag: TagAdminRow }) {
 
   return (
     <div className="app-person p-tag-admin">
-      <form className="nm" action={saveAction}>
+      <form className="nm" action={saveAction} onSubmit={withoutReset(saveAction)}>
         <input type="hidden" name="slug" value={slug} />
         <input type="hidden" name="tagId" value={tag.id} />
         <input

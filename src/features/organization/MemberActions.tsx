@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { Told, useField } from '#lib/field.tsx';
+import { Told, useField, withoutReset } from '#lib/field.tsx';
 import {
   changeRoleAction,
   type OrgActionState,
@@ -34,7 +34,7 @@ export function RoleForm({
   const [value, setValue, settled] = useField(role);
 
   return (
-    <form action={action}>
+    <form action={action} onSubmit={withoutReset(action)}>
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="userId" value={userId} />
       <select

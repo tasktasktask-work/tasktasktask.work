@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { Told, useField } from '#lib/field.tsx';
+import { Told, useField, withoutReset } from '#lib/field.tsx';
 import {
   addProjectMemberAction,
   type ProjectActionState,
@@ -87,7 +87,7 @@ export function ChangeMemberRoleForm({
   const [value, setValue, settled] = useField(String(isAdmin));
 
   return (
-    <form action={action}>
+    <form action={action} onSubmit={withoutReset(action)}>
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="key" value={projectKey} />
       <input type="hidden" name="userId" value={userId} />

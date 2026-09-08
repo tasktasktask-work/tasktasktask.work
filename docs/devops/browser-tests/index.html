@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ブラウザで押して確かめる | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">DevOps 08</p>
+  <h1 class="title">ブラウザで押して確かめる</h1>
+  <p class="lede">
+    ここにあるのは、ブラウザの中でしか起きないことだけである。
+    判定の網は <code>pnpm test</code> が持っている。両方を同じ場所で見ない。
+  </p>
+
+  <h2>なぜ要ったか</h2>
+
+  <p>2026-09-08 に本番へ初めて反映した日、四つの不具合が出た。
+  そのうち二つは、手元でどれだけ確かめても現れなかった。</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>不具合</th><th>捕まえるのに要ったもの</th></tr></thead>
+      <tbody>
+        <tr><td>マジックリンクの着地が <code>0.0.0.0</code> へ飛ぶ</td><td><code>curl</code> でヘッダを見れば足りた</td></tr>
+        <tr><td>CSS が画面に届かない</td><td>class の照合で足りた（<code>pnpm check</code> に入れた）</td></tr>
+        <tr><td><code>blob は中身が空です</code> でコメントを投稿できない</td><td><strong>ブラウザが要った</strong></td></tr>
+        <tr><td>保存すると入力欄が元の値へ戻る</td><td><strong>ブラウザが要った</strong></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>下の二つは、どちらもブラウザの中で起きる。
+  ファイル欄の符号化も、フォームの <code>reset()</code> も、
+  リクエストを手で組む試験では通らない層にある。</p>
+
+  <div class="note warn">
+    <span class="note-label">この二つが往復の原因になった</span>
+    <p>どちらも一度は直したつもりで本番へ出し、直っていなかった。
+    確かめる手段が無いまま「たぶんこうだろう」で直したためである。</p>
+    <p>入れたあと、四つの不具合をすべて元に戻して走らせた。
+    <strong>四つとも落ちた。</strong>この試験があれば、往復は起きなかった。</p>
+  </div>
+
+  <h2>走らせ方</h2>
+
+<pre><code>pnpm build   # standalone の出力が要る
+pnpm e2e</code></pre>
+
+  <p>ビルドしていなければ、その旨を出して止まる。
+  データベースは <code>pnpm test</code> と同じものを使う。</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th class="nowrap">入口</th><th>見るもの</th><th class="nowrap">かかる時間</th></tr></thead>
+      <tbody>
+        <tr><td><code>pnpm check</code></td><td>型、整形、共有スタイル、定義の無い class、移行の規約</td><td>数秒</td></tr>
+        <tr><td><code>pnpm test</code></td><td>判定、SQL、制約。483件</td><td>数秒</td></tr>
+        <tr><td><code>pnpm e2e</code></td><td>ブラウザの中でしか起きないこと。9件</td><td>25秒ほど</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>何を置くか</h2>
+
+  <p>置くのは、ブラウザが要るものだけである。
+  権限の判定も、SQL の条件も、ここでは見ない。
+  全画面を押して回る形にすると、遅くて壊れやすく、落ちても誰も直さなくなる。</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th class="nowrap">ファイル</th><th>見ているもの</th></tr></thead>
+      <tbody>
+        <tr><td class="nowrap"><code>login.spec.ts</code></td><td>マジックリンクの着地、二度使えないこと、カードに意匠が効いていること</td></tr>
+        <tr><td class="nowrap"><code>styles.spec.ts</code></td><td>ログイン画面に CSS と書体が届いていること</td></tr>
+        <tr><td class="nowrap"><code>comment.spec.ts</code></td><td>添付なしで投稿できること、添付ありで名前が保たれること</td></tr>
+        <tr><td class="nowrap"><code>thread-props.spec.ts</code></td><td>保存後に欄が戻らないこと、知らせの出し引き</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>下ごしらえと後片付け</h2>
+
+  <p>組織と最初の管理者は画面から作れないので、データベースへ直に入れる。
+  <code>tests/e2e/fixtures.ts</code> の <code>sow</code> がそれを行い、
+  終わったら <code>reap</code> が消す。</p>
+
+  <p>印は走らせるたびに変える。途中で落ちても、次の回の種に当たらない。</p>
+
+  <p>ログインはマジックリンクを通す。
+  トークンを直に入れてから <code>/auth/magic?token=...</code> を開く。
+  画面のログイン欄を使わないのは、メールが届くのを待つことになるためである。</p>
+
+  <h2>接続先を差し替える</h2>
+
+<pre><code>E2E_BASE_URL=https://tasktasktask.work pnpm e2e</code></pre>
+
+  <p>与えると、自分でサーバーを起こさない。
+  データベースにも手が届かないので、種を蒔く試験は外れる
+  （<code>test.skip(!canSeed, ...)</code>）。残るのは <code>styles.spec.ts</code> だけである。</p>
+
+  <p><strong>本番で何を確かめるかは、まだ決めていない。</strong>
+  専用の組織を置いて書き込みまで見るのか、読むだけに留めるのか。
+  向けるときに決める。継ぎ目だけを先に作ってある。</p>
+
+  <h2>落ちたときに残るもの</h2>
+
+  <p>トレースとスクリーンショットが <code>test-results/</code> に残る。
+  通ったときは何も残らない。置き場は <code>.gitignore</code> に入れてある。</p>
+
+<pre><code>pnpm exec playwright show-trace test-results/&lt;試験の名前&gt;/trace.zip</code></pre>
+
+  <p>トレースには押した順と、各段階の DOM がそのまま入っている。
+  <strong>読むための道具なので、ここが効く。</strong></p>
+
+  <h2>ブラウザの実体</h2>
+
+  <p>chromium は約170MB ある。
+  <code>.devcontainer/Dockerfile</code> に入れてあるので、
+  次に開発コンテナを作り直したときから何もしなくても使える。</p>
+
+  <p>版は <code>package.json</code> の <code>@playwright/test</code> と揃える。
+  ずれると <code>playwright</code> が「入っていない」と言って落ちる。</p>
+
+  <div class="note warn">
+    <span class="note-label">アーキテクチャ</span>
+    <p>開発コンテナは arm64 で、GitHub の runner は x86_64 である。
+    <code>playwright install</code> はどちらでも合うものを取ってくるので、
+    そのままで動く。イメージの側とは別の話である
+    （<a href="../deployment/index.html">デプロイ</a>にある注意はそちら）。</p>
+  </div>
+
+  <h2>CI には入れていない</h2>
+
+  <p><a href="../continuous-integration/index.html">Test ワークフロー</a>で走るのは
+  <code>pnpm check</code> と <code>pnpm test</code> と <code>pnpm build</code> までである。</p>
+
+  <p>入れていないのは、まず手元で確かめるための道具として作ったためである。
+  CI で走らせるなら、runner にブラウザを落とす時間が毎回かかる
+  （キャッシュを効かせるにしても、置き場と鍵を決めることになる）。
+  必要になったときに決める。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../continuous-integration/index.html"><span class="card-no">05</span><p class="card-title">継続的インテグレーション</p><p class="card-desc">CI で走らせているもの</p></a>
+    <a class="card" href="../deployment/index.html"><span class="card-no">04</span><p class="card-title">デプロイ構成</p><p class="card-desc">standalone の出力と静的な資材</p></a>
+    <a class="card" href="../coding-conventions/index.html#editing-fields"><span class="card-no">02</span><p class="card-title">コーディング規約</p><p class="card-desc">入力欄が戻る話はこちら</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>DevOps / ブラウザで押して確かめる</span>
+    <span>最終更新 2026-09-08</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

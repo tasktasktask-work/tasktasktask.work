@@ -21,3 +21,7 @@ coverage/
 # Claude Code の状態ファイル。
 # アカウントと組織の識別情報を含み、作業のたびに書き換わる。
 .devcontainer/.claude.json
+
+# Playwright が落ちたときに残すもの（トレースとスクリーンショット）
+test-results/
+playwright-report/

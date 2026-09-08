@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { useField } from '#lib/field.tsx';
+import { useField, withoutReset } from '#lib/field.tsx';
 import { type OrgActionState, renameOrganizationAction } from './actions.ts';
 
 const empty: OrgActionState = {};
@@ -11,7 +11,7 @@ export function SettingsForm({ slug, name }: { slug: string; name: string }) {
   const [value, setValue, settled] = useField(name);
 
   return (
-    <form className="app-form" action={action}>
+    <form className="app-form" action={action} onSubmit={withoutReset(action)}>
       <input type="hidden" name="slug" value={slug} />
 
       {state.error ? <div className="app-note warn">{state.error}</div> : null}

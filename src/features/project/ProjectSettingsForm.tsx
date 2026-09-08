@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { useField } from '#lib/field.tsx';
+import { useField, withoutReset } from '#lib/field.tsx';
 import {
   changeVisibilityAction,
   deleteProjectAction,
@@ -36,7 +36,7 @@ export function RenameProjectForm({
   const [note, setNote, noteSettled] = useField(description);
 
   return (
-    <form className="app-form" action={action}>
+    <form className="app-form" action={action} onSubmit={withoutReset(action)}>
       <input type="hidden" name="slug" value={slug} />
       <input type="hidden" name="key" value={projectKey} />
 

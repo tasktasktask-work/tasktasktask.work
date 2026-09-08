@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { Told, useField } from '#lib/field.tsx';
+import { Told, useField, withoutReset } from '#lib/field.tsx';
 import {
   setAssigneeAction,
   setParentAction,
@@ -51,7 +51,7 @@ export function ProgressForm({
   if (binary) {
     const next = progress === 100 ? 0 : 100;
     return (
-      <form action={action}>
+      <form action={action} onSubmit={withoutReset(action)}>
         {hidden(target)}
         <input type="hidden" name="progress" value={next} />
         <span className="p-oc" data-oc={progress === 100 ? 'close' : 'open'}>
@@ -67,7 +67,7 @@ export function ProgressForm({
   }
 
   return (
-    <form action={action}>
+    <form action={action} onSubmit={withoutReset(action)}>
       {hidden(target)}
       <input
         type="number"
@@ -111,7 +111,7 @@ export function AssigneeForm({
   const [value, setValue, settled] = useField(assigneeUserId ?? '');
 
   return (
-    <form action={action}>
+    <form action={action} onSubmit={withoutReset(action)}>
       {hidden(target)}
       <select
         name="assignee"
@@ -155,7 +155,7 @@ export function PeriodForm({
   const [to, setTo, toSettled] = useField(endsOn ?? '');
 
   return (
-    <form action={action}>
+    <form action={action} onSubmit={withoutReset(action)}>
       {hidden(target)}
       <input
         type="date"
@@ -200,7 +200,7 @@ export function ParentForm({
   );
 
   return (
-    <form action={action}>
+    <form action={action} onSubmit={withoutReset(action)}>
       {hidden(target)}
       <input
         type="text"

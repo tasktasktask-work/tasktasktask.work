@@ -679,13 +679,29 @@ import { LoginForm } from '#features/authentication/LoginForm.tsx';</code></pre>
   戻るのは画面だけなので、読み込み直すまで気づけない。
   「保存できていないのか、表示だけの話なのか」が使う側からは分からない。</p>
 
+  <p><strong>制御された欄にしても直らない。</strong>
+  <code>reset()</code> はフォームの要素に対して呼ばれるので、
+  制御しているかどうかに関わらず DOM の値が戻る。
+  戻り先は、サーバー側が描いたときの <code>selected</code> 属性である。
+  React 側の状態は動かないままなので描き直しが起きず、DOM だけが戻ったまま残る。</p>
+
+  <p>止めるには、送信の既定動作を止めてから自分で呼ぶ。
+  React は既定動作が止まっているとき、処理の中身を <code>null</code> にして
+  <code>startHostTransition</code> を呼ぶ。<code>null</code> のときは
+  <code>requestFormReset</code> を挟まない（react-dom の実装）。</p>
+
 <pre><code>// 値を画面の側で持ち、サーバ側が動いたら合わせ直す
 const [value, setValue, settled] = useField(assigneeUserId ?? '');
 
-&lt;select name="assignee" value={value} onChange={(e) =&gt; setValue(e.target.value)}&gt;</code></pre>
+&lt;form action={action} onSubmit={withoutReset(action)}&gt;
+  &lt;select name="assignee" value={value} onChange={(e) =&gt; setValue(e.target.value)}&gt;</code></pre>
 
-  <p><code>useField</code> は <code>src/lib/field.tsx</code> にある。
-  三つめに返るのは「見えている値が、保存されている値と揃っているか」で、
+  <p><code>action</code> は残しておく。JS が無いときは、そちらが受ける。</p>
+
+  <p><code>useField</code> と <code>withoutReset</code> は
+  <code>src/lib/field.tsx</code> にある。
+  <code>useField</code> が三つめに返すのは
+  「見えている値が、保存されている値と揃っているか」で、
   保存できたことを知らせてよいかの判断に使う。</p>
 
   <div class="note warn">
@@ -703,6 +719,16 @@ const [value, setValue, settled] = useField(assigneeUserId ?? '');
   <p>この形は2026-09-08に本番で踏んだ。
   スレッドの担当者を変えると、保存はされるのに選択欄が元へ戻っていた。
   同じ書き方が7箇所にあり、まとめて直した。</p>
+
+  <div class="note">
+    <span class="note-label">一度は制御するだけで直したつもりになった</span>
+    <p>最初は <code>defaultValue</code> を <code>value</code> に変えただけで済ませた。
+    直っていなかった。<code>reset()</code> は DOM の値を戻すが、
+    React の状態は動かないので描き直しが起きない、という順番を見落としていた。</p>
+    <p>react-dom の中を読んで、送信の既定動作を止めれば
+    <code>requestFormReset</code> を通らないことを確かめた。
+    ブラウザでの動きは手元では試せないので、確かめたのはここまでである。</p>
+  </div>
 
   <h2>命名</h2>
 

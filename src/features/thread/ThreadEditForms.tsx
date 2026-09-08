@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
-import { useField } from '#lib/field.tsx';
+import { useField, withoutReset } from '#lib/field.tsx';
 import {
   deleteThreadAction,
   editThreadTextAction,
@@ -46,7 +46,7 @@ export function ThreadTextForm({
     <details className="app-disclosure" open={Boolean(state.error)}>
       <summary>タイトルと本文を書き換える</summary>
 
-      <form className="app-form" action={action}>
+      <form className="app-form" action={action} onSubmit={withoutReset(action)}>
         {hidden(target)}
 
         {state.error ? <div className="app-note warn">{state.error}</div> : null}
@@ -111,7 +111,7 @@ export function ThreadArchiveForm({
   const [state, action, saving] = useActionState(setThreadArchivedAction, empty);
 
   return (
-    <form className="app-form" action={action}>
+    <form className="app-form" action={action} onSubmit={withoutReset(action)}>
       {hidden(target)}
       <input type="hidden" name="archived" value={archived ? 'false' : 'true'} />
 

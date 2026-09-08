@@ -108,6 +108,7 @@
         { path: "devops/database-migration/index.html",   label: "スキーマ移行", d: 2 },
         { path: "devops/deployment/index.html",           label: "デプロイ構成", d: 2 },
         { path: "devops/continuous-integration/index.html", label: "CI", d: 2 },
+        { path: "devops/browser-tests/index.html",       label: "ブラウザ試験", d: 2 },
         { path: "devops/commit-workflow/index.html",     label: "コミットの流れ", d: 2 }
       ]
     },
@@ -136,14 +137,14 @@
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 16,
+      sessionTotal: 17,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260908-1847-first-deploy/index.html", label: "2026-09-08 初めての本番反映", d: 2 },
         { path: "sessions/20260908-1549-gantt/index.html", label: "2026-09-08 ガントチャート", d: 2 },
         { path: "sessions/20260908-1516-attachments/index.html", label: "2026-09-08 添付ファイル", d: 2 },
         { path: "sessions/20260908-1113-tags/index.html", label: "2026-09-08 タグ", d: 2 },
-        { path: "sessions/20260908-0943-notification-mail/index.html", label: "2026-09-08 通知メール", d: 2 },
-        { path: "sessions/20260908-0028-notifications/index.html", label: "2026-09-08 通知", d: 2 }
+        { path: "sessions/20260908-0943-notification-mail/index.html", label: "2026-09-08 通知メール", d: 2 }
       ]
     }
   ];

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { startTransition, useState } from 'react';
 
 /* ==========================================================================
    サーバから来た値を持つ入力欄
@@ -17,6 +18,32 @@ import { useState } from 'react';
    ========================================================================== */
 
 export type FieldState = { error?: string; notice?: string };
+
+/**
+ * 送信のたびにフォームが戻るのを止める。
+ *
+ * フォームに action を渡すと、React は処理を始める前に reset() を呼ぶ。
+ * 呼ばれた欄は、組み立てたときの既定値へ戻る。
+ * 制御された欄でも同じである。React 側の状態は動かないので描き直しが起きず、
+ * DOM だけが戻ったまま残る（react-dom の recursivelyResetForms）。
+ *
+ * 既定の送信を止めてから自分で呼ぶと、React は reset を挟まない。
+ *
+ *   if (nativeEvent.defaultPrevented) {
+ *     startHostTransition(maybeTargetInst, pendingState, null, formData);
+ *   }                                                    ^^^^ ここが null なら
+ *
+ * action は残してある。JS が無いときは、そちらが受ける。
+ */
+export function withoutReset(submit: (data: FormData) => void) {
+  return (event: FormEvent<HTMLFormElement>) => {
+    // ハンドラを抜けると currentTarget は null になるので、止める前に掴む
+    const form = event.currentTarget;
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    event.preventDefault();
+    startTransition(() => submit(new FormData(form, submitter)));
+  };
+}
 
 /**
  * 入力欄の値を画面の側で持つ。種はサーバから来た値である。

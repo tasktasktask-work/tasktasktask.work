@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>初めて本番へ出した日 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-08 18:47</p>
+  <h1 class="title">初めて本番へ出した日</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    移行を四本当て、アプリを入れ替えた。
+    そこから四つの不具合が出た。どれも手元では一度も現れなかったものである。
+    最後に、そのうち二つを捕まえる手段を入れた。
+  </p>
+
+  <h2>出す前に確かめたこと</h2>
+
+  <p>未適用の移行が四本あり、うち一本に <code>CREATE INDEX CONCURRENTLY</code> が入っていた。
+  トランザクションを張らない移行を本物のデータベースへ流すのは初めてだったので、
+  空のデータベースを作って本番と同じ状態にし、コンテナが打つのと同じコマンドで通した。</p>
+
+  <p>そのうえで、わざと落とした。索引の作成だけが失敗するイベントトリガを仕掛けている。</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>確かめたこと</th><th>結果</th></tr></thead>
+      <tbody>
+        <tr><td>四本とも通るか</td><td>通った。索引は <code>indisvalid = true</code></td></tr>
+        <tr><td>出来上がりが正本と一致するか</td><td>一致（<code>Schemas are synced</code>）</td></tr>
+        <tr><td>途中で落ちたとき何が残るか</td><td><code>DROP</code> だけ通り、索引が消えた状態で止まる</td></tr>
+        <tr><td>そのまま流し直せるか</td><td><strong>再開する。</strong>Atlas は文の単位で進み具合を持っている</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>この予行は当たった。本番の反映そのものは、何事もなく通っている。</p>
+
+  <h2>出したあとに出た四つ</h2>
+
+  <h3>1. マジックリンクの着地が 0.0.0.0 へ飛ぶ</h3>
+
+  <p>着地点がリクエストから絶対URLを組んでいた。
+  <code>NextRequest</code> の <code>nextUrl</code> は <code>Host</code> ヘッダを見ず、
+  サーバーが束ねているホスト名を返す。本番は <code>HOSTNAME=0.0.0.0</code> である。</p>
+
+  <p>プロトコルは <code>X-Forwarded-Proto</code> が効くのに、ホストは効かない。
+  行き先を相対にして直した。</p>
+
+  <h3>2. CSS が画面に届いていない</h3>
+
+  <p>スクリーンショットで気づいた。カードが素のリンクとして縦に並んでいた。</p>
+
+  <p><code>docs/theme.css</code> には資料だけで使う区画がある。
+  <code>.card</code> と <code>.badge</code> がそこに残ったまま、画面から使われていた。
+  <strong>型検査もビルドもテストも通り、ページモックは正しく描かれる。</strong>
+  崩れるのは本物の画面だけである。</p>
+
+  <p>数えたら8種あった。組織の一覧のカードだけでなく、
+  スレッド一覧の「親からはみ出し」も、担当スレッドの残り日数も、
+  枠のない素の文字で並んでいた。</p>
+
+  <p>規則を <code>@shared</code> ブロックへ移し、
+  定義の無い class を <code>pnpm check</code> が弾くようにした。</p>
+
+  <h3>3. コメントを一つも投稿できない</h3>
+
+  <p>「<code>blob は中身が空です</code>」と出て止まる。</p>
+
+  <p>添付を付けなくても、ファイルの欄は送られてくる。
+  それを「名前が空の File」として届くものと決めつけ、名前の有無で見分けていた。
+  本番では名前が <code>blob</code> で届いた。
+  符号化の途中で <code>File</code> が <code>Blob</code> になると名前が失われ、
+  仕様どおり <code>blob</code> という既定の名前が付く。</p>
+
+  <p>「何も選んでいない」と「空のファイルを選んだ」は、届いた時点では見分けられない。
+  大きさ 0 のものは選ばれなかったものとして落とすことにした。</p>
+
+  <h3>4. 保存すると入力欄が元の値へ戻る</h3>
+
+  <p>担当者を変えると、保存はされるのに選択欄が変更前へ戻る。
+  読み込み直すと新しい値が出る。</p>
+
+  <p><strong>ここで一度、直したつもりで直っていなかった。</strong>
+  <code>defaultValue</code> を <code>value</code> に変えただけで済ませた。</p>
+
+  <p>react-dom を読んで分かったのは、<code>reset()</code> がフォームの要素に対して呼ばれることだった。
+  制御しているかどうかに関わらず DOM の値が戻り、
+  React 側の状態は動かないので描き直しが起きない。</p>
+
+<pre><code>// recursivelyResetForms
+5 === fiber.tag &amp;&amp; fiber.flags &amp; 1024 &amp;&amp; fiber.stateNode.reset();</code></pre>
+
+  <p>止め方も同じ場所にあった。送信の既定動作が止まっているとき、
+  React は処理の中身を <code>null</code> にして呼ぶので、<code>reset</code> を挟まない。</p>
+
+<pre><code>if (nativeEvent.defaultPrevented) {
+  startHostTransition(maybeTargetInst, pendingState, null, formData);
+}                                                 // ↑ null なら noop</code></pre>
+
+  <p>同じ書き方が7箇所にあった。担当者だけでなく、進捗、期間、親、
+  スレッドの本文、組織名、役割、プロジェクトの名前と説明、権限、タグの名前。
+  <code>useField</code> と <code>withoutReset</code> にまとめて、すべてに当てた。</p>
+
+  <p>「保存しました」を出していなかった欄にも足した。
+  出すのは、見えている値が保存済みの値と揃っているあいだだけである。</p>
+
+  <h2>ブラウザで押す手段を入れた</h2>
+
+  <p>四つのうち二つは、手元でどれだけ確かめても現れなかった。
+  ファイル欄の符号化も、フォームの <code>reset()</code> も、
+  リクエストを手で組む試験では通らない層にある。</p>
+
+  <p>Playwright を入れた。置いたのは9件だけで、
+  ブラウザの中でしか起きないものに限ってある。
+  判定の網は既存の483件が持っている。</p>
+
+  <div class="note ok">
+    <span class="note-label">四つとも捕まえる</span>
+    <p>入れたあと、四つの不具合をすべて元のコードに戻して走らせた。
+    <strong>四つとも落ちた。</strong>この試験があれば、往復は起きなかった。</p>
+    <p>詳しくは<a href="../../devops/browser-tests/index.html">ブラウザで押して確かめる</a>にある。</p>
+  </div>
+
+  <h2>決めたこと</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th class="nowrap">番号</th><th>決めたこと</th></tr></thead>
+      <tbody>
+        <tr><td>Q1</td><td>ブラウザ試験を入れる。数は絞り、ブラウザが要るものだけにする</td></tr>
+        <tr><td>Q2</td><td>最初は5本。今日の四つを全部捕まえられる範囲</td></tr>
+        <tr><td>Q3</td><td><code>pnpm e2e</code> として分ける。<code>pnpm check</code> は速いまま保つ</td></tr>
+        <tr><td>Q4</td><td>下ごしらえと後片付けを <code>tests/e2e/fixtures.ts</code> に定着させる</td></tr>
+        <tr><td>Q5</td><td><code>@playwright/test</code> を使う。走らせ役が二つになるが、待ちが組み込まれている</td></tr>
+        <tr><td>Q6</td><td>ブラウザは開発コンテナに焼く。いまの器には手で入れた</td></tr>
+        <tr><td>Q7</td><td>接続先を <code>E2E_BASE_URL</code> で差し替えられるようにする。中身は向けるときに決める</td></tr>
+        <tr><td>Q8</td><td>落ちたときだけトレースとスクリーンショットを残す</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>この日から変わったこと</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th class="nowrap">入口</th><th>足したもの</th></tr></thead>
+      <tbody>
+        <tr><td><code>pnpm check</code></td><td>定義の無い class を弾く（<code>styles:classes</code>）</td></tr>
+        <tr><td><code>pnpm e2e</code></td><td>新設。ブラウザで9件</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>規約にも二つ足した。
+  <a href="../../devops/coding-conventions/index.html#editing-fields">すでにある値を書き換える欄</a>と、
+  <a href="../../ui/principles.html">使う class は @shared の中にあること</a>である。</p>
+
+  <h2>反省</h2>
+
+  <p>四つのうち二つは、確かめる手段が無いまま「たぶんこうだろう」で直して本番へ出した。
+  片方は当たり、片方は外れた。外れたほうは、開発者にもう一度同じ報告をさせている。</p>
+
+  <p>手段を先に作るべきだった。
+  「ブラウザでしか起きないことがある」のは、一つめの時点で分かっていた。</p>
+
+  <h2>次にやること</h2>
+
+  <p>直した四つを本番へ入れる。移行は要らない。</p>
+
+  <p>ブラウザ試験を CI で走らせるかどうかは決めていない。
+  runner にブラウザを落とす時間がかかるので、必要になったときに決める。</p>
+
+  <p>本番へ向けたときに何を確かめるかも、まだ決めていない。
+  いま向けると、種を蒔かない <code>styles.spec.ts</code> の一本だけが走る。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../devops/browser-tests/index.html"><span class="card-no">08</span><p class="card-title">ブラウザで押して確かめる</p><p class="card-desc">入れたものの全体</p></a>
+    <a class="card" href="../../devops/database-migration/index.html"><span class="card-no">03</span><p class="card-title">スキーマ移行</p><p class="card-desc">途中で落ちたときの扱い</p></a>
+    <a class="card" href="../../devops/deployment/index.html"><span class="card-no">04</span><p class="card-title">デプロイ構成</p><p class="card-desc">リクエストからURLを組まない</p></a>
+    <a class="card" href="../../features/attachment/index.html"><span class="card-no">FEATURE</span><p class="card-title">添付ファイル</p><p class="card-desc">中身の無いものの扱い</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 初めて本番へ出した日</span>
+    <span>2026-09-08 18:47</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>
