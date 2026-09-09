@@ -5,7 +5,8 @@ import pg from 'pg';
 /* ==========================================================================
    下ごしらえ
 
-   画面から作れないもの（組織、最初の管理者）はデータベースへ直に入れる。
+   確認のメールを受け取れないもの（組織登録のリンク、マジックリンク）と、
+   試験の出発点になる組織はデータベースへ直に入れる。
    本番へ向けるときは手が届かないので、これを使う試験は外れる。
 
    後片付けは、蒔いた種を印で拾って消す。
@@ -27,6 +28,10 @@ export type Sown = {
   readonly ryoId: string;
   /** そのままリンクに入れる。/auth/magic?token= の後ろに置く */
   readonly magicToken: string;
+  /** 組織登録の確認リンク。/signup?token= の後ろに置く */
+  readonly signupToken: string;
+  /** その確認リンクが指すアドレス。まだアカウントは無い */
+  readonly signupEmail: string;
 };
 
 function client(): pg.Client {
@@ -115,6 +120,18 @@ export async function sow(): Promise<Sown> {
       [asukaId, createHash('sha256').update(magicToken).digest()],
     );
 
+    /*
+     * 組織登録の確認リンク。まだアカウントの無いアドレスに向けて置く。
+     * 画面からは組織を作れるが、確認のメールは受け取れないので、ここで置く。
+     */
+    const signupToken = randomBytes(24).toString('base64url');
+    const signupEmail = `${tag}-new@example.com`;
+    await c.query(
+      `INSERT INTO signup_tokens (email, token_hash, expires_at)
+       VALUES ($1, $2, now() + interval '1 hour')`,
+      [signupEmail, createHash('sha256').update(signupToken).digest()],
+    );
+
     return {
       tag,
       organizationId,
@@ -124,6 +141,8 @@ export async function sow(): Promise<Sown> {
       asukaId,
       ryoId,
       magicToken,
+      signupToken,
+      signupEmail,
     };
   } finally {
     await c.end();
@@ -134,40 +153,45 @@ export async function sow(): Promise<Sown> {
 export async function reap(tag: string): Promise<void> {
   const c = client();
   await c.connect();
-  const inOrg = 'organization_id IN (SELECT id FROM organizations WHERE slug = $1)';
+  /*
+   * 組織登録の試験は、種の tag を先頭に持つ別の組織を作る。
+   * 前方一致で拾わないと、その組織だけが残る。
+   */
+  const like = `${tag}%`;
+  const inOrg = 'organization_id IN (SELECT id FROM organizations WHERE slug LIKE $1)';
   try {
-    await c.query(`DELETE FROM notifications WHERE ${inOrg}`, [tag]);
-    await c.query(`DELETE FROM attachments WHERE ${inOrg} RETURNING storage_key`, [tag]);
+    await c.query(`DELETE FROM notifications WHERE ${inOrg}`, [like]);
+    await c.query(`DELETE FROM attachments WHERE ${inOrg} RETURNING storage_key`, [like]);
     await c.query(
       `DELETE FROM comment_mentions WHERE comment_id IN
        (SELECT id FROM comments WHERE ${inOrg})`,
-      [tag],
+      [like],
     );
     await c.query(
       `DELETE FROM comment_checks WHERE comment_id IN
        (SELECT id FROM comments WHERE ${inOrg})`,
-      [tag],
+      [like],
     );
-    await c.query(`DELETE FROM comments WHERE ${inOrg}`, [tag]);
+    await c.query(`DELETE FROM comments WHERE ${inOrg}`, [like]);
     await c.query(
       `DELETE FROM watches WHERE thread_id IN
        (SELECT id FROM threads WHERE ${inOrg})`,
-      [tag],
+      [like],
     );
     await c.query(
       `DELETE FROM thread_tags WHERE thread_id IN
        (SELECT id FROM threads WHERE ${inOrg})`,
-      [tag],
+      [like],
     );
-    await c.query(`DELETE FROM tags WHERE ${inOrg}`, [tag]);
-    await c.query(`DELETE FROM threads WHERE ${inOrg}`, [tag]);
+    await c.query(`DELETE FROM tags WHERE ${inOrg}`, [like]);
+    await c.query(`DELETE FROM threads WHERE ${inOrg}`, [like]);
     await c.query(
       `DELETE FROM project_members WHERE project_id IN
        (SELECT id FROM projects WHERE ${inOrg})`,
-      [tag],
+      [like],
     );
-    await c.query(`DELETE FROM projects WHERE ${inOrg}`, [tag]);
-    await c.query(`DELETE FROM organization_members WHERE ${inOrg}`, [tag]);
+    await c.query(`DELETE FROM projects WHERE ${inOrg}`, [like]);
+    await c.query(`DELETE FROM organization_members WHERE ${inOrg}`, [like]);
     await c.query(
       `DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE email LIKE $1)`,
       [`${tag}-%`],
@@ -176,8 +200,9 @@ export async function reap(tag: string): Promise<void> {
       `DELETE FROM magic_link_tokens WHERE user_id IN (SELECT id FROM users WHERE email LIKE $1)`,
       [`${tag}-%`],
     );
+    await c.query('DELETE FROM signup_tokens WHERE email LIKE $1', [`${tag}-%`]);
     await c.query('DELETE FROM users WHERE email LIKE $1', [`${tag}-%`]);
-    await c.query('DELETE FROM organizations WHERE slug = $1', [tag]);
+    await c.query('DELETE FROM organizations WHERE slug LIKE $1', [like]);
   } finally {
     await c.end();
   }

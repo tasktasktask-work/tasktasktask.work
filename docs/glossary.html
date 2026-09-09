@@ -57,7 +57,7 @@
       <p><span class="who">PM</span><span>業務委託の人にも入ってもらいたいんですが、うちの組織に招待すると全部見えちゃいますか。</span></p>
       <p><span class="who">開発者</span><span>組織に招待すると、公開プロジェクトは全部見えます。見せたくないものは非公開プロジェクトにしてください。</span></p>
     </div>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#org-admin">組織管理者</a><a href="#project">プロジェクト</a><a href="#invitation">招待</a></div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#org-admin">組織管理者</a><a href="#project">プロジェクト</a><a href="#invitation">招待</a><a href="#signup">組織登録</a><a href="#slug">slug</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/organization/index.html">組織とメンバー</a></div>
   </article>
 
@@ -866,6 +866,42 @@
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/authentication/index.html">認証</a></div>
   </article>
 
+  <article class="term" id="signup">
+    <h3>組織登録<span class="reading">signup</span></h3>
+    <p>自分で新しい<a href="#organization">組織</a>を作り、その組織の最初の<a href="#org-admin">組織管理者</a>になることを<strong>組織登録</strong>と呼ぶ。
+    <a href="#invitation">招待</a>がすでにある組織へ入る手段であるのに対して、組織登録は入る先を新しく作る。</p>
+    <p>ログインしていない人は、先にメールアドレスの確認を通る。
+    アドレスを入れると確認のリンクが飛び、その先の画面で組織名と <a href="#slug">slug</a> を決める。
+    組織が生まれるのはこの瞬間で、リンクが踏まれなければ何も残らない。</p>
+    <p>すでにログインしている人には、確認を求めない。
+    そのアドレスは、ログインできている時点で確認が済んでいる。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>別の部署でも使いたいんですが、申し込みはこちらへ連絡すればいいですか。</span></p>
+      <p><span class="who">開発者</span><span>画面から作れます。ログインしたまま「組織を作る」を押すと、いまのアカウントのまま新しい組織の管理者になります。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#organization">組織</a><a href="#org-admin">組織管理者</a><a href="#slug">slug</a><a href="#invitation">招待</a><a href="#magic-link">マジックリンク</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/organization/index.html">組織とメンバー</a>／<a href="features/authentication/index.html">認証</a></div>
+  </article>
+
+  <article class="term" id="slug">
+    <h3>slug<span class="reading">organization slug</span></h3>
+    <p>URL に含まれる<a href="#organization">組織</a>の識別子を <strong>slug</strong> と呼ぶ。
+    <code>/o/acme/p/WEB/t/128</code> の <code>acme</code> がそれである。
+    小文字の英数字とハイフン、3文字から40文字。生きている組織のあいだで一意である。</p>
+    <p><a href="#signup">組織登録</a>のときに人が決める。早い者勝ちで、先に取られた名前は使えない。
+    <code>admin</code> や <code>login</code> のように、URL の一階層目として使う可能性のある語は<strong>予約語</strong>として断る。
+    予約語の一覧はアプリケーション側が持ち、データベースの制約にはしない。
+    制約にすると、語をひとつ足すたびに移行が積まれ、すでに使われている語を後から予約語にできなくなる。</p>
+    <p>作成後は変えられない。
+    変えると、その組織を指すリンクとブックマークがすべて切れる。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>社名が変わったんですが、URL も直せますか。</span></p>
+      <p><span class="who">開発者</span><span>組織名は設定から変えられますが、URL の acme は変えられません。共有済みのリンクが全部切れるためです。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#organization">組織</a><a href="#signup">組織登録</a><a href="#org-scope">組織のスコープ</a><a href="#project-key">プロジェクトキー</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/organization/index.html">組織とメンバー</a></div>
+  </article>
+
   <article class="term" id="invitation">
     <h3>招待<span class="reading">invitation</span></h3>
     <p><a href="#organization">組織</a>に人を加える唯一の手段を<strong>招待</strong>と呼ぶ。
@@ -873,7 +909,7 @@
     <p>受け取った人は、リンクからパスワードを設定してアカウントを作る。
     リンクの有効期間はマジックリンクと揃えて48時間とする。</p>
     <p>メールドメインによる自動参加や、URLを知っていれば誰でも入れる仕組みは用意しない。</p>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#organization">組織</a><a href="#org-admin">組織管理者</a><a href="#magic-link">マジックリンク</a></div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#organization">組織</a><a href="#org-admin">組織管理者</a><a href="#magic-link">マジックリンク</a><a href="#signup">組織登録</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/authentication/index.html">認証</a>／<a href="features/organization/index.html">組織とメンバー</a></div>
   </article>
 

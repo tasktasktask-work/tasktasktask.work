@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>組織を作る入口を開ける | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-09 17:00</p>
+  <h1 class="title">組織を作る入口を開ける</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    <a href="../../glossary.html#organization">組織</a>はデータの境界である。
+    その境界を作る操作だけが、これまでシステムの外にあった。
+    手元で <code>pnpm org:create</code> を叩ける人だけが、新しい会社をこのシステムに載せられた。
+  </p>
+
+  <h2>入口が無いのではなく、閉じてあった</h2>
+
+  <p>組織に人が増える経路は<a href="../../glossary.html#invitation">招待</a>だけで、招待を送れるのは
+  <a href="../../glossary.html#org-admin">組織管理者</a>だけである。
+  この二つを繋げると、最初のひとりを作る手段がどこにも無い。
+  そこだけを外から埋めていたのが <code>pnpm org:create</code> だった。</p>
+
+  <p>塞いだままにしていた理由は、技術ではなく<a href="../../issues/billing/index.html">料金</a>にあった。
+  誰でも組織を作れる状態は、誰がその費用を持つのかという問いを連れてくる。
+  料金の形が決まる前に入口を開けると、作られた組織の扱いを後から決めることになる。</p>
+
+  <p>それを承知で開ける、というのが今回の判断である。
+  費用の持ち主は組織に紐づけられる形（組織単位の契約）を想定しており、
+  それなら入口を先に開けても、後から紐づける先が消えることはない。</p>
+
+  <div class="note decide">
+    <span class="note-label">認証の文書は、最初からこの形で書かれていた</span>
+    <p><a href="../../features/authentication/index.html">認証</a>の「アカウントの作成」には、
+    アカウントが生まれる経路は「新しい組織を作る」と「招待を受ける」の二つだと書いてある。
+    初期仕様の想定が先にあり、実装だけが片方を欠いていた。
+    今回の作業で、文書と実装が同じ形になる。</p>
+  </div>
+
+  <h2>決めたこと</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>何を</th><th>どう決めたか</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap">作れる人</td>
+          <td>誰でも。ログインしていない人が自分で組織を作れる</td>
+          <td>招待を持たない人が入れる経路が、これ以外に無い</td>
+        </tr>
+        <tr>
+          <td class="nowrap">作った人の役割</td>
+          <td>その場で組織管理者になり、ログイン状態で <code>/o/{slug}</code> へ着く</td>
+          <td><code>pnpm org:create</code> と同じ結果にする。違うのは実行する人だけである</td>
+        </tr>
+        <tr>
+          <td class="nowrap">アドレスの確認</td>
+          <td>確認が先。リンクを踏んだ先で組織を作る</td>
+          <td>組織の行は確認の後にしか生まれない。「未確認の組織」という状態を持たずに済む</td>
+        </tr>
+        <tr>
+          <td class="nowrap">slug</td>
+          <td>人が決める。早い者勝ち、予約語は拒否、後から変えられない</td>
+          <td>URL が組織の身元を示す。変更は既存のリンクを全部切るので、別の話として扱う</td>
+        </tr>
+        <tr>
+          <td class="nowrap">予約語の置き場所</td>
+          <td>アプリのコード。DB の CHECK 制約にはしない</td>
+          <td>語を足すたびに移行が積まれ、すでに使われている語を後から予約語にできなくなる</td>
+        </tr>
+        <tr>
+          <td class="nowrap">受け取る項目</td>
+          <td>組織名と slug だけ。言語と時間帯は既定のまま</td>
+          <td>変える手段が無い欄を入口に置かない。時間帯は設定画面と一緒に足す</td>
+        </tr>
+        <tr>
+          <td class="nowrap">入口の位置</td>
+          <td>ログイン画面すべてに「組織を新しく作る」を出す</td>
+          <td>ログイン画面はどのURLにも現れる。出す場所を選ぶと、出ない画面の説明が要る</td>
+        </tr>
+        <tr>
+          <td class="nowrap">既存アカウント</td>
+          <td>表示名とパスワードを訊かない。組織名と slug だけ入れて作る</td>
+          <td>訊いて上書きできると、リンクを踏ませるだけで他人のパスワードを書き換えられる</td>
+        </tr>
+        <tr>
+          <td class="nowrap">ログイン済みの人</td>
+          <td>メールを挟まず、その場で作る</td>
+          <td>そのアドレスはとうに確認済みである。もう一度踏ませる理由が無い</td>
+        </tr>
+        <tr>
+          <td class="nowrap">トークンの置き場所</td>
+          <td>新しいテーブル <code>signup_tokens</code></td>
+          <td>この時点では組織もアカウントも無い。既存のどのテーブルの意味も変えずに済む</td>
+        </tr>
+        <tr>
+          <td class="nowrap">連投</td>
+          <td>同じアドレスへの再送は3分に一度まで</td>
+          <td>任意のアドレスへ送らせられる初めての経路になる。受信箱を埋める道具にさせない</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>pnpm org:create</code></td>
+          <td>残す。slug の検証だけ画面と共有する</td>
+          <td>画面の経路はメールの到達に依存する。送信が止まった環境でも組織を作れる道を残す</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>経路は二本、作る処理は一つ</h2>
+
+<pre class="figure">未ログイン
+  /signup            メールアドレスを入れる
+    │                signup_tokens に行ができ、リンクが飛ぶ
+    ▼
+  /signup?token=…    組織名 / slug（アカウントが無ければ表示名 / パスワードも）
+    │
+    ▼
+  組織を作る ──→ organizations / organization_members(admin) / sessions
+    │
+    ▼
+  /o/{slug}
+
+ログイン済み
+  /  または /signup   組織名 / slug だけ
+    │
+    ▼
+  組織を作る ──→ organizations / organization_members(admin)
+    │
+    ▼
+  /o/{slug}</pre>
+
+  <p>入口は二つだが、組織を作る処理そのものは一つにまとめる。
+  <code>createOrganization(userId, { name, slug })</code> が
+  組織の行と、作った人を組織管理者とする所属の行を、ひとつのトランザクションで作る。
+  未ログインの経路は、その手前にアカウントの用意を足しただけである。</p>
+
+  <p><code>pnpm org:create</code> もここへ寄せる。
+  寄せない場合に何が起きるかははっきりしていて、slug の予約語が片方だけ増える。
+  そのときCLIから <code>admin</code> という slug が通る。</p>
+
+  <h2>signup_tokens</h2>
+
+<pre><code>CREATE TABLE signup_tokens (
+  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  email      text        NOT NULL,
+  token_hash bytea       NOT NULL,
+  expires_at timestamptz NOT NULL,
+  used_at    timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT signup_tokens_email_lowercase
+    CHECK (email = lower(email)),
+  CONSTRAINT signup_tokens_email_shape
+    CHECK (email ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$')
+);
+
+CREATE UNIQUE INDEX signup_tokens_hash_key ON signup_tokens (token_hash);
+
+CREATE INDEX signup_tokens_by_email
+  ON signup_tokens (email) WHERE used_at IS NULL;</code></pre>
+
+  <p><code>invitations</code> から <code>organization_id</code> と役割を落とした形である。
+  持てるのはメールアドレスだけで、どの組織へ入るかはこの時点では存在しない。
+  詳細は<a href="../../database/signup_tokens/index.html">テーブルの文書</a>に置いた。</p>
+
+  <p>データを失う変更は無い。テーブルがひとつ増えるだけで、既存の列も制約も動かさない。</p>
+
+  <h2>連投を3分で受ける</h2>
+
+  <p>この画面は、<strong>任意のメールアドレスへ送信させられる初めての経路</strong>になる。
+  招待は組織管理者しか送れず、<a href="../../glossary.html#magic-link">マジックリンク</a>は既存のアカウントにしか飛ばない。
+  どちらも、見ず知らずの人の受信箱を埋めるのには使えなかった。</p>
+
+  <p>そこで、同じアドレスへの送信は3分に一度までとする。
+  未使用で期限内のトークンが3分以内に作られていたら、新しくは送らない。
+  画面の返事は変えない。「送りました」とだけ返す。
+  返事を変えると、そのアドレスが登録の途中かどうかを外から測れてしまう。</p>
+
+  <p>新しく発行するときは、そのアドレスの未使用の行を消してから入れる。
+  有効なリンクを一本だけにしておくと、
+  「古いメールのリンクを踏んだのに使えない」という筋の問い合わせを、期限切れ以外に増やさずに済む。</p>
+
+  <h2>今回やらないこと</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>やらないこと</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr><td class="nowrap">ひとりが作れる組織の数の上限</td>
+            <td>運用の実感が無いまま置くと、正当な人を先に止める。作られすぎが起きてから決める</td></tr>
+        <tr><td class="nowrap">IP 単位の回数制限</td>
+            <td>保存先を決める話になる。プロセス内に持つと複数台で効かない</td></tr>
+        <tr><td class="nowrap">slug の変更</td>
+            <td>既存のリンクとブックマークを全部切る。移行の話であり、入口の話ではない</td></tr>
+        <tr><td class="nowrap">時間帯と言語の選択</td>
+            <td>変える手段（組織の設定）と一緒に足すもの。入口には混ぜない</td></tr>
+        <tr><td class="nowrap">最初のプロジェクトの自動作成</td>
+            <td>プロジェクトキーまで登録時に決めさせることになる。空の状態は一覧の文言で受ける</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>実装したもの</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>ファイル</th><th>中身</th></tr></thead>
+      <tbody>
+        <tr><td class="nowrap"><code>schema/05_auth.sql</code></td>
+            <td><code>signup_tokens</code>。移行は <code>20260909083309_add_signup_tokens.sql</code></td></tr>
+        <tr><td class="nowrap"><code>organization/slug.ts</code></td>
+            <td>形式と予約語20語の検証。画面と <code>pnpm org:create</code> が共有する</td></tr>
+        <tr><td class="nowrap"><code>organization/queries.ts</code></td>
+            <td><code>createOrganization()</code> と <code>createOrganizationWithin()</code></td></tr>
+        <tr><td class="nowrap"><code>organization/signup.ts</code></td>
+            <td>発行、下見、完了。完了は招待の受諾と同じ骨格になっている</td></tr>
+        <tr><td class="nowrap"><code>app/signup/page.tsx</code></td>
+            <td>三つの顔（入口、リンクの着地、ログイン済み）をひとつのURLで出し分ける</td></tr>
+        <tr><td class="nowrap"><code>SignupStartForm</code> / <code>CreateOrgForm</code></td>
+            <td>アドレスの欄と、組織名・slug の欄</td></tr>
+        <tr><td class="nowrap"><code>lib/db.ts</code></td>
+            <td><code>isUniqueViolation()</code> を招待から移して共有した</td></tr>
+        <tr><td class="nowrap"><code>tests/signup.test.ts</code></td>
+            <td>18件。501件になった</td></tr>
+        <tr><td class="nowrap"><code>tests/e2e/signup.spec.ts</code></td>
+            <td>5件。18件になった</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>実装して分かったこと</h2>
+
+  <p>予約語のうち <code>o</code> と <code>me</code> は、予約語として断られない。
+  3文字に満たないので、形の検査のほうが先に落とす。
+  一覧には記録として残し、試験は形で落ちることのほうを固定した。</p>
+
+  <p>失敗したときにトークンを消費しない、という決めごとは例外で実現した。
+  値を返してトランザクションを抜けると COMMIT される。
+  slug が埋まっていた場合、作りかけのアカウントがそこで残る。</p>
+
+  <div class="note warn">
+    <span class="note-label">二つ、規約に足した</span>
+    <p><a href="../../devops/coding-conventions/index.html#parameter-properties">クラスの引数でプロパティを宣言しない</a>。
+    Node の型剥がしが受け付けず、<code>pnpm test</code> と <code>pnpm org:create</code> が読み込みの時点で落ちる。</p>
+    <p><a href="../../devops/coding-conventions/index.html#editing-fields">新しく作る欄に <code>settled</code> を使わない</a>。
+    種が空文字の欄では、一文字打った時点で偽になり二度と戻らない。
+    送信は通っているのに「送りました」が出ない状態になり、ブラウザ試験で見つかった。</p>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">既存アカウントのロックは、ここでも解ける</span>
+    <p>登録のリンクを踏めたことは、そのアドレスの持ち主である証拠になる。
+    招待の受諾が<a href="../../glossary.html#account-lock">アカウントロック</a>を解いているのと同じ条件がここにも揃う。
+    揃っているのに解かないと、ロックされた人の解除経路が経路ごとに違うことになる。
+    完了の処理で <code>clearLoginFailures()</code> を呼ぶ。</p>
+  </div>
+
+  <h2>書き換えたドキュメント</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>文書</th><th>何が変わったか</th></tr></thead>
+      <tbody>
+        <tr><td class="nowrap"><a href="../../features/organization/index.html">組織とメンバー</a></td>
+            <td>「最初の組織管理者は、外から作る」を「組織を作る」に差し替えた</td></tr>
+        <tr><td class="nowrap"><a href="../../features/authentication/index.html">認証</a></td>
+            <td>二つの経路のうち、片方が未実装だった注記を消した</td></tr>
+        <tr><td class="nowrap"><a href="../../ui/pages/root/index.html">組織の一覧</a></td>
+            <td>「画面から組織は作れない」を消し、ボタンを置いた</td></tr>
+        <tr><td class="nowrap"><a href="../../ui/pages/login/index.html">ログイン</a></td>
+            <td>カードの下に「組織を新しく作る」を足した</td></tr>
+        <tr><td class="nowrap"><a href="../../issues/organization-signup/index.html">組織を自分で作る</a></td>
+            <td>残した宿題二つに答えが出た。このセッションで解消する</td></tr>
+        <tr><td class="nowrap"><a href="../../glossary.html#signup">用語集</a></td>
+            <td>組織登録と予約 slug を足した</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>関連</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/pages/signup/index.html"><span class="card-no">/signup</span><p class="card-title">組織を作る</p><p class="card-desc">三つの状態のモック</p></a>
+    <a class="card" href="../../database/signup_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">signup_tokens</p><p class="card-desc">確認のトークン</p></a>
+    <a class="card" href="../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">組織の作り方</p></a>
+    <a class="card" href="../../issues/billing/index.html"><span class="card-no">ISSUE</span><p class="card-title">課金とプラン</p><p class="card-desc">先送りの理由だったもの</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-09 17:00</span>
+    <span>最終更新 2026-09-09</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

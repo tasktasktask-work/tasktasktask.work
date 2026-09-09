@@ -46,6 +46,10 @@ export default async function Home() {
               {user.displayName}（{user.email}）
             </div>
           </div>
+          <span style={{ flex: 1 }} />
+          <Link className="app-btn" href="/signup">
+            組織を作る
+          </Link>
         </div>
 
         {memberships.length === 0 ? (
@@ -53,6 +57,8 @@ export default async function Home() {
             所属している組織がありません。
             <br />
             招待を受け取ると、そのリンクから参加できます。
+            <br />
+            自分で組織を作ることもできます。
           </p>
         ) : (
           <div className="cards">

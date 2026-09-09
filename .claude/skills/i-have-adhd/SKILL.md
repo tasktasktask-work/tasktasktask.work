@@ -1,13 +1,7 @@
 ---
 name: i-have-adhd
 description: 'ADHDの読み手向けに出力を整形する: 次の行動を先頭に置く、複数手順には番号を振る、毎ターン現在地を再掲する、脱線を抑える、所要時間を具体的な単位で示す、完了した成果を見える形にする。/i-have-adhd で起動し、「stop adhd mode」または「ADHDモード解除」と言われるまで継続する。'
-disable-model-invocation: true
 license: MIT
-metadata:
-  hermes:
-    tags: [ADHD, Output Style, Productivity, Formatting]
-    category: productivity
-    related_skills: []
 ---
 
 # i-have-adhd

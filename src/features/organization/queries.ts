@@ -1,7 +1,14 @@
 import type pg from 'pg';
 import { z } from 'zod';
-import { type OrgScope, orgAdminExists, pool, transaction } from '#lib/db.ts';
+import {
+  isUniqueViolation,
+  type OrgScope,
+  orgAdminExists,
+  pool,
+  transaction,
+} from '#lib/db.ts';
 import { many, one } from '#lib/row.ts';
+import { checkSlug, type SlugProblem } from './slug.ts';
 
 /* ==========================================================================
    組織と所属の読み書き
@@ -99,6 +106,80 @@ export async function resolveScope(userId: string, slug: string): Promise<OrgSco
 /* --------------------------------------------------------------------------
    組織そのもの
    -------------------------------------------------------------------------- */
+
+export type CreateOrganizationInput = { readonly name: string; readonly slug: string };
+
+export type CreateOrganizationResult =
+  | { readonly ok: true; readonly organizationId: string; readonly slug: string }
+  | { readonly ok: false; readonly reason: 'invalid-name' | SlugProblem | 'slug-taken' };
+
+/**
+ * 組織と、作った人の所属をひとつ作る。
+ *
+ * 組織を作る道は二つある。画面（/signup）と pnpm org:create である。
+ * どちらもこの関数を通る。分けて書くと、片方にだけ検証が増える。
+ *
+ * 作った人は必ず組織管理者になる。
+ * 管理者のいない組織は、中の誰にも設定を触れない器でしかない。
+ */
+export async function createOrganization(
+  userId: string,
+  input: CreateOrganizationInput,
+): Promise<CreateOrganizationResult> {
+  return transaction((client) => createOrganizationWithin(client, userId, input));
+}
+
+/**
+ * すでに開いているトランザクションの中で組織を作る。
+ *
+ * 登録（signup.ts）はアカウントの作成と同じトランザクションで作る必要がある。
+ * 途中で失敗して「アカウントだけできた」を残さないためである。
+ */
+export async function createOrganizationWithin(
+  client: pg.PoolClient,
+  userId: string,
+  input: CreateOrganizationInput,
+): Promise<CreateOrganizationResult> {
+  const name = input.name.trim();
+  if (name === '') {
+    return { ok: false, reason: 'invalid-name' };
+  }
+
+  const checked = checkSlug(input.slug);
+  if (!checked.ok) {
+    return { ok: false, reason: checked.reason };
+  }
+
+  let organizationId: string | undefined;
+  try {
+    const created = await client.query<{ id: string }>(
+      `INSERT INTO organizations (name, slug) VALUES ($1, $2) RETURNING id`,
+      [name, checked.slug],
+    );
+    organizationId = created.rows[0]?.id;
+  } catch (err) {
+    /*
+     * organizations_slug_key に当たった。
+     * 先に確かめてから入れる形にはしない。確かめた後、入れる前に取られる。
+     */
+    if (isUniqueViolation(err)) {
+      return { ok: false, reason: 'slug-taken' };
+    }
+    throw err;
+  }
+
+  if (!organizationId) {
+    throw new Error(`組織を作れませんでした: ${checked.slug}`);
+  }
+
+  await client.query(
+    `INSERT INTO organization_members (organization_id, user_id, role)
+     VALUES ($1, $2, 'admin')`,
+    [organizationId, userId],
+  );
+
+  return { ok: true, organizationId, slug: checked.slug };
+}
 
 const organization = z.object({
   id: z.uuid(),

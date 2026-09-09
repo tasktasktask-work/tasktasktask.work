@@ -81,12 +81,23 @@
   <p>アカウントは二つの経路でしか生まれない。</p>
 
   <ol>
-    <li><strong>新しい組織を作る</strong>。サインアップした人が組織を作り、その人が最初の<a href="../../glossary.html#org-admin">組織管理者</a>になる</li>
+    <li><strong>新しい組織を作る</strong>。<a href="../../glossary.html#signup">組織登録</a>をした人が組織を作り、その人が最初の<a href="../../glossary.html#org-admin">組織管理者</a>になる</li>
     <li><strong>招待を受ける</strong>。組織管理者が送ったリンクからパスワードを設定して登録する</li>
   </ol>
 
-  <p><a href="../../glossary.html#invitation">招待</a>リンクの有効期間はマジックリンクと揃えて48時間とする。
-  メールドメインによる自動参加や、URLを知っていれば誰でも入れる仕組みは持たない。</p>
+  <p>どちらも、メールを受け取れることが本人性の証明になっている。
+  組織登録では、アドレスを確認してからでないと組織を作れない。
+  招待では、そのリンクが本人のメールボックスにしか届いていない。
+  <a href="../../glossary.html#invitation">招待</a>リンクの有効期間はマジックリンクと揃えて48時間とし、
+  組織登録のリンクもそこに揃える。</p>
+
+  <p>メールドメインによる自動参加や、URLを知っていれば誰でも入れる仕組みは持たない。</p>
+
+  <p>すでにアカウントがある人が、どちらの経路を通っても、
+  表示名とパスワードは書き換わらない。
+  訊いて上書きできると、リンクを踏ませるだけで他人のパスワードを変えられることになる。
+  この二つの経路で既存のアカウントに起きるのは、所属がひとつ増えることと、
+  <a href="../../glossary.html#account-lock">ロック</a>が解けることだけである。</p>
 
   <h2>メールの送信</h2>
 
@@ -163,6 +174,8 @@
       <tr><td>ログアウト</td><td>実装済み</td></tr>
       <tr><td><a href="../../glossary.html#invitation">招待</a>からの登録</td><td>実装済み（<a href="../organization/index.html">組織とメンバー</a>に置いた）</td></tr>
       <tr><td>招待の受諾によるロックの解除</td><td>実装済み</td></tr>
+      <tr><td><a href="../../glossary.html#signup">組織登録</a>からの登録</td><td>実装済み（<a href="../organization/index.html#make">組織とメンバー</a>に置いた）</td></tr>
+      <tr><td>組織登録によるロックの解除</td><td>実装済み</td></tr>
       <tr><td>パスワードの変更</td><td><strong>未実装</strong>（<a href="../../issues/account-settings/index.html">アカウントの設定</a>へ送った）</td></tr>
       <tr><td>組織管理者による手動のロック解除</td><td><strong>未実装</strong></td></tr>
       <tr><td>SMTP でのメール送信</td><td>実装済み（2026-09-08。それまで本番ではマジックリンクが届かなかった）</td></tr>
@@ -198,6 +211,7 @@
   <h2>関連する画面</h2>
   <div class="cards">
     <a class="card" href="../../ui/pages/login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">二つの手段を一枚に収めた入り口</p></a>
+    <a class="card" href="../../ui/pages/signup/index.html"><span class="card-no">/signup</span><p class="card-title">組織を作る</p><p class="card-desc">アカウントが生まれるもう一つの経路</p></a>
   </div>
 
   <h2>関連するテーブル</h2>
@@ -206,11 +220,12 @@
     <a class="card" href="../../database/sessions/index.html"><span class="card-no">TABLE</span><p class="card-title">sessions</p><p class="card-desc">ログインセッション</p></a>
     <a class="card" href="../../database/magic_link_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">magic_link_tokens</p><p class="card-desc">使い捨てのログイン用トークン</p></a>
     <a class="card" href="../../database/invitations/index.html"><span class="card-no">TABLE</span><p class="card-title">invitations</p><p class="card-desc">組織への招待</p></a>
+    <a class="card" href="../../database/signup_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">signup_tokens</p><p class="card-desc">組織登録のアドレス確認</p></a>
   </div>
 
   <div class="sheet-foot">
     <span>機能 / 認証</span>
-    <span>最終更新 2026-09-08</span>
+    <span>最終更新 2026-09-09</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

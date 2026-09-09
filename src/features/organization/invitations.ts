@@ -5,7 +5,13 @@ import { MIN_PASSWORD_LENGTH } from '#features/authentication/policy.ts';
 import { clearLoginFailures, normalizeEmail } from '#features/authentication/queries.ts';
 import { createSessionRecord, type IssuedSession } from '#features/authentication/session.ts';
 import { expiresAt, hashToken, issueToken } from '#features/authentication/token.ts';
-import { type OrgScope, orgAdminExists, pool, transaction } from '#lib/db.ts';
+import {
+  isUniqueViolation,
+  type OrgScope,
+  orgAdminExists,
+  pool,
+  transaction,
+} from '#lib/db.ts';
 import { many } from '#lib/row.ts';
 import { sendInvitation } from './mail.ts';
 import { type MemberRole, memberRole } from './queries.ts';
@@ -429,8 +435,4 @@ async function findOrCreateUser(
     throw new Error(`アカウントを作れませんでした: ${email}`);
   }
   return { id: row.id, created: true };
-}
-
-function isUniqueViolation(err: unknown): boolean {
-  return typeof err === 'object' && err !== null && 'code' in err && err.code === '23505';
 }

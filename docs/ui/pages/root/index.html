@@ -37,6 +37,8 @@
               <h2>組織</h2>
               <div class="sub">佐藤 明日香（asuka.sato@example.com）</div>
             </div>
+            <span style="flex:1"></span>
+            <a class="app-btn" href="../signup/index.html">組織を作る</a>
           </div>
 
           <div class="cards">
@@ -98,6 +100,8 @@
               <h2>組織</h2>
               <div class="sub">田中 亮（ryo.tanaka@example.com）</div>
             </div>
+            <span style="flex:1"></span>
+            <a class="app-btn" href="../signup/index.html">組織を作る</a>
           </div>
           <p class="app-empty">
             所属している組織がありません。<br>
@@ -111,12 +115,18 @@
   <p>アカウントはあるのに、どこにも所属していない状態は起こりうる。
   組織から外されたあとがそれである。</p>
 
-  <p>ここに「組織を作る」ボタンは置いていない。
-  <strong>画面から組織は作れない。</strong>
-  参加は<a href="../../../glossary.html#invitation">招待</a>だけで、招待を送れるのは
-  <a href="../../../glossary.html#org-admin">組織管理者</a>に限る。
-  最初のひとりは外から入れることになっており、
-  その経緯は<a href="../../../issues/organization-signup/index.html">組織を自分で作る</a>に置いた。</p>
+  <p>この状態の人にも、行き先がひとつある。
+  見出しの右の<a href="../signup/index.html">組織を作る</a>である。
+  すでにログインしているので、メールでの確認は挟まない。
+  組織名と slug を決めれば、その人が組織管理者になる。</p>
+
+  <p>ボタンは組織を持っている人の画面にも同じ位置に出る。
+  <a href="../o/[slug]/index.html">プロジェクト一覧</a>の「新しいプロジェクト」と揃えた。
+  一覧の画面で新しく作るものは、見出しの右にある。</p>
+
+  <p>押した先はこの画面の中ではなく、<code>/signup</code> である。
+  そこは未ログインの人も通る画面で、組織名と slug を訊く欄はそちらに置いてある。
+  同じ欄を二箇所に持つと、片方だけに予約語の判定が入る日が来る。</p>
 
   <h2>未ログインのとき</h2>
 
@@ -147,7 +157,7 @@
 
   <div class="sheet-foot">
     <span>UI / 組織の一覧</span>
-    <span>最終更新 2026-09-08</span>
+    <span>最終更新 2026-09-09</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

@@ -617,6 +617,34 @@ if (!user) {
   <p>Biome の <code>style/useBlockStatements</code> で機械的に止めている。
   <code>pnpm check</code> が失敗するので、書いた本人が気づく。</p>
 
+  <h2 id="parameter-properties">クラスの引数でプロパティを宣言しない</h2>
+
+  <p>コンストラクタの引数に <code>readonly</code> や <code>private</code> を付けて
+  プロパティを兼ねさせる書き方は使わない。</p>
+
+<pre><code>// 書かない
+class Rollback extends Error {
+  constructor(readonly reason: string) { super(reason); }
+}
+
+// 書く
+class Rollback extends Error {
+  readonly reason: string;
+  constructor(reason: string) {
+    super(reason);
+    this.reason = reason;
+  }
+}</code></pre>
+
+  <p>Node の型剥がし（<code>--experimental-strip-types</code>）が受け付けない。
+  型を消すだけでは動く形にならず、値の生成を伴うためである。</p>
+
+  <p>止まるのは Next のビルドではなく、その手前にある。
+  <code>pnpm test</code> と <code>pnpm org:create</code> は Node が
+  <code>src/</code> を直接読むので、読み込みの時点で
+  <code>ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX</code> になる。
+  <a href="#imports">import の書き方</a>を三つの解決系に揃えているのと同じ制約から来ている。</p>
+
   <h2 id="imports">import の書き方</h2>
 
   <p>解決系が三つある。TypeScript、Next（webpack）、そして Node である。
@@ -721,6 +749,18 @@ const [value, setValue, settled] = useField(assigneeUserId ?? '');
   <p><code>defaultValue</code> を使ってよいのは、戻るのが正しい欄だけである。
   新しく作るフォームの初期値、招待の役割、追加する人の選択欄がこれにあたる。</p>
 
+  <div class="note warn">
+    <span class="note-label">新しく作る欄に settled を使わない</span>
+    <p><code>settled</code> は「サーバから来た値と揃っているか」である。
+    種が空文字の欄では、一文字打った時点で偽になり、<strong>二度と真に戻らない</strong>。
+    そこへ知らせの表示を繋ぐと、送信が通っても何も出ない。</p>
+    <p>新しく作る欄で送信のたびの巻き戻しだけを止めたいなら、
+    <code>withoutReset</code> だけを使い、欄は <code>defaultValue</code> のままにする。
+    <code>withoutReset</code> は制御されていない欄にも効く。</p>
+    <p>組織登録の入口で一度これを踏んだ（2026-09-09）。
+    送信は通っていたのに「送りました」が出ず、ブラウザ試験で見つかった。</p>
+  </div>
+
   <p>この形は2026-09-08に本番で踏んだ。
   スレッドの担当者を変えると、保存はされるのに選択欄が元へ戻っていた。
   同じ書き方が7箇所にあり、まとめて直した。</p>
@@ -789,7 +829,7 @@ const [value, setValue, settled] = useField(assigneeUserId ?? '');
 
   <div class="sheet-foot">
     <span>開発と運用 / コーディング規約</span>
-    <span>最終更新 2026-09-08</span>
+    <span>最終更新 2026-09-09</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

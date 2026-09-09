@@ -58,6 +58,7 @@
         { path: "database/sessions/index.html",            label: "sessions", d: 2 },
         { path: "database/magic_link_tokens/index.html",   label: "magic_link_tokens", d: 2 },
         { path: "database/invitations/index.html",         label: "invitations", d: 2 },
+        { path: "database/signup_tokens/index.html",       label: "signup_tokens", d: 2 },
         { path: "database/projects/index.html",            label: "projects", d: 2 },
         { path: "database/project_members/index.html",     label: "project_members", d: 2 },
         { path: "database/threads/index.html",             label: "threads", d: 2 },
@@ -83,6 +84,7 @@
         { path: "ui/pages/index.html",                       label: "ページモック" },
         { path: "ui/pages/root/index.html",                  label: "組織の一覧", d: 2 },
         { path: "ui/pages/login/index.html",                 label: "ログイン", d: 2 },
+        { path: "ui/pages/signup/index.html",                label: "組織を作る", d: 2 },
         { path: "ui/pages/join/index.html",                  label: "招待を受ける", d: 2 },
         { path: "ui/pages/o/[slug]/index.html",              label: "プロジェクト一覧", d: 2 },
         { path: "ui/pages/o/[slug]/members/index.html",      label: "メンバー", d: 2 },
@@ -138,14 +140,14 @@
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 19,
+      sessionTotal: 20,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260909-1700-organization-signup/index.html", label: "2026-09-09 組織を作る入口", d: 2 },
         { path: "sessions/20260909-1405-thread-detail-layout/index.html", label: "2026-09-09 詳細画面の並び", d: 2 },
         { path: "sessions/20260909-1145-app-frame-width/index.html", label: "2026-09-09 画面の枠", d: 2 },
         { path: "sessions/20260908-1847-first-deploy/index.html", label: "2026-09-08 初めての本番反映", d: 2 },
-        { path: "sessions/20260908-1549-gantt/index.html", label: "2026-09-08 ガントチャート", d: 2 },
-        { path: "sessions/20260908-1516-attachments/index.html", label: "2026-09-08 添付ファイル", d: 2 }
+        { path: "sessions/20260908-1549-gantt/index.html", label: "2026-09-08 ガントチャート", d: 2 }
       ]
     }
   ];

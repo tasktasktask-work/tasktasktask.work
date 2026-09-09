@@ -62,3 +62,28 @@ CREATE UNIQUE INDEX invitations_token_hash_key ON invitations (token_hash);
 CREATE UNIQUE INDEX invitations_pending_uniq
   ON invitations (organization_id, email)
   WHERE accepted_at IS NULL AND revoked_at IS NULL;
+
+
+-- 組織を自分で作るときの、メールアドレス確認。48時間、一度きり。
+-- 発行の時点では組織もアカウントも無いため、外部キーを一本も持たない。
+CREATE TABLE signup_tokens (
+  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  email      text        NOT NULL,   -- 小文字で正規化して保存する
+  token_hash bytea       NOT NULL,
+  expires_at timestamptz NOT NULL,
+  used_at    timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT signup_tokens_email_lowercase
+    CHECK (email = lower(email)),
+  CONSTRAINT signup_tokens_email_shape
+    CHECK (email ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$')
+);
+
+CREATE UNIQUE INDEX signup_tokens_hash_key ON signup_tokens (token_hash);
+
+-- 同じアドレスへの再送の間隔を測るときに引く。使い終わった行は外れる。
+CREATE INDEX signup_tokens_by_email
+  ON signup_tokens (email) WHERE used_at IS NULL;
+
+-- 期限切れの行は定期的に物理削除してよい。magic_link_tokens と同じ扱いである。

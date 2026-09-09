@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useActionState } from 'react';
 import { type LoginState, loginWithPassword, requestMagicLinkAction } from './actions.ts';
@@ -93,6 +94,23 @@ export function LoginForm() {
         リンクは48時間有効で、一度使うと無効になります。
         <br />
         パスワードを忘れた場合もこちらから入れます。
+      </p>
+
+      {/*
+        組織を持たない人の入口。
+        この画面はどのURLにも出るので、招待のリンクから来た人の目にも入る。
+        押されても、作られるのは新しい組織だけで、見ようとしていた組織には何も起きない。
+      */}
+      <p
+        style={{
+          fontSize: '.76rem',
+          margin: '1.2rem 0 0',
+          textAlign: 'center',
+          borderTop: '1px solid var(--rule)',
+          paddingTop: '1rem',
+        }}
+      >
+        <Link href="/signup">組織を新しく作る</Link>
       </p>
     </div>
   );

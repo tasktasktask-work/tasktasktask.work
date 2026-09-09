@@ -34,3 +34,29 @@ export async function sendInvitation(
     ].join('\n'),
   });
 }
+
+/**
+ * 組織登録の確認リンク。
+ *
+ * すでにアカウントがある人にも、同じ文面を送る。
+ * 「登録済みです」と書き分けると、どちらのメールが届いたかで
+ * そのアドレスの登録の有無が分かってしまう。
+ */
+export async function sendSignupLink(to: string, token: string): Promise<void> {
+  const url = `${env.APP_ORIGIN}/signup?token=${encodeURIComponent(token)}`;
+  await mailSender.send({
+    to,
+    subject: 'TASK3 で組織を作る',
+    text: [
+      '下のリンクを開くと、組織の名前を決める画面に進みます。',
+      '',
+      url,
+      '',
+      `このリンクは${TOKEN_LIFETIME_HOURS}時間で切れ、一度使うと無効になります。`,
+      '組織を作った人が、その組織の管理者になります。',
+      '',
+      '心当たりがなければ、このメールは破棄してください。',
+      'リンクを開かないかぎり、何も起きません。',
+    ].join('\n'),
+  });
+}

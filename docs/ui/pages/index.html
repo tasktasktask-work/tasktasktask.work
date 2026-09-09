@@ -16,13 +16,14 @@
   <p class="eyebrow">UI Pages</p>
   <h1 class="title">ページモック</h1>
   <p class="lede">
-    6画面ある。どれもサンプルデータを入れた、読み込み直後の状態である。
+    16画面ある。どれもサンプルデータを入れた、読み込み直後の状態である。
     実装の際はこの見た目を基準にする。
   </p>
 
   <h2>URL の構造</h2>
 <pre class="figure">/                                       所属している組織の一覧
 /login                                  ログイン
+/signup                                 組織を作る（未ログインならアドレスの確認から）
 /join?token=...                         招待の受諾
 /me                                     アカウント（組織に依らない）
 /o/{slug}                               プロジェクト一覧
@@ -36,7 +37,11 @@
   <p>組織を示す <code>{slug}</code> を必ず含める。
   ひとりが複数の組織に所属するため、URLを見てどの組織かがわからないと取り違えが起きる。</p>
 
-  <p><code>/me</code> だけが例外である。
+  <p>ログインより手前の画面（<code>/login</code>、<code>/signup</code>、<code>/join</code>）に <code>{slug}</code> は無い。
+  どの組織を見るかが、まだ決まっていないためである。
+  <code>/signup</code> にいたっては、これから作る組織の slug をその画面で決める。</p>
+
+  <p>ログインしたあとで例外なのは <code>/me</code> だけである。
   ここで触る値は組織の外側にあり、所属しているすべての組織に効く。
   <code>{slug}</code> を含めると、その組織だけの設定に見える。</p>
 
@@ -48,6 +53,7 @@
   <div class="cards">
     <a class="card" href="root/index.html"><span class="card-no">/</span><p class="card-title">組織の一覧</p><p class="card-desc">ログインすると必ずここに着く</p></a>
     <a class="card" href="login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">パスワードとマジックリンクを一枚に</p></a>
+    <a class="card" href="signup/index.html"><span class="card-no">/signup</span><p class="card-title">組織を作る</p><p class="card-desc">ログインの有無で二段にも一段にもなる</p></a>
     <a class="card" href="join/index.html"><span class="card-no">/join</span><p class="card-title">招待を受ける</p><p class="card-desc">アカウントの有無で入力欄が変わる</p></a>
     <a class="card" href="me/index.html"><span class="card-no">/me</span><p class="card-title">アカウント</p><p class="card-desc">通知メールの入り切り</p></a>
     <a class="card" href="o/[slug]/index.html"><span class="card-no">/o/{slug}</span><p class="card-title">プロジェクト一覧</p><p class="card-desc">組織に入って最初に見る</p></a>
@@ -105,7 +111,7 @@
 
   <div class="sheet-foot">
     <span>UI / ページモック</span>
-    <span>最終更新 2026-09-08</span>
+    <span>最終更新 2026-09-09</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

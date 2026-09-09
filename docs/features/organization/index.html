@@ -67,6 +67,10 @@
   <code>@example.com</code> のアドレスを持つ人が全員そのまま入れる仕組みは、
   退職者のアカウントが生きている間ずっと入り続けられることを意味する。</p>
 
+  <p>既存の組織に入る手段はこれだけである。
+  自分で<a href="#make">組織を作る</a>経路は、入る先を新しく作るものであって、
+  すでにある組織へ入る手段ではない。</p>
+
   <h2>組織が持つ設定</h2>
 
   <div class="table-scroll">
@@ -85,19 +89,46 @@
   選べる値が一つしかなくても、列とインタフェースを後から足すほうが高くつくからである。
   実際に複数の値を扱えるようにする作業は<a href="../../issues/i18n/index.html">多言語対応</a>に送った。</p>
 
-  <h2>最初の組織管理者は、外から作る</h2>
+  <h2 id="make">組織を作る</h2>
 
-  <p>参加が招待だけで、招待を送れるのが組織管理者だけだと、
-  最初のひとりを作る手段が画面のどこにも無い。</p>
+  <p>組織は<a href="../../ui/pages/signup/index.html"><code>/signup</code></a> から作る。
+  作った人がその組織の最初の組織管理者になり、そのままログイン状態で <code>/o/{slug}</code> へ着く。</p>
+
+  <p>ログインしていない人は、先にメールアドレスの確認を通る。
+  アドレスを入れると確認のリンクが飛び、そのリンクの先で組織名と slug を決める。
+  <a href="../../database/organizations/index.html">organizations</a> の行が生まれるのはこの瞬間である。
+  確認より前に組織を作らないので、「まだ確認されていない組織」を掃除する仕組みが要らない。</p>
+
+  <p>すでにログインしている人には、確認を求めない。
+  そのアドレスはログインできている時点で確認済みであり、もう一度踏ませても確かめられることが増えない。
+  組織名と slug だけで、その場で作る。</p>
+
+  <h3>slug は早い者勝ちで、あとから変えられない</h3>
+
+  <p><a href="../../glossary.html#slug">slug</a> は人が決める。
+  小文字の英数字とハイフン、3文字から40文字。
+  すでに使われている名前と、<code>admin</code> や <code>login</code> のような予約語は断る。</p>
+
+  <p>予約語はアプリケーション側で持ち、データベースの制約にはしない。
+  制約に入れると、語をひとつ足すたびに移行が積まれる。
+  そのうえ、すでに使われている語を後から予約語にできなくなる。
+  既存の行が制約に違反するためである。</p>
+
+  <p>作成後の変更は用意しない。
+  変えると、その組織のURLを指すリンクとブックマークが全部切れる。
+  必要になったときは、移行の手順を含めて別に決める。</p>
+
+  <h3>手元から作る道も残す</h3>
 
 <pre><code>pnpm org:create --name "株式会社アクメ" --slug acme \
                 --admin someone@example.com --admin-name "佐藤 明日香"</code></pre>
 
   <p>組織と、組織管理者としての所属と、ログイン用リンクを作って出力する。
-  パスワードはこの経路では設定しないので、受け取った人はまずマジックリンクで入る。</p>
+  画面の経路がメールの到達に依存するのに対し、こちらは依存しない。
+  送信が止まっている環境でも組織を作れる道として残してある。</p>
 
-  <p>誰でも組織を作れる入口は、料金の形が決まってからにしたい。
-  <a href="../../issues/organization-signup/index.html">組織を自分で作る</a>として先送りにしてある。</p>
+  <p>slug の検証は画面と共有する。
+  分けて持つと、片方にだけ予約語が増えた日から、CLI からは <code>admin</code> が通る。</p>
 
   <h2>組織のスコープ</h2>
 
@@ -209,6 +240,7 @@
     <a class="card" href="../../ui/pages/o/[slug]/members/index.html"><span class="card-no">/o/{slug}/members</span><p class="card-title">メンバー</p><p class="card-desc">一覧、役割、招待</p></a>
     <a class="card" href="../../ui/pages/o/[slug]/settings/index.html"><span class="card-no">/o/{slug}/settings</span><p class="card-title">組織の設定</p><p class="card-desc">組織管理者だけが開ける</p></a>
     <a class="card" href="../../ui/pages/join/index.html"><span class="card-no">/join</span><p class="card-title">招待を受ける</p><p class="card-desc">メールのリンクの着地点</p></a>
+    <a class="card" href="../../ui/pages/signup/index.html"><span class="card-no">/signup</span><p class="card-title">組織を作る</p><p class="card-desc">確認を通ってから組織が生まれる</p></a>
     <a class="card" href="../../ui/pages/login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">組織の一覧へ着地する</p></a>
   </div>
 
@@ -217,11 +249,12 @@
     <a class="card" href="../../database/organizations/index.html"><span class="card-no">TABLE</span><p class="card-title">organizations</p><p class="card-desc">組織そのもの</p></a>
     <a class="card" href="../../database/organization_members/index.html"><span class="card-no">TABLE</span><p class="card-title">organization_members</p><p class="card-desc">所属と役割</p></a>
     <a class="card" href="../../database/invitations/index.html"><span class="card-no">TABLE</span><p class="card-title">invitations</p><p class="card-desc">招待</p></a>
+    <a class="card" href="../../database/signup_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">signup_tokens</p><p class="card-desc">登録のときのアドレス確認</p></a>
   </div>
 
   <div class="sheet-foot">
     <span>機能 / 組織とメンバー</span>
-    <span>最終更新 2026-09-07</span>
+    <span>最終更新 2026-09-09</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

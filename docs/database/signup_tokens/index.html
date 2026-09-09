@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>signup_tokens | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">signup_tokens</h1>
+  <p class="lede">
+    <a href="../../glossary.html#signup">組織登録</a>の途中で、メールアドレスの持ち主であることを確かめるための一時的な行。
+    この時点では、組織もアカウントもまだ存在しない。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+
+  <p>登録を始めた人について分かっているのは、入力されたメールアドレスひとつだけである。
+  そのアドレスが本人のものかは、リンクを踏んでもらうまで分からない。
+  確かめる前に <code>users</code> の行を作ると、認証のいちばん基礎のテーブルに
+  「まだ確認されていないアカウント」という状態が生まれる。
+  ログインできるのか、誰が掃除するのか、招待の宛先として扱ってよいのか。
+  問いが一つずつぶら下がる。</p>
+
+  <p>そこで、確認が済むまでの情報だけを別の場所に置く。
+  <a href="../invitations/index.html">invitations</a> から
+  <code>organization_id</code> と役割を落とすと、ちょうどこの形になる。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE signup_tokens (
+  id         uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  email      text        NOT NULL,
+  token_hash bytea       NOT NULL,
+  expires_at timestamptz NOT NULL,
+  used_at    timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT signup_tokens_email_lowercase
+    CHECK (email = lower(email)),
+  CONSTRAINT signup_tokens_email_shape
+    CHECK (email ~ '^[^@[:space:]]+@[^@[:space:]]+\.[^@[:space:]]+$')
+);
+
+CREATE UNIQUE INDEX signup_tokens_hash_key ON signup_tokens (token_hash);
+
+-- 再送の間隔を測るときに引く。使い終わった行は対象から外れる。
+CREATE INDEX signup_tokens_by_email
+  ON signup_tokens (email) WHERE used_at IS NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>email</code></td><td>text</td><td>登録しようとしているアドレス。小文字で正規化して保存する。<code>users</code> にあるとは限らない</td></tr>
+      <tr><td><code>token_hash</code></td><td>bytea</td><td>登録URLに含めた値の SHA-256。値そのものは保存しない</td></tr>
+      <tr><td><code>expires_at</code></td><td>timestamptz</td><td>発行から48時間後。マジックリンクと招待に揃えてある</td></tr>
+      <tr><td><code>used_at</code></td><td>timestamptz</td><td>組織を作り終えた時刻。一度きり</td></tr>
+      <tr><td><code>created_at</code></td><td>timestamptz</td><td>発行の時刻。同じアドレスへの再送の間隔をここで測る</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><code>organization_id</code> を持たない。
+  組織はこのトークンが使われた瞬間に生まれるので、発行の時点では指す先が無い。
+  組織名も <a href="../../glossary.html#slug">slug</a> も持たないのは同じ理由である。
+  どちらもリンクを踏んだ先の画面で入力する。</p>
+
+  <h3>使われたときに起きること</h3>
+  <ol>
+    <li>そのメールアドレスの <code>users</code> が無ければ作る。表示名とパスワードはこの画面で設定する</li>
+    <li><code>organizations</code> に行を作る。slug が埋まっていたらここで止まる</li>
+    <li><code>organization_members</code> に <code>admin</code> で行を作る</li>
+    <li><code>used_at</code> を埋める</li>
+    <li><code>sessions</code> を作ってログイン状態にする</li>
+  </ol>
+
+  <p>すべて同じトランザクションの中で行う。
+  2 で止まったときは <code>used_at</code> も埋まらないので、同じリンクで slug を入れ直せる。
+  <strong>作れなかったリンクを消費しない</strong>のは、
+  ここで消費すると、埋まっていた slug をひとつ選んだだけの人が最初からやり直すことになるためである。</p>
+
+  <div class="note warn">
+    <span class="note-label">すでにアカウントがある人には、表示名もパスワードも訊かない</span>
+    <p>訊いて上書きできると、<strong>登録リンクを踏ませるだけで他人のパスワードを書き換えられる</strong>。
+    <a href="../invitations/index.html">招待</a>の受諾がパスワードを訊かないのと同じ判断である。</p>
+    <p>この経路で既存のアカウントに起きるのは、組織がひとつ増えることと、
+    <a href="../../glossary.html#account-lock">ロック</a>が解けることだけである。</p>
+  </div>
+
+  <h3>同じアドレスへの再送</h3>
+
+  <p>未使用で期限内の行が3分以内に作られていれば、新しくは送らない。
+  画面の返事は送ったときと同じにする。
+  返事を変えると、そのアドレスが登録の途中かどうかを外から測れてしまう。</p>
+
+  <p>3分を過ぎていれば、そのアドレスの未使用の行を消してから新しく入れる。
+  有効なリンクは常に一本だけになる。
+  古い行を <code>used_at</code> で畳まずに消すのは、
+  使われていないトークンに残す価値が無いからである。
+  誰がいつ登録を試みたかの記録は、<a href="../../issues/audit-log/index.html">監査ログ</a>の仕事になる。</p>
+
+  <p>期限切れの行も、定期的に物理削除してよい。
+  <a href="../magic_link_tokens/index.html">magic_link_tokens</a> と同じ扱いである。</p>
+
+  <h2>関係</h2>
+<pre class="figure">signup_tokens （組織にもアカウントにも繋がっていない）
+      │
+      │ 使われると
+      ▼
+users ──&lt; organization_members &gt;── organizations
+  │
+  └──&lt; sessions</pre>
+
+  <p>外部キーを一本も持たない。
+  <a href="../invitations/index.html">invitations</a> が <code>organization_id</code> と
+  <code>invited_by_user_id</code> を持つのと対照的だが、これは招待が
+  「すでにある組織の、ある人が送るもの」であるのに対し、
+  登録は「まだ何も無いところから始まるもの」だからである。</p>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../organizations/index.html"><span class="card-no">TABLE</span><p class="card-title">organizations</p><p class="card-desc">使われた結果できる行</p></a>
+    <a class="card" href="../organization_members/index.html"><span class="card-no">TABLE</span><p class="card-title">organization_members</p><p class="card-desc">作った人が admin で入る</p></a>
+    <a class="card" href="../invitations/index.html"><span class="card-no">TABLE</span><p class="card-title">invitations</p><p class="card-desc">形が似ている隣のテーブル</p></a>
+    <a class="card" href="../magic_link_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">magic_link_tokens</p><p class="card-desc">同じ48時間、同じ一度きり</p></a>
+  </div>
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">組織の作り方</p></a>
+    <a class="card" href="../../features/authentication/index.html"><span class="card-no">FEATURE</span><p class="card-title">認証</p><p class="card-desc">アカウントが生まれる経路</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / signup_tokens</span>
+    <span>最終更新 2026-09-09</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

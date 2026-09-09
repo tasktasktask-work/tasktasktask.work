@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>組織を作る | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock &#183; /signup</p>
+  <h1 class="title">組織を作る</h1>
+  <p class="lede">
+    この画面を開く人は、まだこのシステムの中に何も持っていない。
+    アカウントも、組織も、招待もない。
+    だから最初に訊けるのは、メールアドレスひとつだけである。
+  </p>
+
+  <div class="note decide">
+    <span class="note-label">確認が先、組織が後</span>
+    <p>アドレスを確認してからでないと、組織は作れない。
+    <a href="../../../database/organizations/index.html">organizations</a> の行は、
+    メールのリンクを踏んだ先の画面で初めて生まれる。</p>
+    <p>先に組織を作って後から確認する形にすると、
+    「まだ確認されていない組織」を誰がいつ掃除するのかが、新しい問いとして残る。</p>
+  </div>
+
+  <h2>入口</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/signup</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="brand"><span class="m">3</span>TASK3</div>
+          <div class="tag">組織を新しく作る</div>
+
+          <form onsubmit="return false">
+            <div class="auth-field">
+              <label for="su-email">メールアドレス</label>
+              <input id="su-email" type="email" value="asuka.sato@example.com">
+            </div>
+            <button class="auth-btn" type="submit">確認のリンクを受け取る</button>
+          </form>
+
+          <p style="font-size:.73rem;color:var(--ink-soft);margin:.7rem 0 0;line-height:1.75;text-align:center">
+            リンクを開くと、組織の名前を決める画面に進みます。<br>
+            リンクは48時間有効です。
+          </p>
+
+          <div class="auth-or">または</div>
+
+          <a class="auth-btn alt" href="../login/index.html" style="display:block;text-align:center">ログインする</a>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>組織名の欄をここに置かない。
+  置くと、リンクを踏むまでのあいだ、入力された組織名をどこかに預かることになる。
+  預かる先は <a href="../../../database/signup_tokens/index.html">signup_tokens</a> しかなく、
+  そこに置いた組織名は、リンクが踏まれなければ誰にも使われないまま残る。</p>
+
+  <p>訊く場所を後ろへ回すと、預かるものが無くなる。
+  この画面が持って帰るのはアドレスだけである。</p>
+
+  <h2>送ったあと</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/signup</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="brand"><span class="m">3</span>TASK3</div>
+          <div class="tag">組織を新しく作る</div>
+
+          <div class="app-note ok">
+            <p style="margin:0">確認のリンクを <strong>asuka.sato@example.com</strong> へ送りました。
+            48時間のあいだ有効です。</p>
+          </div>
+
+          <p style="font-size:.73rem;color:var(--ink-soft);margin:.9rem 0 0;line-height:1.75;text-align:center">
+            届かない場合は、迷惑メールの振り分けを確認してください。<br>
+            しばらく待ってから、もう一度受け取ることもできます。
+          </p>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">同じ返事を、いつでも返す</span>
+    <p>そのアドレスにすでにアカウントがあっても、直前に送ったばかりで実際には送らなかった場合でも、
+    画面に出るのはこの一枚である。</p>
+    <p>返事を出し分けると、アドレスを打ち込むだけで
+    「登録済みかどうか」「登録の途中かどうか」を外から測れてしまう。
+    <a href="../login/index.html">ログイン画面</a>が
+    「そのアドレスは登録されていません」と言わないのと同じ理由である。</p>
+    <p>送信は同じアドレスにつき3分に一度まで。
+    間隔の中で押されたときも、この画面が出る。</p>
+  </div>
+
+  <h2>リンクの着地（アカウントが無い人）</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/signup?token=&#8230;</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="brand"><span class="m">3</span>TASK3</div>
+          <div class="tag">組織を新しく作る</div>
+
+          <form onsubmit="return false">
+            <div class="auth-field">
+              <label for="sg-email">メールアドレス</label>
+              <input id="sg-email" type="email" value="asuka.sato@example.com" disabled>
+            </div>
+            <div class="auth-field">
+              <label for="sg-org">組織名</label>
+              <input id="sg-org" type="text" placeholder="株式会社アクメ">
+            </div>
+            <div class="auth-field">
+              <label for="sg-slug">URL に使う名前</label>
+              <div style="display:flex;align-items:center;gap:.4rem">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink-soft);white-space:nowrap">tasktasktask.work/o/</span>
+                <input id="sg-slug" type="text" placeholder="acme" style="flex:1;min-width:0">
+              </div>
+              <p style="font-size:.72rem;color:var(--ink-soft);margin:.4rem 0 0;line-height:1.7">
+                小文字の英数字とハイフン、3〜40文字。あとから変えられません。
+              </p>
+            </div>
+            <div class="auth-field">
+              <label for="sg-name">表示名</label>
+              <input id="sg-name" type="text" placeholder="佐藤 明日香">
+            </div>
+            <div class="auth-field">
+              <label for="sg-pw">パスワード（8文字以上）</label>
+              <input id="sg-pw" type="password">
+            </div>
+            <button class="auth-btn" type="submit">組織を作る</button>
+          </form>
+
+          <p style="font-size:.73rem;color:var(--ink-soft);margin:.9rem 0 0;line-height:1.75;text-align:center">
+            作った人が、その組織の組織管理者になります。
+          </p>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p><a href="../../../glossary.html#slug">slug</a> の欄には、これから使われるURLの形をそのまま置く。
+  <code>acme</code> という語だけを見せて「識別子です」と説明するより、
+  <code>tasktasktask.work/o/acme</code> の <code>acme</code> を打ってもらうほうが速い。</p>
+
+  <p>候補は自動で入れない。
+  組織名は「株式会社アクメ」のような日本語で入ってくるので、そこから作れる候補が無い。
+  入れられない欄に、入れられるふりをさせない。</p>
+
+  <div class="note decide">
+    <span class="note-label">あとから変えられません、を欄の下に書く</span>
+    <p>slug は変更できない。組織の設定にもその欄は無い。
+    この一行を作成の時点で読んでもらえないと、
+    「設定のどこで変えるのか」を探す時間が、あとで発生する。</p>
+  </div>
+
+  <h2>リンクの着地（すでにアカウントがある人）</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/signup?token=&#8230;</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="brand"><span class="m">3</span>TASK3</div>
+          <div class="tag">組織を新しく作る</div>
+
+          <form onsubmit="return false">
+            <div class="auth-field">
+              <label for="sg2-email">メールアドレス</label>
+              <input id="sg2-email" type="email" value="ryo.tanaka@example.com" disabled>
+            </div>
+            <div class="auth-field">
+              <label for="sg2-org">組織名</label>
+              <input id="sg2-org" type="text" value="合同会社ベータ">
+            </div>
+            <div class="auth-field">
+              <label for="sg2-slug">URL に使う名前</label>
+              <div style="display:flex;align-items:center;gap:.4rem">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink-soft);white-space:nowrap">tasktasktask.work/o/</span>
+                <input id="sg2-slug" type="text" value="beta" style="flex:1;min-width:0">
+              </div>
+              <p style="font-size:.72rem;color:var(--ink-soft);margin:.4rem 0 0;line-height:1.7">
+                小文字の英数字とハイフン、3〜40文字。あとから変えられません。
+              </p>
+            </div>
+            <button class="auth-btn" type="submit">組織を作る</button>
+          </form>
+
+          <p style="font-size:.76rem;color:var(--ink-soft);margin-top:.9rem">
+            このメールアドレスのアカウントはすでにあります。パスワードは変わりません。
+          </p>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="note warn">
+    <span class="note-label">表示名もパスワードも訊かない</span>
+    <p>訊いて上書きできると、<strong>登録リンクを踏ませるだけで他人のパスワードを書き換えられる</strong>。
+    <a href="../join/index.html">招待の受諾</a>で入力欄が消えるのと、同じ経路を塞いでいる。</p>
+  </div>
+
+  <h2>slug が埋まっていたとき</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/signup?token=&#8230;</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="brand"><span class="m">3</span>TASK3</div>
+          <div class="tag">組織を新しく作る</div>
+
+          <div class="app-note warn">
+            <p style="margin:0"><code>acme</code> はすでに使われています。別の名前にしてください。</p>
+          </div>
+
+          <form onsubmit="return false">
+            <div class="auth-field">
+              <label for="sg3-org">組織名</label>
+              <input id="sg3-org" type="text" value="株式会社アクメ">
+            </div>
+            <div class="auth-field">
+              <label for="sg3-slug">URL に使う名前</label>
+              <div style="display:flex;align-items:center;gap:.4rem">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink-soft);white-space:nowrap">tasktasktask.work/o/</span>
+                <input id="sg3-slug" type="text" value="acme" style="flex:1;min-width:0">
+              </div>
+            </div>
+            <button class="auth-btn" type="submit">組織を作る</button>
+          </form>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>入力した値は残したまま、slug だけを直してもらう。
+  リンクはまだ使える。
+  <strong>作れなかった送信でトークンを消費しない</strong>ので、
+  名前をひとつ選び損ねた人が、メールを受け取り直すところからやり直すことにはならない。</p>
+
+  <p>予約語（<code>admin</code> や <code>login</code> など）を打った場合も、同じ形で断る。
+  文言だけが「その名前は使えません」に変わる。</p>
+
+  <h2>使えないリンク</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/signup?token=&#8230;</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="auth-wrap">
+        <div class="auth-card">
+          <div class="brand"><span class="m">3</span>TASK3</div>
+          <div class="app-note warn">
+            <p style="margin:0">このリンクの有効期間（48時間）が切れています。もう一度受け取ってください。</p>
+          </div>
+          <form onsubmit="return false" style="margin-top:1.1rem">
+            <div class="auth-field">
+              <label for="sg4-email">メールアドレス</label>
+              <input id="sg4-email" type="email" placeholder="you@example.com">
+            </div>
+            <button class="auth-btn" type="submit">確認のリンクを受け取る</button>
+          </form>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>期限切れ、使用済み、存在しない。
+  三つの理由で文言を変える。
+  取り消しはない。送った本人しか消せる相手がいないためである。</p>
+
+  <p>どの理由でも、入口の欄をその場に出す。
+  <a href="../join/index.html">招待</a>と違って、<strong>この人は自分で送り直せる</strong>。
+  他人に頼む必要がないなら、頼み方ではなく、送り直す欄を出すほうが早い。</p>
+
+  <h2>ログインしている人が開いたとき</h2>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/signup</span></div>
+    <div class="mock-body"><div class="mock-inner" style="min-width:0">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="sp"></span>
+          <span class="hanko sm">佐</span>
+          <button class="app-btn ghost" type="button">ログアウト</button>
+        </div>
+        <div class="app-main">
+          <div class="app-head">
+            <div>
+              <h2>組織を作る</h2>
+              <div class="sub">佐藤 明日香（asuka.sato@example.com）</div>
+            </div>
+          </div>
+
+          <form class="app-form" onsubmit="return false" style="max-width:34rem">
+            <div class="auth-field">
+              <label for="sg5-org">組織名</label>
+              <input id="sg5-org" type="text" placeholder="株式会社アクメ">
+            </div>
+            <div class="auth-field">
+              <label for="sg5-slug">URL に使う名前</label>
+              <div style="display:flex;align-items:center;gap:.4rem">
+                <span style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--ink-soft);white-space:nowrap">tasktasktask.work/o/</span>
+                <input id="sg5-slug" type="text" placeholder="acme" style="flex:1;min-width:0">
+              </div>
+              <p style="font-size:.72rem;color:var(--ink-soft);margin:.4rem 0 0;line-height:1.7">
+                小文字の英数字とハイフン、3〜40文字。あとから変えられません。
+              </p>
+            </div>
+            <div class="line">
+              <button class="app-btn" type="submit">組織を作る</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>メールを挟まない。
+  このアドレスは、ログインできている時点で確認が済んでいる。
+  もう一度踏ませても、確かめられることは何も増えない。</p>
+
+  <p>左帯は付かない。
+  <a href="../root/index.html">組織の一覧</a>と同じで、
+  この画面はまだどの組織にも属していない。</p>
+
+  <h2>作ったあと</h2>
+
+  <p>その場でログイン状態にし、作った組織のプロジェクト一覧
+  （<a href="../o/[slug]/index.html"><code>/o/{slug}</code></a>）へ送る。
+  組織の一覧を経由しない。
+  いま作ったばかりの組織を、一覧から選び直してもらう理由が無い。</p>
+
+  <p>着いた先には、まだプロジェクトが一つもない。
+  作った人は組織管理者なので、その画面から作れる。</p>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../login/index.html"><span class="card-no">/login</span><p class="card-title">ログイン</p><p class="card-desc">ここから来る</p></a>
+    <a class="card" href="../root/index.html"><span class="card-no">/</span><p class="card-title">組織の一覧</p><p class="card-desc">ログイン済みの入口</p></a>
+    <a class="card" href="../join/index.html"><span class="card-no">/join</span><p class="card-title">招待を受ける</p><p class="card-desc">骨格を借りた画面</p></a>
+    <a class="card" href="../../../database/signup_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">signup_tokens</p><p class="card-desc">使ったときに起きること</p></a>
+    <a class="card" href="../../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">組織の作り方</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>UI / ページモック / 組織を作る</span>
+    <span>最終更新 2026-09-09</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../sidebar.js" defer></script>
+</body>
+</html>

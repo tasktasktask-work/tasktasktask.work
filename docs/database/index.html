@@ -163,7 +163,13 @@ $$;</code></pre>
     <a class="card" href="sessions/index.html"><span class="card-no">TABLE</span><p class="card-title">sessions</p><p class="card-desc">30日で切れるログインセッション</p></a>
     <a class="card" href="magic_link_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">magic_link_tokens</p><p class="card-desc">48時間、一度きりのログイン用トークン</p></a>
     <a class="card" href="invitations/index.html"><span class="card-no">TABLE</span><p class="card-title">invitations</p><p class="card-desc">組織への招待。受諾でメンバーになる</p></a>
+    <a class="card" href="signup_tokens/index.html"><span class="card-no">TABLE</span><p class="card-title">signup_tokens</p><p class="card-desc">組織を作る前のアドレス確認。外部キーを持たない</p></a>
   </div>
+
+  <p><code>signup_tokens</code> だけが、どのテーブルとも繋がっていない。
+  発行の時点では、指す先の組織もアカウントも存在しないためである。
+  使われた瞬間に <code>organizations</code> と <code>organization_members</code> が生まれ、
+  必要ならその手前で <code>users</code> も生まれる。</p>
 
   <h2>組織とプロジェクト</h2>
   <p>権限はここで決まる。公開プロジェクトなら組織メンバー全員、非公開なら <code>project_members</code> にいる人と組織管理者。</p>
@@ -238,7 +244,7 @@ COMMIT;</code></pre>
 
   <div class="sheet-foot">
     <span>データベース</span>
-    <span>最終更新 2026-09-07</span>
+    <span>最終更新 2026-09-09</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

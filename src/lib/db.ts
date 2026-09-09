@@ -240,3 +240,13 @@ export async function transaction<T>(fn: (client: pg.PoolClient) => Promise<T>):
     client.release();
   }
 }
+
+/**
+ * 一意制約に当たったかどうか。
+ *
+ * 「先に SELECT して無ければ INSERT」は、確かめた後、入れる前に取られる。
+ * 索引に当てて、当たったら断る形にする。
+ */
+export function isUniqueViolation(err: unknown): boolean {
+  return typeof err === 'object' && err !== null && 'code' in err && err.code === '23505';
+}

@@ -13,10 +13,35 @@
 
 <main class="sheet">
 <div class="wrap">
-  <p class="eyebrow">Issue &#183; 優先度 中</p>
+  <p class="eyebrow">Issue &#183; 解消</p>
   <h1 class="title">組織を自分で作る</h1>
 
-  <h2>概要</h2>
+  <div class="note decide">
+    <span class="note-label">2026-09-09 に対応した</span>
+    <p>この課題は<a href="../../sessions/20260909-1700-organization-signup/index.html">2026-09-09 のセッション</a>で設計し、そのまま実装した。
+    残していた宿題二つには、下の「決めた答え」に書いたとおりの答えが出ている。
+    仕様の置き場所は<a href="../../features/organization/index.html#make">組織とメンバー</a>に移った。</p>
+  </div>
+
+  <h2>決めた答え</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>宿題</th><th>答え</th></tr></thead>
+      <tbody>
+        <tr><td class="nowrap">slug の取り合い</td>
+            <td>早い者勝ち。予約語はアプリケーション側の一覧で断る。作成後の変更は用意しない</td></tr>
+        <tr><td class="nowrap">捨てアドレスの扱い</td>
+            <td>アドレスの確認を先に済ませる。組織の行は確認のリンクを踏んだ先で生まれる</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>先送りの理由だった<a href="../billing/index.html">課金とプラン</a>は、まだ決まっていない。
+  それでも入口を開けたのは、費用の持ち主を組織に紐づける形（組織単位の契約）を想定しており、
+  入口を先に開けても、後から紐づける先が消えないためである。</p>
+
+  <h2>概要（先送りしていた当時の記録）</h2>
   <p>組織に人が増える経路は<a href="../../glossary.html#invitation">招待</a>だけで、
   招待を送れるのは<a href="../../glossary.html#org-admin">組織管理者</a>だけである。
   すると最初の組織管理者を作る手段が、画面のどこにも無い。</p>
@@ -43,7 +68,7 @@
     <li>料金の形が決まり、支払いの主体を組織に紐づけられるようになったとき</li>
   </ul>
 
-  <h2>実装するとしたら</h2>
+  <h2>実装するとしたら（当時の見通し）</h2>
   <p>登録した人がその場で組織管理者になる。
   <code>pnpm org:create</code> がやっていることと同じで、
   違うのは実行する人だけである。</p>
@@ -62,11 +87,13 @@
     <a class="card" href="../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">参加は招待だけ</p></a>
     <a class="card" href="../billing/index.html"><span class="card-no">ISSUE</span><p class="card-title">課金とプラン</p><p class="card-desc">先に決めたいこと</p></a>
     <a class="card" href="../account-settings/index.html"><span class="card-no">ISSUE</span><p class="card-title">アカウントの設定</p><p class="card-desc">同じ経路で生じた課題</p></a>
+    <a class="card" href="../../sessions/20260909-1700-organization-signup/index.html"><span class="card-no">SESSION</span><p class="card-title">組織を作る入口を開ける</p><p class="card-desc">この課題に答えを出した回</p></a>
+    <a class="card" href="../../ui/pages/signup/index.html"><span class="card-no">/signup</span><p class="card-title">組織を作る</p><p class="card-desc">できあがる画面</p></a>
   </div>
 
   <div class="sheet-foot">
     <span>課題 / 組織を自分で作る</span>
-    <span>最終更新 2026-09-07</span>
+    <span>最終更新 2026-09-09</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 
