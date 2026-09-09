@@ -265,6 +265,34 @@ docker compose up -d</code></pre>
     利用者には理由の分からない失敗として届く。</p>
   </div>
 
+  <h2>開発コンテナの逆プロキシ</h2>
+
+  <p>本番の振り分けは nginx-proxy が <code>VIRTUAL_HOST</code> を見て行うが、
+  開発コンテナは自前の nginx を持っている
+  （<code>.devcontainer/reverse-proxy/etc/nginx/nginx.conf</code>）。
+  <code>app.tasktasktask.work.localhost</code> への要求を <code>app:3000</code> へ渡す、
+  <code>server</code> ブロック一つぶんの設定である。</p>
+
+  <div class="note decide">
+    <span class="note-label">proxy_pass の宛先に変数を使うと 502 になる</span>
+    <p>宛先を <code>set $upstream_app app:3000;</code> で変数に入れ、
+    <code>proxy_pass http://$upstream_app;</code> と書くと、
+    <strong>nginx は名前解決を起動時ではなく要求ごとに回す</strong>。
+    そのとき参照するのが <code>resolver</code> ディレクティブで、この設定には置いていない。
+    引く先を持たないまま要求時に解決しようとして、502 になる。</p>
+    <p>宛先を <code>proxy_pass http://app:3000;</code> と直に書けば、起動時に一度引いて済む。</p>
+    <p>引き換えに入るものがある。起動時に引いた住所を持ち続けるので、
+    <code>app</code> のコンテナだけを作り直して IP が変わると、
+    nginx は古い住所へ送り続ける。逆プロキシごと起こし直せば直る。
+    どうしても変数で書く必要が出たときは、
+    <code>resolver 127.0.0.11 valid=10s;</code>（Docker の内蔵DNS）を添える。</p>
+  </div>
+
+  <p>同じファイルには <code>proxy_http_version 1.1;</code> も置いてある。
+  nginx は既定で上流に HTTP/1.0 で話し、
+  Next.js の動的ページは <code>Transfer-Encoding: chunked</code> で返る。
+  1.0 のままだと本文の終わりが分からず、接続が閉じるまで待つことになる。</p>
+
   <h2>バックアップ</h2>
 
   <div class="table-scroll">
@@ -314,7 +342,7 @@ docker compose up -d</code></pre>
 
   <div class="sheet-foot">
     <span>開発と運用 / デプロイ構成</span>
-    <span>最終更新 2026-09-08</span>
+    <span>最終更新 2026-09-09</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

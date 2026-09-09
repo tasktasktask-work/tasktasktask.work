@@ -184,7 +184,10 @@
 .auth-or::before, .auth-or::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
 
 /* 画面の枠と、画面の中の知らせ ---------------------------------------------- */
-.app-frame { max-width: 68rem; margin: 0 auto; border: 1px solid var(--rule); background: var(--card); }
+/* 幅は絞らない。主役が一覧と工程表なので、横を余らせる理由がない。
+   枠線も持たせない。画面の端に張り付いた線は、枠ではなく傷に見える。
+   上帯との境目は .app-top が自分で border-bottom を引いている。 */
+.app-frame { background: var(--card); }
 .app-empty {
   padding: 2.4rem 1rem; text-align: center; color: var(--ink-faint);
   font-size: .85rem; border: 1px dashed var(--rule-strong); background: var(--paper);
@@ -408,18 +411,21 @@
    資料の側では、関連するページへの導線としても使っている。
    -------------------------------------------------------------------------- */
 
+/* 隙間を空け、罫はカードごとに持たせる。
+   容器へ罫の色を敷いて隙間から覗かせる組み方だと、
+   カードの無いセルに容器の色がそのまま出る。
+   枠を画面幅まで広げたぶん列が増え、無地の帯として残っていた。 */
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(15.5rem, 1fr));
-  gap: 1px;
-  background: var(--rule);
-  border: 1px solid var(--rule);
+  gap: .8rem;
   margin: 0 0 2.2rem;
 }
 
 .card {
   display: block;
   background: var(--card);
+  border: 1px solid var(--rule);
   padding: 1.15rem 1.25rem 1.25rem;
   text-decoration: none;
   color: inherit;

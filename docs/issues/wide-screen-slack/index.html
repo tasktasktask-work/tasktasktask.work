@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>広い画面での間延び | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Issue &#183; 優先度 低</p>
+  <h1 class="title">広い画面での間延び</h1>
+
+  <h2>概要</h2>
+
+  <p>画面の枠から幅の上限を外した（2026-09-09）。
+  一覧も工程表も画面の端まで使えるようになったが、
+  同じ幅が中身の側にも配られている。</p>
+
+  <p>1920px の画面で三箇所が目に付く。</p>
+
+  <ul>
+    <li>スレッド詳細の空の区画。子スレッドもコメントも無いとき、
+    「まだありません。」の一行が幅1600pxの点線の中央に浮く</li>
+    <li>一覧の行。<a href="../../features/organization/index.html">メンバー</a>の行も
+    担当スレッドの行も、名前が左端、操作と数値が右端に付く。
+    どの行のどの操作なのかを、目で1500px たどることになる</li>
+    <li>スレッド詳細の右の属性欄。<code>15rem</code> 固定なので、
+    画面が広くなるほど本文から離れる。担当者を確かめて本文へ戻る往復が長くなる</li>
+  </ul>
+
+  <h2>先送りとした理由</h2>
+
+  <p>読み物の幅に上限を置かないことは、幅を広げるときに一緒に決めた。
+  本文が1600pxの一行になるのは承知のうえである。
+  ここで挙げた三つは、その決定の帰結ではなく、
+  余った幅をどう配るかを誰も決めていないために起きている。</p>
+
+  <p>それでも当日には直さないことにした。
+  痛みの出方が想像でしかないためである。
+  空の区画が気になるのは最初に開いた一度だけかもしれないし、
+  行の間延びは、行が3件のときと80件のときで意味が違う。
+  実際に広い画面で使って、どれが繰り返し邪魔になるかを見てから決める。</p>
+
+  <p>工程表はこの課題に含めない。
+  期間が短いと右に余白が残るが、1日の幅を <code>1.6rem</code> で固定するのは
+  <a href="../../features/gantt/index.html">ガントチャート</a>の判断である。
+  画面幅で1日の幅が変わると、別のプロジェクトの図と長さを比べられなくなる。</p>
+
+  <h2>再検討のきっかけ</h2>
+
+  <ul>
+    <li>広い画面で日常的に使い、同じ箇所で目が迷うと感じたとき</li>
+    <li>一覧の行が数十件を超え、行を目で追う場面が増えたとき</li>
+    <li>スレッド詳細に、属性欄以外の情報を足したくなったとき</li>
+  </ul>
+
+  <h2>実装するとしたら</h2>
+
+  <p>三つとも別の直し方になる。まとめて一つの規則にはできない。</p>
+
+  <p>空の区画は、点線の枠を内容の幅に合わせるか、区画そのものを畳む。
+  0件の区画を常に開いておく必要があるかは、あわせて考え直す余地がある。</p>
+
+  <p>行は、名前と操作のあいだに情報を足すか、操作を名前の側へ寄せる。
+  前者を選ぶなら、何を足すと行を読む助けになるのかが先に要る。</p>
+
+  <p>属性欄は、幅を <code>15rem</code> から広げるより、
+  本文の側に上限を置いて欄との距離を詰めるほうが素直である。
+  ただしこれは「全部そのまま伸ばす」という決定の変更にあたる。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../sessions/20260909-1145-app-frame-width/index.html"><span class="card-no">SESSION</span><p class="card-title">画面の枠を外した</p><p class="card-desc">この課題が生まれた場所</p></a>
+    <a class="card" href="../../ui/principles.html"><span class="card-no">UI</span><p class="card-title">設計方針</p><p class="card-desc">画面の幅の決め事</p></a>
+    <a class="card" href="../../features/gantt/index.html"><span class="card-no">FEATURE</span><p class="card-title">ガントチャート</p><p class="card-desc">1日の幅を固定する判断</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>課題 / 広い画面での間延び</span>
+    <span>最終更新 2026-09-09</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

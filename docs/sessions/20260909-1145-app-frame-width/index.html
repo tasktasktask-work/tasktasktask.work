@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>画面の枠を外した | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-09 11:45</p>
+  <h1 class="title">画面の枠を外した</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    幅を止めていたのは <code>max-width: 68rem</code> の一行である。
+    外すのも一行で済んだ。手が要ったのは、外した後に画面へ出てきたもののほうだった。
+  </p>
+
+  <h2>止めていた場所は一箇所だった</h2>
+
+  <p>枠は <code>.app-frame</code> という一つのクラスで、使っているのは組織の一覧、
+  アカウント、そして組織の中の全画面を包む <code>OrgShell</code> の三箇所である。
+  つまり実質すべての画面が、68rem の板の上に載っていた。</p>
+
+  <p>紛らわしい作りがひとつあった。<code>globals.css</code> にも <code>.app-frame</code> がある。
+  そちらは高さと並べ方だけを持ち、幅には触れていない。
+  幅を決めているのは共有スタイルの側だけである。</p>
+
+  <p>意匠の正本は <code>docs/theme.css</code> で、そこから <code>src/styles/</code> へ写している。
+  だから直す場所は資料の側で、製品はそれを受け取る。
+  資料のページモックは <code>60rem</code> の紙面に <code>52rem</code> の最小幅で置いてあるので、
+  68rem の上限にはもともと届いていない。見本の見え方は変わらなかった。</p>
+
+  <h2>決めたこと</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>何を</th><th>どう決めたか</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap">幅</td>
+          <td>上限を撤廃し、左右の余白も置かない</td>
+          <td>主役が一覧と工程表であり、横を余らせる理由が薄い</td>
+        </tr>
+        <tr>
+          <td class="nowrap">枠線</td>
+          <td>四辺とも外す</td>
+          <td>画面の端に張り付いた1pxは、枠ではなく傷に見える。上帯は自分で罫を持っている</td>
+        </tr>
+        <tr>
+          <td class="nowrap">読み幅</td>
+          <td>上限を置かない。本文も一覧もそのまま伸ばす</td>
+          <td>先に上限を置くと、どこが本当に読みにくいのかが隠れる</td>
+        </tr>
+        <tr>
+          <td class="nowrap">左帯とカードの列</td>
+          <td>現状維持</td>
+          <td>枠だけを変え、実物を見てから中身を触る</td>
+        </tr>
+        <tr>
+          <td class="nowrap">中身の左右余白</td>
+          <td>現状維持（<code>1.3rem</code>）</td>
+          <td>業務画面の端としては狭くない</td>
+        </tr>
+        <tr>
+          <td class="nowrap">試験</td>
+          <td>足さない</td>
+          <td>幅はまた触る値である。共有スタイルの写し漏れは <code>pnpm styles:check</code> が別に見ている</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>変えた規則</h2>
+
+  <pre><code>- .app-frame { max-width: 68rem; margin: 0 auto; border: 1px solid var(--rule); background: var(--card); }
++ .app-frame { background: var(--card); }</code></pre>
+
+  <p>残したのは背景だけである。
+  画面が使うクラスの定義は <code>src/styles/</code> の中にしか探しに行かない検査があるので、
+  規則ごと消すことはできない。</p>
+
+  <h2>修正イメージ</h2>
+
+  <p>前は、地の上に板が浮いていた。1920px の画面では、板の外側に800pxの地が残る。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">前 &#183; 1920px</span></div>
+    <div style="background:var(--paper);padding:0;overflow:hidden">
+      <div style="max-width:29rem;margin:0 auto;border:1px solid var(--rule);background:var(--card)">
+        <div style="height:1.5rem;border-bottom:1px solid var(--rule);background:var(--card)"></div>
+        <div style="display:grid;grid-template-columns:5rem 1fr;min-height:7rem">
+          <div style="border-right:1px solid var(--rule);background:var(--paper)"></div>
+          <div style="padding:.7rem">
+            <div style="height:.5rem;width:9rem;background:var(--rule)"></div>
+            <div style="height:.4rem;width:14rem;background:var(--rule);margin-top:.6rem"></div>
+            <div style="height:.4rem;width:12rem;background:var(--rule);margin-top:.35rem"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>後は、板が地を覆う。左帯の幅も、中身の余白も、そのままである。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">後 &#183; 1920px</span></div>
+    <div style="background:var(--card);overflow:hidden">
+      <div style="height:1.5rem;border-bottom:1px solid var(--rule)"></div>
+      <div style="display:grid;grid-template-columns:5rem 1fr;min-height:7rem">
+        <div style="border-right:1px solid var(--rule);background:var(--paper)"></div>
+        <div style="padding:.7rem">
+          <div style="height:.5rem;width:9rem;background:var(--rule)"></div>
+          <div style="height:.4rem;width:28rem;background:var(--rule);margin-top:.6rem"></div>
+          <div style="height:.4rem;width:24rem;background:var(--rule);margin-top:.35rem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>広げたら、無地の帯が出た</h2>
+
+  <p>実物を撮って最初に目に入ったのは、ログイン直後の組織の一覧だった。
+  組織のカードの右に、幅1600pxの無地の帯が寝ている。</p>
+
+  <p>原因はカードの並べ方にあった。
+  <code>.cards</code> は隙間を <code>1px</code> だけ空け、その隙間から容器の背景を覗かせることで、
+  カードのあいだに罫を引いていた。容器の背景は罫の色である。
+  カードの無いセルには何も乗らないので、そこは容器の色がそのまま面で出る。</p>
+
+  <p>68rem のころは3セル分だった。列が7つに増えて、面積が倍以上になった。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">前 &#183; 組織がひとつのとき</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule)">
+        <div style="background:var(--card);padding:.8rem">
+          <div style="height:.35rem;width:4rem;background:var(--rule)"></div>
+          <div style="height:.5rem;width:7rem;background:var(--rule-strong);margin-top:.5rem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>直し方は隣にあった。プロジェクトの一覧は、隙間を <code>.8rem</code> 空けて、
+  罫はカードごとに持たせている。同じ広い画面でも、こちらは何も起きていない。
+  <code>.cards</code> をその作りへ寄せた。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">後 &#183; 組織がひとつのとき</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.8rem">
+        <div style="background:var(--card);border:1px solid var(--rule);padding:.8rem">
+          <div style="height:.35rem;width:4rem;background:var(--rule)"></div>
+          <div style="height:.5rem;width:7rem;background:var(--rule-strong);margin-top:.5rem"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>この並びは資料の側でも使っている。各ページの下にある「関連する場所」がそれである。
+  そちらも継ぎ目のない板から、離れたカードへ変わった。</p>
+
+  <h2>工程表は伸びない</h2>
+
+  <p>広げれば一番得をするのは工程表だと思っていた。実際には伸びなかった。</p>
+
+  <p><code>.p-gantt-grid</code> の横幅は、名前の欄と「日数 &times; 1.6rem」の和である。
+  期間が18日しかない図は、画面が1920pxあっても、そのぶんの幅しか使わない。
+  右におよそ900pxの余白が残る。</p>
+
+  <p>これは直さないことにした。
+  1日の幅が画面や期間で変わると、同じ10日の棒が、別のプロジェクトでは違う長さに見える。
+  工程表は長さを読む道具なので、そこは動かせない。</p>
+
+  <h2>確かめたこと</h2>
+
+  <pre><code>pnpm check  型・整形・共有スタイル・class の定義・移行の検査すべて通過
+実画面の撮影 7画面 &times; 1920/1280 の14枚
+  枠の左端 x=0、幅は画面幅と一致、横方向の溢れなし
+資料のページ 見本の幅は 60rem のまま変わらず</code></pre>
+
+  <div class="note warn">
+    <span class="note-label">確かめていないところ</span>
+    <p>撮ったのは組織の一覧、アカウント、担当スレッド、プロジェクト一覧、
+    スレッド詳細、ガント、メンバーの7画面である。
+    ログイン、招待の受け取り、各種の設定画面は撮っていない。
+    どれも <code>.app-frame</code> の中に載るので、幅の扱いは同じになる。</p>
+    <p>スマートフォンの幅では、もともと上限に届いていなかった。
+    変わるのは枠線が消えることだけで、そちらは撮っていない。</p>
+  </div>
+
+  <h2>払った代金</h2>
+
+  <p>読み物の幅に上限を置かなかった。
+  スレッドの本文は1600pxの一行になる。行の折り返しが遠いほど、次の行の頭を見失いやすい。</p>
+
+  <p>空の区画と一覧の行も、同じ幅を受け取っている。
+  「まだありません。」が広い点線の中央に浮き、行の名前と操作は画面の両端に分かれた。
+  これらは<a href="../../issues/wide-screen-slack/index.html">広い画面での間延び</a>に書き出した。
+  想像で先回りせず、使っていて繰り返し邪魔になったものから直す。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="../../ui/principles.html"><span class="card-no">UI</span><p class="card-title">設計方針</p><p class="card-desc">画面の幅を書き足した</p></a>
+    <a class="card" href="../../issues/wide-screen-slack/index.html"><span class="card-no">ISSUE</span><p class="card-title">広い画面での間延び</p><p class="card-desc">受け取った幅の配り方</p></a>
+    <a class="card" href="../../ui/pages/root/index.html"><span class="card-no">UI</span><p class="card-title">組織の一覧</p><p class="card-desc">帯が出ていた画面</p></a>
+    <a class="card" href="../../devops/documentation-rules/index.html"><span class="card-no">DEVOPS</span><p class="card-title">ドキュメント規約</p><p class="card-desc">共有スタイルの正本</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 画面の枠を外した</span>
+    <span>2026-09-09 11:45</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

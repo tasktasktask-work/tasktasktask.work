@@ -131,20 +131,21 @@
         { path: "issues/audit-log/index.html",                 label: "監査ログ", d: 2 },
         { path: "issues/glossary-examples/index.html",         label: "用例の無い用語", d: 2 },
         { path: "issues/i18n/index.html",                      label: "多言語対応", d: 2 },
-        { path: "issues/billing/index.html",                   label: "課金とプラン", d: 2 }
+        { path: "issues/billing/index.html",                   label: "課金とプラン", d: 2 },
+        { path: "issues/wide-screen-slack/index.html",         label: "広い画面での間延び", d: 2 }
       ]
     },
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 17,
+      sessionTotal: 18,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260909-1145-app-frame-width/index.html", label: "2026-09-09 画面の枠", d: 2 },
         { path: "sessions/20260908-1847-first-deploy/index.html", label: "2026-09-08 初めての本番反映", d: 2 },
         { path: "sessions/20260908-1549-gantt/index.html", label: "2026-09-08 ガントチャート", d: 2 },
         { path: "sessions/20260908-1516-attachments/index.html", label: "2026-09-08 添付ファイル", d: 2 },
-        { path: "sessions/20260908-1113-tags/index.html", label: "2026-09-08 タグ", d: 2 },
-        { path: "sessions/20260908-0943-notification-mail/index.html", label: "2026-09-08 通知メール", d: 2 }
+        { path: "sessions/20260908-1113-tags/index.html", label: "2026-09-08 タグ", d: 2 }
       ]
     }
   ];
