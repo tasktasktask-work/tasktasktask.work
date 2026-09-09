@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>書く場所を、対象の隣へ | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-09 14:05</p>
+  <h1 class="title">書く場所を、対象の隣へ</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    タイトルの誤字に気づいてから直すまでに、この画面では四つの区画を通り過ぎることになっていた。
+    添付、子スレッド、コメント、投稿欄。「タイトルと本文を書き換える」は、その先で畳まれている。
+  </p>
+
+  <h2>入口が遠いのか、対象が遠いのか</h2>
+
+  <p>最初は畳んであることが悪いのだと考えた。
+  開いておけば見つかる、という理屈である。
+  ところが開いたままにすると、コメントの下に12行のテキストエリアが常駐することになる。
+  読みに来た人が毎回それを跨ぐ。</p>
+
+  <p>遠いのは入口ではなく、入口と対象の距離のほうだった。
+  タイトルは画面の上端にあり、それを直す欄は最下部にある。
+  途中に何を挟んでも、その二つは離れたままである。</p>
+
+  <p>だから欄を上へ動かすのではなく、
+  タイトルの位置でタイトルを直し、本文の位置で本文を直す形にした。
+  読みと書きが同じ場所を使い、押すと入れ替わる。</p>
+
+  <p>そうすると本文列に空きが出る。
+  そこへ子スレッドと添付の追加欄が居座っていたので、あわせて右へ移した。
+  今回の四点は、どれも「本文列に何を残すか」という一つの問いに繋がっていた。</p>
+
+  <h2>決めたこと</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>何を</th><th>どう決めたか</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap">編集の動線</td>
+          <td>見出しの横と本文の直下に「編集」を置き、押すと読み表示が入力欄に入れ替わる</td>
+          <td>入口が対象から遠いことと、押した先がさらに遠いことの二重になっていた</td>
+        </tr>
+        <tr>
+          <td class="nowrap">フォームの分割</td>
+          <td>タイトルと本文を別々のフォームにする</td>
+          <td>入口が二箇所になるので、開く先も二つに分かれる</td>
+        </tr>
+        <tr>
+          <td class="nowrap">編集済みの印</td>
+          <td>タイトルだけの変更では押さない。表示も「本文編集済み」に変える</td>
+          <td>印は、本文を前提に書かれたコメントが宙に浮いたことを知らせるものである</td>
+        </tr>
+        <tr>
+          <td class="nowrap">子スレッド</td>
+          <td>サイドへ移し、2行の簡略行にする。0件なら区画を出さない</td>
+          <td>本文列の面積を占めていた。辿る先であって、読むものではない</td>
+        </tr>
+        <tr>
+          <td class="nowrap">子を作る導線</td>
+          <td>子スレッド欄と一緒にサイドへ移す</td>
+          <td>親子を扱う場所を一箇所にまとめる</td>
+        </tr>
+        <tr>
+          <td class="nowrap">添付の追加欄</td>
+          <td>サイドへ移し、選択またはドロップだけで送信まで終える</td>
+          <td>面積のわりに、押す回数が一度多い</td>
+        </tr>
+        <tr>
+          <td class="nowrap">添付の一覧</td>
+          <td>本文列に残す</td>
+          <td>仕様書や画面の写しは本文の側の情報である。18remに畳むと中身を確かめられない</td>
+        </tr>
+        <tr>
+          <td class="nowrap">削除の欄</td>
+          <td>組織管理者かつアーカイブ済みのときだけ出す</td>
+          <td>「できない操作は消す。無効化して残さない」に戻す</td>
+        </tr>
+        <tr>
+          <td class="nowrap">サイドの幅</td>
+          <td>15rem から 18rem へ</td>
+          <td>中身が増えたぶんだけ足す。本文側の上限は今回は置かない</td>
+        </tr>
+        <tr>
+          <td class="nowrap">狭い画面</td>
+          <td>本文 &rarr; サイド &rarr; コメント の順に落とす</td>
+          <td>そのまま落とすと、属性が長いコメント列の後ろへ回る</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>新しい並び</h2>
+
+  <p>本文列に残るのは読むものだけである。
+  サイドは、この一件の属性と、そこから伸びる先を持つ。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">前 &#183; 本文列に9区画</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <div style="display:grid;grid-template-columns:1fr 8rem;gap:1rem;align-items:start;font-size:.72rem">
+        <div style="display:flex;flex-direction:column;gap:.3rem">
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">本文</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--shu)">子を作る導線</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">添付の一覧</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--shu)">添付の追加欄</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--shu)">子スレッド</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">コメント</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">投稿欄</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--shu)">書き換える</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">アーカイブ</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">削除</div>
+        </div>
+        <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--ink-soft)">属性 6行</div>
+      </div>
+    </div>
+  </div>
+
+  <p>朱で示した四つが動く。「書き換える」は区画ごと消えて、本文と見出しの中へ入る。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">後 &#183; 本文列に6区画</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <div style="display:grid;grid-template-columns:1fr 8rem;gap:1rem;align-items:start;font-size:.72rem">
+        <div style="display:flex;flex-direction:column;gap:.3rem">
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">本文 <span style="color:var(--shu)">＋編集</span></div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">添付の一覧</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">コメント</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">投稿欄</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">アーカイブ</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--ink-faint)">削除（畳んだときだけ）</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.3rem;color:var(--ink-soft)">
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">属性 6行</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--shu)">添付を足す</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--shu)">子スレッド</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>実物の見え方は<a href="mock.html">修正イメージ</a>にある。
+  広い画面、タイトルの編集中、保存したあと、本文が空のとき、1カラムのとき、アーカイブ済みのとき。
+  広い画面の一枚は製品と同じ規則で描いてあるので、実際の画面と同じものが出る。</p>
+
+  <h2>読みと書きは、同じ場所を使う</h2>
+
+  <p>入れ替えには <code>details</code> をそのまま使う。
+  開いているあいだ読み表示を隠すのは CSS の仕事なので、JavaScript は要らない。</p>
+
+  <p>入口は読み表示より後ろに置く。
+  見出しの「編集」は <code>h2</code> の右、本文の「編集」は本文の下である。
+  隣接セレクタは前へは効かないので、<code>:has()</code> で受ける。</p>
+
+  <pre><code>/* 開いているあいだ、読み表示を隠す */
+.app-head h2:has(~ .app-edit[open])  { display: none; }
+.app-body-md:has(+ .app-edit[open])  { display: none; }
+
+/* 開いたら入口も引っ込める。閉じる役は「やめる」が持つ */
+.app-edit[open] > summary { display: none; }</code></pre>
+
+  <p><code>:has()</code> が効かない環境では、読み表示と入力欄が並んで出る。
+  値は同じものなので読めなくはならないが、どちらが今の値かは分かりにくい。
+  対応しているのは Chrome 105、Safari 15.4、Firefox 121 からで、
+  この製品が想定する範囲は超えている。</p>
+
+  <p>入口は <code>summary</code> である。
+  <code>a</code> でも <code>Link</code> でもない。
+  <a href="../../devops/coding-conventions/index.html#mutating-links">書き換える動線を、リンクにしない</a>の規約は、
+  Next の <code>Link</code> が画面に現れた時点で行き先を先読みすることへの備えである。
+  ここは開閉するだけでサーバー側が動かないので、その危険には当たらない。
+  ただし見た目をリンクに寄せる以上、新しいタブでは開けない。
+  規約の側に、この形を認める一行を足す。</p>
+
+  <p>「やめる」を保存の隣に置く。
+  読み表示が消えている状態では、元へ戻る道が画面にないと手が止まる。
+  <code>details</code> を閉じるだけなので JavaScript が要るが、動かないときは <code>summary</code> の押し直しが受ける。</p>
+
+  <p>保存できたら閉じて読みへ戻す。
+  戻したうえで「保存しました」を読み表示の直上に出す。
+  失敗したときは開いたまま、フォームの中にエラーを出す。
+  直す対象が画面にないと直せない。</p>
+
+  <div class="note">
+    <span class="note-label">既存の仕組みを使う</span>
+    <p>入力欄の値を画面の側で持つ <code>useField</code> と、
+    保存の知らせを出す <code>Told</code> は
+    <a href="../20260908-1847-first-deploy/index.html">前回のセッション</a>で入れたものをそのまま使う。
+    「見えている値と保存済みの値が揃っているあいだだけ知らせを出す」という判定も同じである。</p>
+  </div>
+
+  <h2>印が指すものが、本文だけになる</h2>
+
+  <p>いまの <code>editThreadText</code> は、タイトルだけを直したときも <code>body_edited_at</code> を押す。
+  誤字を一文字直しただけで「編集済み」が付き、
+  それを見た人は、いま並んでいるコメントが古い本文に向けられていないかを疑うことになる。</p>
+
+  <p>更新文を二つに分ける。</p>
+
+  <pre><code>-- タイトル。印には触らない
+UPDATE threads SET title = $4, updated_at = now() WHERE …
+
+-- 本文。ここでだけ押す
+UPDATE threads SET body = $4, body_edited_at = now(), updated_at = now() WHERE …</code></pre>
+
+  <p>表示も「編集済み」から「本文編集済み」へ変える。
+  タイトルを直したのに印が出ないことを、印そのものが説明する。</p>
+
+  <p>すでにある行には、タイトルだけの変更で付いた印が混ざっている。
+  どちらの理由で付いたかは記録していないので、遡っては直せない。そのまま残る。</p>
+
+  <h2>添付は、選んだ時点で終わる</h2>
+
+  <p>ファイルを選び、それから「添付する」を押す。
+  この二段目は、押し忘れたときにだけ意味を持つ。
+  ところが押し忘れたことは画面から分からないので、意味を持つ場面が来ない。</p>
+
+  <p>選択とドロップの直後に <code>requestSubmit()</code> を呼ぶ。
+  縮める処理が終わってからなので、10MBを超えた写真は今までどおり品質だけ落として送られる。</p>
+
+  <p>ドロップを受けるのはサイドの添付欄の中だけにする。
+  本文列まで受け皿にすると、本文の文字を選んで動かしたときに紛れる。</p>
+
+  <p>押しボタンは <code>noscript</code> の中へ移す。
+  JavaScript が動かない環境では素のフォームとして残り、動く環境では画面に出ない。
+  <a href="../../features/attachment/index.html">添付</a>は経路を一本に決めてあり、
+  ここだけ JavaScript 必須にするとその決定が崩れる。</p>
+
+  <p>断るときは、選んだものを欄から捨てる。
+  押しボタンが無い以上、直してもう一度押す機会がない。
+  10MBを超えたファイルが一つ混じっていたときも、全部を断る。
+  一部だけ送ると、何が上がって何が上がらなかったかを人が突き合わせることになる。</p>
+
+  <p>送信中は欄そのものが「送っています…」に変わる。
+  終わったら「添付しました」を短く出す。
+  結果が増えるのは本文列の一覧だが、広い画面では視線が右にある。</p>
+
+  <div class="note warn">
+    <span class="note-label">コメント側は変えない</span>
+    <p><code>AttachmentPicker</code> はコメントの投稿欄でも使っている。
+    そちらは本文と一緒に送るものなので、選んだ時点では送れない。
+    即時送信は引数で切り替え、コメント側は今のままにする。</p>
+  </div>
+
+  <h2>子スレッドの行に、印が出ていなかった</h2>
+
+  <p>サイドへ移す前に、ひとつ直すものが見つかった。</p>
+
+  <p><a href="../../features/thread/index.html">スレッド</a>には、はみ出し警告についてこう書いてある。</p>
+
+  <blockquote>印は子の行に出る。
+  親の行にも出せるが、一覧で親に警告が付いていても、ぶら下がった十件のうちどれがはみ出しているのかは分からない。
+  詳細画面では親の側にも出す。こちらは子が数件ずつ並んでいるので、そこから探せる。</blockquote>
+
+  <p>詳細画面は <code>ThreadRows</code> を <code>showMeta={false}</code> で呼んでいる。
+  落とされる <code>meta</code> の中に、はみ出しの印も入っている。
+  つまりこの画面は「子スレッドの期間が、このスレッドの期間の外に出ています。」と警告を出しておきながら、
+  どれがそうなのかを表示していない。探せる、と書いてあるものが探せない。</p>
+
+  <p>サイドの簡略行を新しく作るので、そこで印を出す。
+  記述のほうが正しいので、実装を寄せる。</p>
+
+  <p>行は2段にする。
+  上に種別の札とタイトル、下に番号と進捗と担当者のハンコ、そしてはみ出しとアーカイブ済みの印を置く。
+  一覧の行をそのまま18remへ詰めることはしない。
+  一覧は横に並べて比べるためのもので、こちらは一件ずつ辿るためのものである。</p>
+
+  <h2>削除の欄は、方針に戻すだけである</h2>
+
+  <p>UI設計方針には二箇所ある。</p>
+
+  <blockquote>無効化して灰色で残すのではなく、消す。<br>
+  できない操作は消す。無効化して残さない</blockquote>
+
+  <p>いまの削除欄は、組織管理者に対しては常に出る。
+  アーカイブしていないスレッドでは、説明文と灰色の押しボタンが並ぶ。
+  これは方針から外れた実装である。</p>
+
+  <p><code>deleteThread</code> の条件を確かめた。
+  組織管理者であること、アーカイブ済みであること、閲覧できるプロジェクトにあることの三つで、
+  プロジェクト側のアーカイブは見ていない。
+  畳んだプロジェクトの中でも、畳んだスレッドは消せる。
+  だから表示の条件を「組織管理者かつアーカイブ済み」にすると、操作の可否と表示が過不足なく一致する。</p>
+
+  <h2>実装するもの</h2>
+
+  <p>意匠の正本は <code>docs/theme.css</code> である。
+  規則はそちらを直し、<code>pnpm styles:sync</code> で <code>src/styles/</code> へ写す。</p>
+
+  <h3>CSS</h3>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>規則</th><th>何をするか</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap"><code>.app-detail</code></td>
+          <td>箱を3つに増やす。<code>1fr 18rem</code>、右の欄は <code>grid-row: 1 / span 2</code>。
+              行の高さは <code>auto 1fr</code></td>
+          <td>広い画面では右に立て、狭い画面では本文とコメントのあいだへ落とすため。
+              行を <code>auto auto</code> にすると、右が高いぶんが本文の下へ空きとして出る</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>.app-head h2</code></td>
+          <td><code>display: inline</code> にする</td>
+          <td>塊のままだと、隣に置いた「編集」が次の行へ落ちる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>.app-detail</code> の 900px 以下</td>
+          <td>1カラムにし、<code>order</code> で 本文 &rarr; サイド &rarr; コメント</td>
+          <td>属性と子スレッドが、長いコメント列の後ろへ回らないように</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>.app-aside</code></td>
+          <td>新設。箱を縦に積む包み。見出しは mono の小字</td>
+          <td><code>.app-side</code> は左の帯で使っている。名前が衝突する</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>.app-props</code></td>
+          <td>触らない</td>
+          <td>組織設定と自分の設定でも使っている</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>.p-child</code></td>
+          <td>新設。子スレッドの2段の行</td>
+          <td>一覧の <code>.p-row</code> は5カラムで、18remには入らない</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>.app-edit</code></td>
+          <td>新設。読みと書きを入れ替える <code>details</code></td>
+          <td><code>.app-disclosure</code> の枠付きの見出しは、タイトルの横には大きすぎる</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>スレッド</h3>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>ファイル</th><th>何をするか</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap"><code>thread/queries.ts</code></td>
+          <td><code>editThreadText</code> を <code>editThreadTitle</code> と <code>editThreadBody</code> に分ける</td>
+          <td>印を押す条件が二つに分かれた</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>thread/actions.ts</code></td>
+          <td>対応する入口を二つ置き、<code>editThreadTextAction</code> を消す</td>
+          <td>フォームが二つになる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>ThreadEditForms.tsx</code></td>
+          <td><code>ThreadTextForm</code> を <code>ThreadTitle</code> と <code>ThreadBody</code> に割る。
+              どちらも読み表示と欄の両方を出す。
+              <code>ThreadDeleteForm</code> から <code>archived</code> の出し分けを消す</td>
+          <td>読み表示と欄が隣り合っていることが、隠す規則の前提になる。
+              削除は出るときには必ず押せる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>ThreadChildren.tsx</code></td>
+          <td>新設。サイドの子スレッド欄と、子を作る導線</td>
+          <td>簡略行と一覧の行は、求める密度が違う</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>ThreadRows.tsx</code></td>
+          <td><code>showMeta</code> を消す。詳細画面からは呼ばなくなる</td>
+          <td>一覧のための形として残す。
+              偽を渡していたのは詳細画面だけで、その呼び出しが消えると使い道が無い</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>t/[number]/page.tsx</code></td>
+          <td>箱を3つに組み替え、区画を並べ直す。「本文編集済み」へ文言を変える</td>
+          <td>この画面の並びそのものが今回の対象である</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>添付</h3>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>ファイル</th><th>何をするか</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap"><code>AttachmentPicker.tsx</code></td>
+          <td>ドロップの受け皿を足す。引数で即時送信に切り替える。断ったら選択を捨てる</td>
+          <td>コメント側は本文と一緒に送るので、即時送信にできない</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>ThreadAttachForm.tsx</code></td>
+          <td>押しボタンを <code>noscript</code> の中へ移す。送信中と成功の知らせを出す</td>
+          <td>JavaScript が動かなくても送れる、という決定を保つ</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>AttachmentList.tsx</code></td>
+          <td>触らない</td>
+          <td>一覧は本文列に残る</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>永続化するデータは変えない</h2>
+
+  <p>カラムの追加も削除もない。移行も要らない。
+  <code>body_edited_at</code> は押す条件が変わるだけで、既存の行には触れない。</p>
+
+  <h2>組んでみて分かったこと</h2>
+
+  <p>三つあった。どれも画面を撮るまで見えなかった。</p>
+
+  <p><strong>入口が次の行へ落ちた。</strong>
+  <code>h2</code> は塊なので、その後ろに置いた「編集」が改行の下に来る。
+  見出しの側を <code>display: inline</code> にして、同じ行へ並べた。</p>
+
+  <p><strong>本文とコメントのあいだに、縦150pxの空きが出た。</strong>
+  右の欄が二行にまたがっていて、そちらのほうが高い。
+  行の高さを <code>auto auto</code> のままにすると、余りが一行目にも配られる。
+  <code>grid-template-rows: auto 1fr</code> にして、余りは下の行が受けるようにした。</p>
+
+  <p><strong>送っているあいだに欄を差し替えると、ファイルが消える。</strong>
+  「送っています…」で欄ごと入れ替える組み方にしていた。
+  ファイルの入力欄が DOM から外れるので、
+  <code>requestSubmit()</code> がフォームからファイルを拾えなくなる。
+  入れ替えるのは中の文字だけにして、欄そのものは置いたままにした。</p>
+
+  <h2>試験</h2>
+
+  <p>判定の網は既存の483件が持つ。
+  ブラウザの中でしか起きないものだけを E2E に置く、という線もそのままにする。
+  足したのは4件で、E2E は9件から13件になった。</p>
+
+  <ul>
+    <li>見出しの「編集」でタイトルが入力欄に入れ替わり、保存すると閉じて新しいタイトルが出る</li>
+    <li>「やめる」で元のタイトルへ戻る</li>
+    <li>ファイルを選ぶだけで、押しボタンを押さずに添付が終わる</li>
+    <li>ドロップで添付が終わる</li>
+  </ul>
+
+  <p>「やめる」は決めた段階では数えていなかった。
+  読み表示が消えている状態から戻る道なので、
+  入れ替えそのものと同じだけ壊れると困る。</p>
+
+  <p>単体の側は件数が増えていない。
+  タイトルの書き換えを確かめていた試験の中に、
+  「タイトルだけを直したときは印が付かない」と「本文を直すと付く」を足した。</p>
+
+  <p>アーカイブしていないスレッドに削除欄が出ないことは、置かない。
+  サーバー側の描画の話で、ブラウザ固有の挙動ではない。
+  引き換えに、表示の条件を見張るものは無くなる。</p>
+
+  <h2>書き換えるドキュメント</h2>
+
+  <p>次を直した。</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>場所</th><th>直す前の記述</th><th>なぜ変えたか</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap"><a href="../../glossary.html#edited-mark">用語 / 編集済み</a></td>
+          <td>スレッドのタイトルか本文が書き換えられたことを示す印</td>
+          <td>本文だけになる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../database/threads/index.html">threads</a></td>
+          <td><code>body_edited_at</code> は本文かタイトルを編集した時刻</td>
+          <td>同上</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../features/thread/index.html">機能 / スレッド</a></td>
+          <td>タイトルと本文は編集できる。履歴は残さず、「編集済み」の印と最終更新日時だけを出す</td>
+          <td>印の条件と、編集の動線を書き足す</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../features/attachment/index.html">機能 / 添付ファイル</a></td>
+          <td>スレッドへ添付する画面は「ファイルを選んでください」と返す</td>
+          <td>即時送信では空のまま送られない。<code>noscript</code> の経路にだけ残る</td>
+        </tr>
+        <tr>
+          <td class="nowrap">同上</td>
+          <td>出るのは「縮めています」「送っています」の二つだけである</td>
+          <td>「添付しました」が増えて三つになる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html">UI / スレッド詳細</a></td>
+          <td>画面の組みと、理由の節</td>
+          <td>今回の主対象。子を作る導線を本文直下に置いた理由も書き換える</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../ui/principles.html">UI設計方針</a></td>
+          <td>記述なし</td>
+          <td>編集フォームの出し方と、サイド欄に何を置くかを書き足す</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../devops/coding-conventions/index.html#mutating-links">規約 / 書き換える動線</a></td>
+          <td>状態が変わる動線は、フォームの送信にする</td>
+          <td>リンクに見える <code>summary</code> を認める一行を足す</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../issues/wide-screen-slack/index.html">課題 / 広い画面での間延び</a></td>
+          <td>再検討のきっかけの三つ目</td>
+          <td>「属性欄以外の情報を足したくなったとき」が成立した</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>過去のセッション記録は書き換えない。
+  当時の決定の記録であり、今回の記録がその上に重なる。</p>
+
+  <p><a href="../../features/thread/index.html">機能 / スレッド</a>のはみ出し警告の節も書き換えない。
+  記述のほうが正しく、実装が伴っていなかった。</p>
+
+  <h2>残すもの</h2>
+
+  <p>本文の幅に上限は置かない。
+  1920pxの画面では、本文もコメントも1500px以上の一行になる。
+  サイドを18remへ広げたぶん、属性欄との距離はいくらか縮むが、
+  <a href="../../issues/wide-screen-slack/index.html">広い画面での間延び</a>の主題はそこではない。</p>
+
+  <p>その課題に挙げた三つのうち、空の区画は一つだけ片付く。
+  子スレッドが0件のとき、区画ごと出さないことにしたためである。
+  コメントが0件のときの「まだありません。」は、そのまま点線の中央に浮いたままになる。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="mock.html"><span class="card-no">MOCK</span><p class="card-title">修正イメージ</p><p class="card-desc">広い画面と、1カラムのとき</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html"><span class="card-no">UI</span><p class="card-title">スレッド詳細</p><p class="card-desc">いまの画面</p></a>
+    <a class="card" href="../../features/thread/index.html"><span class="card-no">FEATURE</span><p class="card-title">スレッド</p><p class="card-desc">編集済みの印と、はみ出し警告</p></a>
+    <a class="card" href="../../features/attachment/index.html"><span class="card-no">FEATURE</span><p class="card-title">添付ファイル</p><p class="card-desc">JavaScript が動かなくても送れる</p></a>
+    <a class="card" href="../../issues/wide-screen-slack/index.html"><span class="card-no">ISSUE</span><p class="card-title">広い画面での間延び</p><p class="card-desc">再検討のきっかけが成立した</p></a>
+    <a class="card" href="../20260908-1847-first-deploy/index.html"><span class="card-no">SESSION</span><p class="card-title">初めて本番へ出した日</p><p class="card-desc">useField と Told を入れた</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 書く場所を、対象の隣へ</span>
+    <span>2026-09-09 14:05</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

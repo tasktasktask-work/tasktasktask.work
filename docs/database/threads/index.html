@@ -118,9 +118,9 @@ CREATE INDEX threads_gantt
       <tr><td><code>organization_id</code></td><td>uuid</td><td>プロジェクト経由でも辿れるが直接持つ。番号の一意性と権限判定に使う</td></tr>
       <tr><td><code>number</code></td><td>integer</td><td><a href="../../glossary.html#thread-number">スレッド番号</a>。組織の中で通し番号</td></tr>
       <tr><td><code>type</code></td><td>text</td><td><code>kadai</code> / <code>giron</code> / <code>shitsumon</code>。<strong>作成後は変更できない</strong></td></tr>
-      <tr><td><code>title</code></td><td>text</td><td>編集できる</td></tr>
+      <tr><td><code>title</code></td><td>text</td><td>編集できる。直しても <code>body_edited_at</code> は動かない</td></tr>
       <tr><td><code>body</code></td><td>text</td><td>Markdown。編集できる。空文字を既定とする</td></tr>
-      <tr><td><code>body_edited_at</code></td><td>timestamptz</td><td>本文かタイトルを編集した時刻。「編集済み」の印に使う</td></tr>
+      <tr><td><code>body_edited_at</code></td><td>timestamptz</td><td>本文を編集した時刻。<a href="../../glossary.html#edited-mark">編集済み</a>の印に使う。タイトルの変更とチェックボックスでは動かさない</td></tr>
       <tr><td><code>progress</code></td><td>smallint</td><td><a href="../../glossary.html#progress">進捗率</a>。課題は0から100、議論と質問は0か100</td></tr>
       <tr><td><code>starts_on</code> / <code>ends_on</code></td><td>date</td><td><a href="../../glossary.html#period">期間</a>。課題のみ。時刻を持たない</td></tr>
       <tr><td><code>assignee_user_id</code></td><td>uuid</td><td><a href="../../glossary.html#assignee">担当者</a>。ひとりまで。NULL を許す</td></tr>

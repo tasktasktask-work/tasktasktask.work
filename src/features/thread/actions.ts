@@ -11,7 +11,8 @@ import { parseThreadNumber, threadPath } from './path.ts';
 import {
   createThread,
   deleteThread,
-  editThreadText,
+  editThreadBody,
+  editThreadTitle,
   resolveThread,
   setAssignee,
   setBodyCheck,
@@ -170,16 +171,21 @@ export async function createThreadAction(
    直す
    -------------------------------------------------------------------------- */
 
-const textForm = target.extend({
+/*
+ * タイトルと本文で入口が分かれている。
+ * 画面の側で欄が別々に開くためであり、押す印も別である。
+ * タイトルを直しても「編集済み」は付かない。
+ */
+
+const titleForm = target.extend({
   title: z.string().min(1, 'タイトルを入力してください'),
-  body: z.string().optional(),
 });
 
-export async function editThreadTextAction(
+export async function editThreadTitleAction(
   _prev: ThreadActionState,
   form: FormData,
 ): Promise<ThreadActionState> {
-  const parsed = textForm.safeParse(Object.fromEntries(form));
+  const parsed = titleForm.safeParse(Object.fromEntries(form));
   if (!parsed.success) {
     return { error: z.prettifyError(parsed.error) };
   }
@@ -188,12 +194,33 @@ export async function editThreadTextAction(
     return { error: '操作する権限がありません' };
   }
 
-  const result = await editThreadText(
-    here.scope,
-    here.thread.id,
-    parsed.data.title,
-    parsed.data.body ?? '',
-  );
+  const result = await editThreadTitle(here.scope, here.thread.id, parsed.data.title);
+  if (!result.ok) {
+    return { error: say(result.reason) };
+  }
+
+  refresh(parsed.data.slug, parsed.data.key, parsed.data.number);
+  return { notice: '保存しました' };
+}
+
+const bodyForm = target.extend({
+  body: z.string().optional(),
+});
+
+export async function editThreadBodyAction(
+  _prev: ThreadActionState,
+  form: FormData,
+): Promise<ThreadActionState> {
+  const parsed = bodyForm.safeParse(Object.fromEntries(form));
+  if (!parsed.success) {
+    return { error: z.prettifyError(parsed.error) };
+  }
+  const here = await locate(parsed.data.slug, parsed.data.key, parsed.data.number);
+  if (!here) {
+    return { error: '操作する権限がありません' };
+  }
+
+  const result = await editThreadBody(here.scope, here.thread.id, parsed.data.body ?? '');
   if (!result.ok) {
     return { error: say(result.reason) };
   }

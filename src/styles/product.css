@@ -293,6 +293,23 @@
   .p-row { grid-template-columns: auto minmax(0,1fr); }
 }
 
+/* 子スレッドの行。詳細画面の右の欄に置く ------------------------------------
+   一覧の .p-row を狭めたものではない。
+   一覧は横に並べて比べるための形で、こちらは一件ずつ辿るための形である。
+   下段にはみ出しの印を出す。上に出る警告と対になっていて、
+   どの子がはみ出しているのかは、ここでしか分からない。 */
+.p-child { display: block; padding: .5rem .7rem; border-bottom: 1px solid var(--rule); text-decoration: none; }
+.p-child:last-child { border-bottom: 0; }
+.p-child:hover { background: var(--card); }
+.p-child .ttl {
+  display: block; margin-top: .25rem; font-size: .8rem; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.p-child:hover .ttl { color: var(--shu); }
+.p-child .meta { display: flex; flex-wrap: wrap; gap: .3rem; align-items: center; margin-top: .3rem; }
+.p-child[data-archived="true"] { background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(23,27,34,.02) 6px, rgba(23,27,34,.02) 12px); }
+.p-child[data-archived="true"] .ttl { color: var(--ink-soft); }
+
 /* コメント --------------------------------------------------------------- */
 .p-comment { display: flex; gap: .8rem; padding: 1.1rem 0; border-bottom: 1px solid var(--rule); }
 .p-comment:last-child { border-bottom: 0; }
@@ -572,6 +589,26 @@
 .p-attach-pick .picked { margin: 0; padding: 0; list-style: none; font-size: .74rem; }
 .p-attach-pick .picked li { color: var(--ink-soft); word-break: break-all; }
 .p-attach-pick .picked .size { font-family: var(--font-mono); font-size: .68rem; color: var(--ink-faint); }
+
+/* 落として添付する欄。スレッドの本文に付けるときだけ使う ---------------------
+   選んだ時点で送るので、押しボタンが無い。
+   受け皿をここだけに絞ってあるのは、本文列まで広げると
+   本文の文字を選んで動かしたときに紛れるためである。 */
+.p-attach-drop { padding: .6rem .7rem; }
+.p-attach-drop .zone {
+  border: 1px dashed var(--rule-strong); background: var(--card);
+  padding: .7rem .6rem; text-align: center; font-size: .74rem; color: var(--ink-soft);
+}
+.p-attach-drop .zone[data-over="true"] { border-color: var(--shu); background: var(--shu-wash); color: var(--shu); }
+.p-attach-drop .zone input[type="file"] { display: block; margin: .4rem auto 0; font-size: .72rem; max-width: 100%; }
+.p-attach-drop .busy { color: var(--shu); }
+/* 資料の側にも .note がある（囲みの注記）。名前が当たるので、箱を明示的に外す */
+.p-attach-drop .note {
+  margin: .35rem 0 0; padding: 0; border: 0; background: none;
+  font-size: .7rem; line-height: 1.7; color: var(--ink-faint);
+}
+.p-attach-drop .err  { margin: .35rem 0 0; font-size: .74rem; color: var(--ki); }
+.p-attach-drop .ok   { margin: .35rem 0 0; font-size: .74rem; color: var(--midori); }
 
 /* --------------------------------------------------------------------------
    小さな札

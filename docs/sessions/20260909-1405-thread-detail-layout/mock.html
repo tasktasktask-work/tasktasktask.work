@@ -3,23 +3,35 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>スレッド詳細画面 | TASK3 設計ドキュメント</title>
+<title>修正イメージ | TASK3 設計ドキュメント</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../../../../../../../../theme.css">
+<link rel="stylesheet" href="../../theme.css">
+<style>
+  /* 縦一列の見え方を狭い枠で示すためだけの規則。ほかは製品と同じ class を使う */
+  .mk-narrow { max-width: 26rem; margin: 0 auto; }
+</style>
 </head>
 <body>
 
 <main class="sheet">
 <div class="wrap">
-  <p class="eyebrow">Page Mock</p>
-  <h1 class="title">スレッド詳細</h1>
+  <p class="eyebrow">Session &#183; 2026-09-09 14:05 &#183; 修正イメージ</p>
+  <h1 class="title">スレッド詳細の新しい並び</h1>
   <p class="lede">
-    本文、属性、親子、コメント。
-    この画面でだけ、期間と進捗率と担当者を変更できる。
-    本文の列に置くのは読むものだけで、書く操作は対象の隣か、右の欄にある。
+    本文の列に残るのは読むものだけになる。
+    書く操作は、対象の隣か、右の欄のどちらかへ移る。
   </p>
+
+  <p><a href="index.html">&larr; セッションへ戻る</a></p>
+
+  <h2>広い画面</h2>
+
+  <p>タイトルの右と本文の下に「編集」がある。
+  子スレッドと添付を足す欄は右へ移り、添付の一覧は本文の側に残る。
+  この見本は製品と同じ規則で描いてあるので、
+  <a href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html">ページモック</a>と同じものが出る。</p>
 
   <div class="mock">
     <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/p/WEB/t/7</span></div>
@@ -60,7 +72,6 @@
             <button class="app-btn ghost">&#9734; ウォッチ</button>
             <button class="app-btn ghost">&#8943;</button>
           </div>
-
           <div class="app-detail">
             <div class="body">
               <div class="app-body-md">
@@ -262,247 +273,147 @@
                 </a>
                 <div class="foot">
                   <p class="app-hint">このスレッドを親にして<br>
-                    <a href="../../new/index.html">課題</a> / <a href="../../new/index.html">議論</a> / <a href="../../new/index.html">質問</a> を作成する
+                    <a href="../../ui/pages/o/[slug]/p/[key]/new/index.html">課題</a> / <a href="../../ui/pages/o/[slug]/p/[key]/new/index.html">議論</a> / <a href="../../ui/pages/o/[slug]/p/[key]/new/index.html">質問</a> を作成する
                   </p>
                 </div>
               </section>
             </aside>
-          </div>
-        </div>
+          </div>        </div>
       </div>
     </div></div>
   </div>
 
-  <h2>タグの欄に入り口が三つある理由</h2>
+  <p>子スレッドの下の段に「親からはみ出し」が出ている。
+  上に出る警告と対になる印で、これまでの画面には出ていなかった。</p>
 
-  <p>付いている札それぞれの&#215;、名前を打って足す欄、そして畳んだチェックの一覧。
-  同じ操作に三つの道があるのは、多いように見える。</p>
+  <p>削除の欄は無い。このスレッドが畳まれていないためである。</p>
 
-  <p>打つ側を主にしてあるのは、<a href="../../../../../../../../glossary.html#tag">タグ</a>が
-  組織の単位で誰でも作れるためである。数十個まで増えうる。
-  その数のチェックボックスを常に開いておくと、属性欄が縦に伸びて、
-  <a href="../../../../../../../../glossary.html#progress">進捗率</a>も期間も画面の外へ出る。
-  畳んでおけば、他の欄の位置が動かない。</p>
+  <h2>タイトルを編集しているとき</h2>
 
-  <p>札の&#215;を残したのは、一つ外すためだけに一覧を開かせないためである。
-  チェックの一覧は付いているものと付いていないものを同時に扱うので、
-  「これを外す」という一手には重い。</p>
+  <p>「編集」を押すと、見出しがあった場所に入力欄が入る。
+  見出しそのものは消える。読みと書きが同時に見えていると、
+  どちらが今の値なのかが分からなくなる。</p>
 
-  <p>名前の欄は <code>datalist</code> で補助する。ただし補助であって制限ではないので、
-  一覧に無い名前も送れてしまう。作れるのは
-  <a href="../../../../../../../../ui/pages/o/[slug]/tags/index.html">管理画面</a>だけなので、
-  届いた側で断り、そこへのリンクを添える。</p>
-
-  <h2>ウォッチの欄に人数を出さない理由</h2>
-
-  <p>押しボタンが一つあるだけである。自分が付けているかどうかしか出ない。</p>
-
-  <p>誰がウォッチしているかを並べる案もあった。やめたのは、
-  <strong>人数だけでも、少人数の組織では誰が見張っているかが割れる</strong>からである。
-  <a href="../../../../../../../../glossary.html#watch">ウォッチ</a>は自分あての設定であって、
-  他の人に見せる情報ではない。</p>
-
-  <p>アーカイブされたスレッドでも、この押しボタンだけは残る。
-  畳んだ先に新しいコメントは付かないので通知は飛ばないが、
-  外す手立てまで消えると、開け直したときに困る。</p>
-
-  <h2>投稿欄に警告を出す理由</h2>
-
-  <p><a href="../../../../../../../../glossary.html#comment">コメント</a>は投稿すると編集も削除もできない。
-  押した後で取り返せないのに、押す前に何も伝えないのは不親切にあたる。</p>
-
-  <p>そこで投稿ボタンの並びに一文を置く。
-  確認ダイアログにはしない。毎回出れば読まれなくなり、投稿そのものが億劫になる。</p>
-
-  <h2>本文とコメントの扱いの違い</h2>
-
-  <p>タイトルの下に「本文編集済み」の印がある。
-  本文は編集できるが、コメントはできない。</p>
-
-  <p>印が指すのは本文だけである。タイトルを直しても付かない。
-  誤字を一文字直しただけで印が付くと、それを見た人は、
-  並んでいるコメントが古い本文に向けられていないかを毎回疑うことになる。</p>
-
-  <p>本文は「現在の課題の定義」であり、調査が進めば書き換わってよい。
-  コメントは「その時点の発言」なので不変にする。</p>
-
-  <p>ただし本文が黙って書き換わると、それを前提に書かれたコメントが宙に浮く。
-  上の例では、田中のコメントが「ページングはカーソルで」と言い、
-  そのあと佐藤が本文に反映している。
-  編集済みの印は、この順序を追うための手がかりになる。</p>
-
-  <h2>書き換える欄は、対象の隣にある</h2>
-
-  <p>タイトルは見出しの隣、本文は本文の直下に「編集」がある。
-  押すと、その位置の読み表示が入力欄に入れ替わる。読み表示は消える。
-  どちらが今の値なのかを、迷わせないためである。</p>
-
-  <p>以前は画面の下端に「タイトルと本文を書き換える」という欄が一つあり、
-  コメントの列を越えた先で畳んであった。
-  畳んであること自体は正しい。この画面の主役は読むことで、書き換えは時々である。
-  遠かったのは入口ではなく、入口と対象の距離のほうだった。</p>
-
-  <p>入口は <code>summary</code> で、リンクではない。
-  <a href="../../../../../../../../devops/coding-conventions/index.html#mutating-links">書き換える動線を、リンクにしない</a>の規約は、
-  <code>Link</code> が画面に現れた時点で行き先を先読みすることへの備えである。
-  ここは開閉するだけでサーバー側が動かない。</p>
-
-  <p>保存できたら閉じて読みへ戻り、「保存しました」が読み表示の上に出る。
-  失敗したときは開いたままにする。直す対象が画面にないと直せない。
-  保存の隣に「やめる」を置いたのは、読み表示が消えている状態で、
-  元へ戻る道が画面にないと手が止まるためである。</p>
-
-  <h2>子スレッドと添付を右へ置いた理由</h2>
-
-  <p>どちらも本文の列を占めていた。
-  子スレッドは辿る先であって、この画面で読むものではない。
-  添付を足す欄は操作であって、内容ではない。</p>
-
-  <p>添付の一覧のほうは本文の列に残してある。
-  仕様書や画面の写しは本文の側の情報で、18remの欄に畳むと、
-  中身を確かめるために結局押すことになる。</p>
-
-  <p>右の欄では、高さの変わらないものを上に積む。
-  属性、添付を足す欄、子スレッドの順である。
-  子スレッドは0件から十数件まで伸びるので、上に置くと、
-  その下の落とす欄の位置がスレッドごとに変わる。</p>
-
-  <p>子スレッドの行は一覧の行を狭めたものではない。
-  一覧は横に並べて比べるための形で、こちらは一件ずつ辿るための形である。
-  下の段に「親からはみ出し」の印を出す。
-  上に出る警告と対になっていて、どの子がはみ出しているのかは、ここでしか分からない。</p>
-
-  <p>0件のときは欄ごと出さない。子を立てる導線だけが残る。</p>
-
-  <h2>添付は選んだ時点で送られる</h2>
-
-  <p>右の欄に落とすか、ファイルを選ぶと、そのまま送信まで終わる。押しボタンは無い。</p>
-
-  <p>以前は「選ぶ」と「添付する」の二段だった。
-  二段目は押し忘れたときにだけ意味を持つ押しボタンで、
-  ところが押し忘れたことは画面から分からないので、意味を持つ場面が来ない。
-  間違えて付けたものは、一覧の側から一押しで消せる。</p>
-
-  <p>受け皿はその欄の中だけである。
-  本文の列まで広げると、本文の文字を選んで動かしたときに紛れる。</p>
-
-  <p>断るときは選んだものを欄から捨てる。押しボタンが無いので、直してもう一度押す機会がない。
-  「添付する」は <code>noscript</code> の中に残してあり、
-  JavaScript が動かない環境ではそちらが受ける。</p>
-
-  <p>コメントの投稿欄は二段のままである。
-  こちらは本文と添付を一つの送信で出すので、選んだ時点では送れない。</p>
-
-  <h2>関連するスレッドを作る導線</h2>
-
-  <p>右の欄の子スレッドの下に「このスレッドを親にして 課題 / 議論 / 質問 を作成する」を置いてある。
-  ここから立てると、このスレッドが親に入った状態で
-  <a href="../../new/index.html">立てる画面</a>が開く。</p>
-
-  <p>本文のすぐ下に置いてあったものを、子スレッドの欄と一緒に移した。
-  親子を扱う場所が二つに分かれているより、一つにまとまっているほうが探しやすい。</p>
-
-  <p><a href="../../../../../../../../glossary.html#thread-type">種別</a>は後から変えられない。
-  議論として立てたものを課題に作り変えることはできないので、
-  <strong>議論を読んでいる最中に課題を立てる</strong>のがいちばん自然な流れになる。
-  そのとき番号を書き写させると、書き写さない人が出て、親子が切れる。</p>
-
-  <h2>誰がこの画面で書き換えられるか</h2>
-
-  <p>このプロジェクトを閲覧できる人なら誰でも書き換えられる。
-  進捗率も担当者も期間も親も、そしてアーカイブも同じである。</p>
-
-  <p><a href="../../../../../../../../glossary.html#soft-delete">削除</a>だけが違う。
-  <a href="../../../../../../../../glossary.html#org-admin">組織管理者</a>以外には、削除の欄そのものが出ない。
-  押せない押しボタンを見せて断るより、出さないほうがいい。</p>
-
-  <p>畳んでいないスレッドでも出ない。削除できるのはアーカイブを経たものだけなので、
-  組織管理者から見ても、条件が揃うまで欄は現れない。
-  上の見本に削除の欄が無いのは、このスレッドが畳まれていないためである。</p>
-
-  <p>条件にプロジェクト側のアーカイブは入らない。
-  畳んだプロジェクトの中では、畳むことも戻すこともできないが、
-  畳んだスレッドを消すことはできる。</p>
-
-  <h2>右の欄</h2>
-
-  <p>属性、添付を足す欄、子スレッドの三つが縦に積んである。
-  罫は箱ごとに持たせ、見出しは属性欄の項目名と同じ字面にしてある。
-  本文の列の見出し（明朝の太字に下罫）と同じ形にすると、右が本文の続きに見える。</p>
-
-  <p>この画面でだけ、進捗率と期間と担当者を変更できる。
-  <a href="../../gantt/index.html">ガント</a>のバーはドラッグできないので、期間を変えるならここへ来る。</p>
-
-  <p>ウォッチしている人を出しているのは、
-  自動では付かない仕様のため「誰が見ているか」が自明でないからである。
-  ここに自分がいなければ、コメントが付いても通知は来ない。</p>
-
-  <h2>チェックボックス</h2>
-
-  <p>本文にもコメントにも <code>- [ ] やること</code> と書ける。
-  押せるのは、そのプロジェクトを閲覧できる人なら誰でもである。</p>
-
-  <p>本文の箱を押すと、本文そのものが書き換わる。
-  それでも「編集済み」の印は付かない。
-  項目はもとから並んでいて、終わったかどうかだけが動くからである。</p>
-
-  <p>コメントの箱を押しても、コメントの本文は一字も変わらない。
-  <a href="../../../../../../../../database/comment_checks/index.html">状態は別のテーブル</a>にあり、
-  誰がいつ入れたかもそちらに残る。</p>
-
-  <div class="note warn">
-    <span class="note-label">この見本にはまだ動かない部分がある</span>
-    <p>コメントを消す動線は出していない。
-    <a href="../../../../../../../../features/comment/index.html">組織管理者だけが消せる</a>と決めてあるが、
-    押す前に何を確かめさせるかを決めていない。</p>
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">タイトルの編集中</span></div>
+    <div style="background:var(--card);padding:1.1rem 1.3rem">
+      <div class="app-head" style="margin-bottom:0">
+        <span class="p-type" data-type="kadai">課題</span>
+        <div style="min-width:0;flex:1">
+          <form class="app-form" style="margin:0" onsubmit="return false">
+            <div class="auth-field" style="margin-bottom:.5rem">
+              <label for="mk-title">タイトル</label>
+              <input id="mk-title" type="text" value="検索APIの実装">
+            </div>
+            <div class="line">
+              <span style="flex:1"></span>
+              <button class="app-btn ghost" type="button">やめる</button>
+              <button class="app-btn" type="button">保存</button>
+            </div>
+          </form>
+          <div class="sub" style="margin-top:.5rem"><span class="p-id">WEB-7</span> &#160;佐藤 明日香 が 9月4日 に作成</div>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <h2>添付の並べ方</h2>
+  <p>保存できたら閉じて、見出しの上に「保存しました」が出る。</p>
 
-  <p><a href="../../../../../../../../glossary.html#reencode">再エンコード</a>できた画像は、
-  そのまま並べる。名前の行だけにすると、中身を確かめるための往復が読む人の数だけ起きる。
-  押すと新しいタブで開く。拡大も保存も、ブラウザのものがそのまま使える。</p>
-
-  <p>読めなかったファイルは、名前と大きさの行だけになる。
-  画像の下にも同じ行が付く。名前と大きさはどのみち出す必要があり、
-  消す押しボタンの置き場も要るためである。
-  画像の上に重ねると、画像そのものを押したいときと当たる。</p>
-
-  <p>並ぶのは付けた順である。
-  新しいものを上にすると、本文やコメントの中で「上の画像が」と書かれたときに、
-  その指し先が後から動く。</p>
-
-  <p>消す押しボタンが出るのは、上げた本人と
-  <a href="../../../../../../../../glossary.html#org-admin">組織管理者</a>にだけである。
-  一度押すと「本当に消す」に変わる。実体ごと消えて取り消せない。</p>
-
-  <h2>アーカイブされている場合</h2>
-
-  <p>投稿欄と、子スレッドを追加する導線を消す。
-  タイトルと本文の「編集」も、添付を落とす欄も出ない。
-  無効化して灰色で残すのではなく、消す。
-  読めるが書けない状態であることを、画面の構造で示す。</p>
-
-  <p>入れ替わりに、削除の欄が出る。組織管理者にだけである。
-  右の欄に残るのは、読み取りの属性と、子スレッドの並びと、ウォッチの押しボタンだけになる。
-  ウォッチは自分あての設定なので、畳んだスレッドでも付け外しできる。</p>
-
-  <h2>関連するページ</h2>
-  <div class="cards">
-    <a class="card" href="../../../../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
-    <a class="card" href="../../index.html"><span class="card-no">PAGE</span><p class="card-title">スレッド一覧</p><p class="card-desc">この画面へ来る導線</p></a>
-    <a class="card" href="../../../../../../../../features/comment/index.html"><span class="card-no">FEATURE</span><p class="card-title">コメント</p><p class="card-desc">不変であることの理由</p></a>
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">保存したあと</span></div>
+    <div style="background:var(--card);padding:1.1rem 1.3rem">
+      <div class="app-head" style="margin-bottom:0">
+        <span class="p-type" data-type="kadai">課題</span>
+        <div style="min-width:0;flex:1">
+          <p class="app-note ok">保存しました</p>
+          <h2>検索 API の実装</h2>
+          <details class="app-edit"><summary>編集</summary></details>
+          <div class="sub"><span class="p-id">WEB-7</span> &#160;佐藤 明日香 が 9月4日 に作成</div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <p>この見出しには「本文編集済み」が付いていない。タイトルだけを直したためである。</p>
+
+  <h2>本文がまだ無いとき</h2>
+
+  <p>「本文はまだありません。」の一行が、そのまま入口になる。
+  空の知らせの下に、押しどころが別にもう一つ並ぶ形にはしない。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">本文が空のとき</span></div>
+    <div style="background:var(--card);padding:1.1rem 1.3rem">
+      <details class="app-edit blank"><summary>本文はまだありません。</summary></details>
+    </div>
+  </div>
+
+  <h2>1カラムに落ちたとき</h2>
+
+  <p>900px を下回ると縦一列になる。
+  本文とコメントのあいだに右の欄が入る。
+  そのまま落とすと、属性が長いコメント列の後ろへ回っていた。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">&lt; 900px</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <div class="mk-narrow" style="display:flex;flex-direction:column;gap:.5rem;font-size:.74rem">
+        <div style="border:1px solid var(--rule);padding:.5rem .7rem">
+          <div style="font-weight:700;font-family:var(--font-display)">検索APIの実装
+            <span style="font-size:.74rem;color:var(--ai);border-bottom:1px dotted var(--ai);margin-left:.4rem">編集</span></div>
+          <div style="height:.4rem;width:80%;background:var(--rule);margin-top:.55rem"></div>
+          <div style="height:.4rem;width:66%;background:var(--rule);margin-top:.3rem"></div>
+          <div style="margin-top:.5rem"><span style="font-size:.74rem;color:var(--ai);border-bottom:1px dotted var(--ai)">編集</span></div>
+        </div>
+        <div style="border:1px solid var(--rule);padding:.5rem .7rem;color:var(--ink-soft)">添付の一覧 2件</div>
+        <div style="border:1px solid var(--rule);padding:.5rem .7rem;background:var(--paper);color:var(--ink-soft)">属性 7行</div>
+        <div style="border:1px solid var(--rule);padding:.5rem .7rem;background:var(--paper);color:var(--ink-soft)">添付を足す</div>
+        <div style="border:1px solid var(--rule);padding:.5rem .7rem;background:var(--paper);color:var(--ink-soft)">子スレッド 2件</div>
+        <div style="border:1px solid var(--rule);padding:.5rem .7rem;color:var(--ink-soft)">コメント 3件</div>
+        <div style="border:1px solid var(--rule);padding:.5rem .7rem;color:var(--ink-soft)">投稿欄</div>
+        <div style="border:1px solid var(--rule);padding:.5rem .7rem;color:var(--ink-soft)">アーカイブ</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>アーカイブ済みのとき</h2>
+
+  <p>書ける欄が消える。
+  タイトルと本文の「編集」も、添付を落とす欄も、子を作る導線も、投稿欄も出ない。
+  かわりに削除の欄が出る。組織管理者にだけである。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">アーカイブ済み &#183; 組織管理者から見たとき</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <div style="display:grid;grid-template-columns:1fr 8rem;gap:1rem;align-items:start;font-size:.72rem">
+        <div style="display:flex;flex-direction:column;gap:.3rem">
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">本文（編集の入口なし）</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">添付の一覧（消す押しボタンなし）</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">コメント</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--ink-soft)">アーカイブされているので、新しいコメントは書けません。</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">アーカイブを解除</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--shu)">削除</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.3rem;color:var(--ink-soft)">
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">属性（読み取り。ウォッチだけ押せる）</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">子スレッド</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>畳んだプロジェクトの中では、アーカイブの解除も出ない。
+  削除は出る。<code>deleteThread</code> がプロジェクト側のアーカイブを見ていないためである。</p>
 
   <div class="sheet-foot">
-    <span>UI / スレッド詳細</span>
-    <span>最終更新 2026-09-09</span>
+    <span>セッション / 書く場所を、対象の隣へ / 修正イメージ</span>
+    <span>2026-09-09 14:05</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 
 </div>
 </main>
 
-<script src="../../../../../../../../sidebar.js" defer></script>
+<script src="../../sidebar.js" defer></script>
 </body>
 </html>

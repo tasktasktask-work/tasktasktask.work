@@ -512,18 +512,17 @@ export async function createThread(
    -------------------------------------------------------------------------- */
 
 /**
- * タイトルと本文を書き換える。
+ * タイトルを書き換える。
  *
- * 履歴は残さない。残すのは「編集済み」の印と、その時刻だけである。
- * 本文は現在の定義であって発言ではないので、書き換わってよい。
- * ただし黙って書き換わると、それを前提に書かれたコメントが宙に浮く。
- * body_edited_at は、その食い違いに気づくための最低限の手がかりである。
+ * body_edited_at には触らない。
+ * 印は「本文が書き換わって、それを前提に書かれたコメントが宙に浮いた」ことを
+ * 知らせるものである。誤字を一文字直しただけで印が付くと、
+ * それを見た人は、並んでいるコメントが古い本文に向けられていないかを毎回疑うことになる。
  */
-export async function editThreadText(
+export async function editThreadTitle(
   scope: OrgScope,
   threadId: string,
   title: string,
-  body: string,
 ): Promise<ThreadChange> {
   const trimmed = title.trim();
   if (trimmed === '') {
@@ -532,9 +531,33 @@ export async function editThreadText(
 
   const { rowCount } = await pool.query(
     `UPDATE threads t
-        SET title = $4, body = $5, body_edited_at = now(), updated_at = now()
+        SET title = $4, updated_at = now()
       WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
-    [scope.organizationId, scope.userId, threadId, trimmed, body],
+    [scope.organizationId, scope.userId, threadId, trimmed],
+  );
+  return rowCount === 1 ? { ok: true } : { ok: false, reason: await whyNot(scope, threadId) };
+}
+
+/**
+ * 本文を書き換える。
+ *
+ * 履歴は残さない。残すのは「編集済み」の印と、その時刻だけである。
+ * 本文は現在の定義であって発言ではないので、書き換わってよい。
+ * ただし黙って書き換わると、それを前提に書かれたコメントが宙に浮く。
+ * body_edited_at は、その食い違いに気づくための最低限の手がかりである。
+ *
+ * 印を押すのはここだけである（チェックボックスの setBodyCheck も押さない）。
+ */
+export async function editThreadBody(
+  scope: OrgScope,
+  threadId: string,
+  body: string,
+): Promise<ThreadChange> {
+  const { rowCount } = await pool.query(
+    `UPDATE threads t
+        SET body = $4, body_edited_at = now(), updated_at = now()
+      WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
+    [scope.organizationId, scope.userId, threadId, body],
   );
   return rowCount === 1 ? { ok: true } : { ok: false, reason: await whyNot(scope, threadId) };
 }

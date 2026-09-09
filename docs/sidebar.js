@@ -138,14 +138,14 @@
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 18,
+      sessionTotal: 19,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260909-1405-thread-detail-layout/index.html", label: "2026-09-09 詳細画面の並び", d: 2 },
         { path: "sessions/20260909-1145-app-frame-width/index.html", label: "2026-09-09 画面の枠", d: 2 },
         { path: "sessions/20260908-1847-first-deploy/index.html", label: "2026-09-08 初めての本番反映", d: 2 },
         { path: "sessions/20260908-1549-gantt/index.html", label: "2026-09-08 ガントチャート", d: 2 },
-        { path: "sessions/20260908-1516-attachments/index.html", label: "2026-09-08 添付ファイル", d: 2 },
-        { path: "sessions/20260908-1113-tags/index.html", label: "2026-09-08 タグ", d: 2 }
+        { path: "sessions/20260908-1516-attachments/index.html", label: "2026-09-08 添付ファイル", d: 2 }
       ]
     }
   ];

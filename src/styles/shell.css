@@ -66,6 +66,9 @@
   padding: 0; border: 0; line-height: 1.5;
 }
 .app-head h2::before { display: none; }
+/* 「編集」を見出しの隣に置く。h2 が塊のままだと、入口が次の行へ落ちる */
+.app-head h2 { display: inline; }
+.app-head h2 + .app-edit > summary { margin-left: .6rem; }
 .app-head .sub { font-size: .76rem; color: var(--ink-soft); margin-top: .15rem; }
 .app-btn {
   font-family: var(--font-body); font-size: .8rem;
@@ -96,9 +99,48 @@
 .app-filters label { display: inline-flex; align-items: center; gap: .28rem; color: var(--ink-mid); }
 .app-filters .sp { flex: 1; }
 
-/* スレッド詳細 -------------------------------------------------------------- */
-.app-detail { display: grid; grid-template-columns: 1fr 15rem; gap: 1.6rem; align-items: start; }
-@media (max-width: 900px) { .app-detail { grid-template-columns: 1fr; } }
+/* スレッド詳細 --------------------------------------------------------------
+   箱は三つある。本文（本文と添付の一覧）、コメント（投稿欄と畳む操作まで）、
+   そして右の欄である。広い画面では右の欄が二行にまたがって立つ。
+
+   狭い画面で縦に落ちるとき、右の欄は本文とコメントのあいだへ入る。
+   そのまま落とすと、進捗率や担当者が長いコメント列の後ろへ回る。 */
+.app-detail {
+  display: grid; grid-template-columns: 1fr 18rem;
+  /*
+   * 右の欄は二行にまたがる。行の高さを auto auto にすると、
+   * 右が本文より高いぶんが一行目へ配られ、本文とコメントのあいだに空きが出る。
+   * 余りは下の行が受ける。
+   */
+  grid-template-rows: auto 1fr;
+  gap: 1.6rem; align-items: start;
+}
+.app-detail > .body    { grid-column: 1; grid-row: 1; min-width: 0; }
+.app-detail > .talk    { grid-column: 1; grid-row: 2; min-width: 0; }
+.app-detail > .app-aside { grid-column: 2; grid-row: 1 / span 2; }
+/* 箱の間隔は grid の gap が持つ。見出しの上余白と二重に空けない */
+.app-detail > .talk > .app-section:first-child { margin-top: 0; }
+@media (max-width: 900px) {
+  .app-detail { grid-template-columns: 1fr; grid-template-rows: none; }
+  .app-detail > .body      { grid-column: 1; grid-row: auto; order: 1; }
+  .app-detail > .app-aside { grid-column: 1; grid-row: auto; order: 2; }
+  .app-detail > .talk      { grid-column: 1; grid-row: auto; order: 3; }
+}
+
+/* 右の欄。箱を縦に積む包みで、罫は箱の側が持つ ------------------------------- */
+.app-aside { display: flex; flex-direction: column; gap: .9rem; min-width: 0; }
+.app-aside > section { border: 1px solid var(--rule); background: var(--paper); font-size: .8rem; }
+.app-aside > section > h3 {
+  margin: 0; padding: .35rem .7rem; border-bottom: 1px solid var(--rule);
+  font-family: var(--font-mono); font-size: .66rem; font-weight: 500;
+  letter-spacing: .06em; color: var(--ink-faint); background: var(--card);
+}
+.app-aside > section > h3::before { display: none; }
+.app-aside > section > h3 .n { color: var(--ink-faint); }
+.app-aside .app-hint { margin: 0; }
+.app-aside .foot { padding: .5rem .7rem; border-top: 1px solid var(--rule); }
+.app-aside > section > .foot:first-child { border-top: 0; }
+
 .app-props { border: 1px solid var(--rule); background: var(--paper); font-size: .8rem; }
 .app-props .row { display: flex; gap: .6rem; padding: .5rem .7rem; border-bottom: 1px solid var(--rule); }
 .app-props .row:last-child { border-bottom: 0; }
@@ -295,6 +337,44 @@
 .app-disclosure > summary:hover { background: var(--paper); }
 .app-disclosure[open] > summary { margin-bottom: .6rem; }
 .app-disclosure .app-form { margin-bottom: 0; }
+
+/* 読みと書きを入れ替える欄 ---------------------------------------------------
+   タイトルはタイトルの位置で、本文は本文の位置で直す。
+   入口は読み表示より後ろに置くので、隣接セレクタは前へ効かない。:has() で受ける。
+
+   入口は summary である。a でも Link でもない。
+   Link は画面に現れた時点で行き先を先読みするので、書き換えの動線には使えない
+   （devops/coding-conventions#mutating-links）。
+   ここは開閉するだけでサーバー側が動かないため、リンクに見せてよい。
+
+   :has() が効かない環境では、読み表示と入力欄が並んで出る。
+   値は同じものなので読めなくはならない。 */
+.app-edit { display: inline; }
+.app-edit > summary {
+  display: inline-block; list-style: none; cursor: pointer;
+  font-size: .74rem; color: var(--ai); border-bottom: 1px dotted var(--ai);
+}
+.app-edit > summary::-webkit-details-marker { display: none; }
+.app-edit > summary:hover { color: var(--shu); border-color: var(--shu); }
+/* 開いたら入口も引っ込める。閉じる役は「やめる」が持つ */
+.app-edit[open] { display: block; }
+.app-edit[open] > summary { display: none; }
+.app-edit .app-form { margin-bottom: 0; }
+
+.app-head h2:has(~ .app-edit[open]) { display: none; }
+.app-body-md:has(+ .app-edit[open]) { display: none; }
+/* 入口を本文の下端へ寄せる。区画の間隔ぶん離すと、本文と結び付いて見えない */
+.app-body-md:has(+ .app-edit) { margin-bottom: .5rem; }
+
+/* 本文がまだ無いときは、その一行そのものが入口になる。
+   空の知らせの下に押しどころをもう一つ並べない */
+.app-edit.blank { display: block; margin-bottom: 1.4rem; }
+.app-edit.blank > summary {
+  display: block; padding: 2.4rem 1rem; text-align: center;
+  font-size: .85rem; color: var(--ink-faint);
+  border: 1px dashed var(--rule-strong); background: var(--paper);
+}
+.app-edit.blank > summary:hover { color: var(--shu); border-color: var(--shu); }
 
 /* 画面の中の小さな注記と、設定の見出し -------------------------------------- */
 .app-hint {

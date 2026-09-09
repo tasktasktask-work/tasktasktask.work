@@ -11,7 +11,8 @@
 - `queries.ts` 読み書き。データにさわる関数の書き方の見本でもある
 - `actions.ts` 画面から呼ばれる操作。slug とキーと番号だけを受け取る
 - `path.ts` 画面への行き先と、`WEB-3` の読み書き
-- `ThreadRows.tsx` 一覧の行。詳細の子スレッド欄でも同じものを使う
+- `ThreadRows.tsx` 一覧の行
+- `ThreadChildren.tsx` 詳細の右の欄に出す子スレッド。一覧の行とは別の形である
 - `ThreadFilters.tsx` 絞り込みの帯。JavaScript を使わない GET のフォーム
 - `NewThreadForm.tsx` / `ThreadProps.tsx` / `ThreadEditForms.tsx` 入力の欄
 
@@ -33,8 +34,13 @@ Markdown の仕組みはコメントと共通で、二つ作らない。
   **両方**のアーカイブを見る。片方だけだと、畳んだプロジェクトの中身が書き換わる
 - 親の付け替えは輪を作りうる。`setParent` の中で祖先を辿って断る。
   辿るところと書くところは同じトランザクションに入れる
-- 本文のチェックボックス（`setBodyCheck`）は `body_edited_at` に触らない。
-  印は「課題の定義が変わった」ことを知らせるもので、箱が入ったことではない
+- `body_edited_at` を押すのは `editThreadBody` だけである。
+  タイトルの書き換え（`editThreadTitle`）でも、本文のチェックボックス（`setBodyCheck`）でも触らない。
+  印は「本文が変わって、それを前提に書かれたコメントが宙に浮いた」ことを知らせるもので、
+  箱が入ったことでも、誤字が直ったことでもない
+- 詳細画面の書き換えの欄は、読み表示と同じ部品が出す（`ThreadTitle` / `ThreadBody`）。
+  隠す役は CSS の `:has()` が持つので、両者が隣り合っていることが前提になる。
+  あいだに何かを挟むと、読み表示が消えなくなる
 - `THREAD_WRITABLE` はコメント側とタグ側からも使う。書き写さない
 - 時刻の表示は `#lib/datetime.ts` を通し、組織のタイムゾーンを渡す
 - import には必ず拡張子を書く（[規約](../../../docs/devops/coding-conventions/index.html#imports)）

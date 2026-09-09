@@ -4,7 +4,8 @@ import type { MemberRole } from '#features/organization/queries.ts';
 import {
   createThread,
   deleteThread,
-  editThreadText,
+  editThreadBody,
+  editThreadTitle,
   listChildren,
   listThreads,
   resolveThread,
@@ -598,9 +599,16 @@ describe('スレッドを書き換える', () => {
     const project = await newProject(org, admin.userId);
     const thread = await addThread(org, project.id, admin.userId, 'kadai');
 
-    assert.equal((await editThreadText(plain, thread.id, '新しい題', '本文')).ok, true);
+    assert.equal((await editThreadTitle(plain, thread.id, '新しい題')).ok, true);
+    const named = await readThread(thread.id);
+    assert.equal(named.title, '新しい題');
+    // タイトルだけを直したときは印を押さない。
+    // 印は「本文が変わって、それを前提に書かれたコメントが宙に浮いた」ことを知らせるものである
+    assert.equal(named.body_edited_at, null);
+
+    assert.equal((await editThreadBody(plain, thread.id, '本文')).ok, true);
     const row = await readThread(thread.id);
-    assert.equal(row.title, '新しい題');
+    assert.equal(row.body, '本文');
     // 履歴は残さない。残すのは印と時刻だけである
     assert.notEqual(row.body_edited_at, null);
   });
@@ -612,7 +620,7 @@ describe('スレッドを書き換える', () => {
     const project = await newProject(org, admin.userId, { visibility: 'private' });
     const thread = await addThread(org, project.id, admin.userId, 'kadai');
 
-    const result = await editThreadText(faked(plain), thread.id, '乗っ取り', '');
+    const result = await editThreadTitle(faked(plain), thread.id, '乗っ取り');
     assert.equal(result.ok, false);
     assert.equal((await readThread(thread.id)).title, '検索の設計');
   });
@@ -625,8 +633,11 @@ describe('スレッドを書き換える', () => {
       archived_at: new Date(),
     });
 
-    const result = await editThreadText(admin, thread.id, '新しい題', '');
+    const result = await editThreadTitle(admin, thread.id, '新しい題');
     assert.equal(result.ok === false && result.reason, 'archived');
+    // 本文の側も同じ線で止まる
+    const body = await editThreadBody(admin, thread.id, '書き足し');
+    assert.equal(body.ok === false && body.reason, 'archived');
   });
 
   it('プロジェクトごと畳まれていれば、中のスレッドも書けない', async () => {
@@ -638,7 +649,7 @@ describe('スレッドを書き換える', () => {
     // 個々の archived_at は立っていない。プロジェクトの側だけで止める
     const row = await readThread(thread.id);
     assert.equal(row.archived_at, null);
-    const result = await editThreadText(admin, thread.id, '新しい題', '');
+    const result = await editThreadTitle(admin, thread.id, '新しい題');
     assert.equal(result.ok === false && result.reason, 'project-archived');
   });
 
@@ -648,7 +659,7 @@ describe('スレッドを書き換える', () => {
     const project = await newProject(org, admin.userId);
     const thread = await addThread(org, project.id, admin.userId, 'kadai');
 
-    const result = await editThreadText(admin, thread.id, '  ', '');
+    const result = await editThreadTitle(admin, thread.id, '  ');
     assert.equal(result.ok === false && result.reason, 'invalid-title');
   });
 
