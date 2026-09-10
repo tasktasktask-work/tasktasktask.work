@@ -634,3 +634,45 @@
 .badge.midori { color: var(--midori); background: var(--midori-wash); }
 .badge.ki     { color: var(--ki);     background: var(--ki-wash); }
 .badge.mute   { color: var(--ink-soft); background: var(--paper-deep); }
+
+
+/* 公開ページ ---------------------------------------------------------------
+   ログインの要らない一枚もの（料金、規約、方針、表記）。
+   画面の中ではなく、外から読まれる場所なので、枠を持たず本文だけを置く。
+   -------------------------------------------------------------------------- */
+.pub { max-width: 44rem; margin: 0 auto; padding: 2.6rem 1.2rem 4rem; }
+.pub-brand {
+  display: inline-flex; align-items: center; gap: .5rem;
+  font-family: var(--font-display); font-weight: 800; font-size: 1.1rem;
+  color: var(--ink); text-decoration: none;
+}
+.pub-brand .m {
+  width: 1.6rem; height: 1.6rem; border: 1.6px solid var(--shu); border-radius: 4px;
+  color: var(--shu); display: inline-flex; align-items: center; justify-content: center;
+  font-size: .9rem;
+}
+.pub h1 {
+  font-family: var(--font-display); font-weight: 800;
+  font-size: 1.5rem; line-height: 1.5; margin: 1.8rem 0 .4rem;
+}
+.pub .lede { color: var(--ink-mid); font-size: .92rem; line-height: 1.9; margin: 0 0 1.8rem; }
+.pub h2 {
+  font-family: var(--font-display); font-weight: 700; font-size: 1rem;
+  margin: 2.2rem 0 .7rem; padding-bottom: .3rem; border-bottom: 1px solid var(--rule);
+}
+.pub h3 { font-family: var(--font-display); font-weight: 700; font-size: .9rem; margin: 1.4rem 0 .4rem; }
+.pub p, .pub li { font-size: .88rem; line-height: 1.95; }
+.pub ol, .pub ul { padding-left: 1.4rem; }
+.pub li { margin-bottom: .3rem; }
+.pub .amount { font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; color: var(--shu); }
+.pub-foot {
+  display: flex; flex-wrap: wrap; gap: 1.1rem;
+  margin-top: 3rem; padding-top: 1.2rem; border-top: 1px solid var(--rule);
+  font-size: .78rem;
+}
+.pub-foot .rev { color: var(--ink-faint); font-family: var(--font-mono); font-size: .7rem; }
+/* 記入が済んでいない欄。目で見て分かるようにしておく */
+.pub .todo {
+  background: var(--ki-wash); border-bottom: 1px dashed var(--ki);
+  padding: 0 .2em; color: var(--ink-mid);
+}
