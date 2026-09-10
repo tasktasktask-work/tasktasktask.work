@@ -16,14 +16,14 @@
 
 - データにさわる関数は、組織のスコープ（`OrgScope`）を第一引数に取る
 - 閲覧できるプロジェクトの判定は `#lib/db.ts` の `VISIBLE_PROJECT_IDS` を使う。ここに書き写さない
-- スレッドへ書けるかどうかは `#features/thread/queries.ts` の `THREAD_WRITABLE` を使う
+- スレッドへ書けるかどうかは `#features/thread/queries.ts` の `threadWritable()` を使う
 - import には必ず拡張子を書く（[規約](../../../docs/devops/coding-conventions/index.html#imports)）
 
 ## `attach.ts` を分けてある理由
 
 スレッドを立てるときにもタグを付けるので、`#features/thread/queries.ts` が
 タグ側を呼ぶ。ところが `queries.ts` は書き込みの可否を判定するために
-`THREAD_WRITABLE` を読む。両方を一つの模組に置くと、二つが互いを参照する。
+`threadWritable()` を読む。両方を一つの模組に置くと、二つが互いを参照する。
 
 `attach.ts` には判定を置かない。呼ぶ側が先に済ませている前提で、
 行を入れるだけの関数にしてある。

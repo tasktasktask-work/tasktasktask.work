@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>課金を入れる | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-09 19:11</p>
+  <h1 class="title">課金を入れる</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    組織を画面から作れるようにした翌日に、料金の話になった。
+    課金は「利用者がついてから作るもの」として先送りしてあり、
+    <a href="../../issues/billing/index.html">課題のページ</a>にもそう書いてある。
+    その判断を今日ひっくり返した。
+  </p>
+
+  <h2>人数で数えると決めた理由</h2>
+
+  <p>先送りにしたとき、ひとつだけ先に見ておいた項目がある。
+  何を課金の単位にしうるか、である。
+  後から数えられないものは単位にできないので、そこだけは実装より先に確かめてあった。</p>
+
+  <p>そのとき数えられると分かっていたのは、メンバー数、プロジェクト数、スレッド数、添付の総容量の四つ。
+  数えられないと分かっていたのが月間の活動量で、こちらは<a href="../../issues/audit-log/index.html">監査ログ</a>が先に要る。
+  今回選んだのはメンバー数で、四つのうちで唯一、画面にすでに出ている数でもある。</p>
+
+  <p>単価は 1 ドル。一人ぶん、ひと月ぶんである。
+  この額は日を置いて二度動いた。決めた経緯は末尾の「あとから変えたこと」にある。</p>
+
+  <h2>決めたこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>何を</th><th>どう決めたか</th><th>なぜ</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">課金の単位</td><td>組織ごと。その月に在籍した実人数&#215;$1.00（税込）</td><td>既存のスキーマで数えられる唯一の素直な単位</td></tr>
+      <tr><td class="nowrap">日割り</td><td>しない。月途中の増加も減少もその月はフル</td><td>説明が一文で終わる。按分は請求の根拠を説明できなくする</td></tr>
+      <tr><td class="nowrap">請求のタイミング</td><td>後払い。6月分を7月1日に請求する</td><td>在籍した実人数は、月が終わらないと確定しない</td></tr>
+      <tr><td class="nowrap"><a href="../../glossary.html#trial">おためし期間</a></td><td>登録日から翌月末まで</td><td>月末で切ると、課金の開始月が月単位できれいに決まる</td></tr>
+      <tr><td class="nowrap"><a href="../../glossary.html#freeze">凍結</a></td><td>書き込みを全面停止。読み取りは全部残す</td><td>データを人質にすると、払う判断をする人が中身を見られない</td></tr>
+      <tr><td class="nowrap">支払い失敗</td><td>猶予なしで即凍結</td><td>猶予を置くと、未収の期間だけ費用が積み上がる</td></tr>
+      <tr><td class="nowrap">凍結中の請求</td><td>作らない。あとから遡って請求もしない</td><td>使えなかった月の代金を、解除の瞬間に突きつけない</td></tr>
+      <tr><td class="nowrap">払わない組織</td><td>無期限に放置。督促も削除もしない</td><td>凍結が効いていれば費用は止まる。削除は取り返しがつかない</td></tr>
+      <tr><td class="nowrap">プラン</td><td>単一。階層を作らない</td><td>階層は「このプランで使えるか」の判定を全機能に散らす</td></tr>
+      <tr><td class="nowrap">決済</td><td>Stripe。ただしサブスクリプションは使わない</td><td>後述</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>Stripe のサブスクリプションが使えなかった</h2>
+
+  <p>人数ぶんの月額を取るのだから、Stripe のサブスクリプションに座席数を持たせれば済むはずだった。
+  実際にはそうならない。</p>
+
+  <p>サブスクリプションの座席数は、請求のときの値で課金される。
+  月の途中で10人から8人に減らせば、その月の請求は8人分になる。
+  日割りを切っても変わらない。切れるのは変更時に差額を即時請求するかどうかだけで、最後に残った数が請求額を決める。
+  <strong>月の途中で去った二人ぶんを取る方法が無い。</strong></p>
+
+  <p>「その月に在籍した実人数」と、Stripe が持っている「いまの座席数」は、別の数である。
+  そこで Stripe には顧客と支払い方法だけを預け、
+  請求は毎月こちらが人数を数えて請求書を作り、確定させることにした。</p>
+
+  <div class="note warn">
+    <span class="note-label">言葉が一つずれた</span>
+    <p>この決定で「サブスク登録が完了するまで操作不可」という当初の言い方が実体と合わなくなった。
+    利用者が行うのは<a href="../../glossary.html#payment-method">支払い方法</a>の登録であり、定期購読の契約ではない。
+    カードを預けた時点で凍結が解け、実際に金が動くのは翌月以降になる。</p>
+  </div>
+
+  <h2>凍結は、この製品がすでに持っている形をなぞる</h2>
+
+  <p>組織の書き込みを止めると決めたとき、判定を何箇所に入れることになるかを先に調べた。
+  結果として、入れる場所は二つで足りる。</p>
+
+  <p>ひとつは <code>currentScope()</code> である。
+  <code>/o/{slug}/</code> 配下の12経路と、組織スコープを要する Server Action のすべてが、漏れなくここを通っている。
+  ミドルウェアも組織用の layout も持たない代わりに、この関数が唯一の入口になっている。</p>
+
+  <p>もうひとつが SQL の中である。
+  書き込みの権限を呼び出し側の値で判定しない、という規約がすでにあり、
+  スレッド、コメント、タグの付与、添付の書き込みは <code>THREAD_WRITABLE</code> という条件の断片を共有している。
+  <a href="../../glossary.html#archive">アーカイブ</a>された対象を弾いているのがこの断片で、
+  読み取り専用という状態は、はじめから製品の中にある。</p>
+
+<pre class="figure">画面と Server Action        currentScope() が凍結を返す
+                                 │
+                                 ▼  書き込みの入口を消す／早期に断る
+SQL                         ORG_NOT_FROZEN を AND で足す
+                                 │
+                                 ▼  最後の砦。0 行更新で理由を引き直す</pre>
+
+  <p>粒度は違う。
+  アーカイブはスレッドとプロジェクトに掛かり、凍結は組織に掛かる。
+  掛かる範囲も違って、アーカイブはその配下だけを止めるが、凍結は組織のすべての書き込みを止める。</p>
+
+  <h2>止めるものと、残すもの</h2>
+
+  <p>凍結中にできるのは読み取りと、支払いの設定だけである。
+  既読を付けることも、コメントのチェックボックスを動かすことも、ウォッチの切り替えもできない。
+  どれも読むための操作だが、実装としては書き込みなので止まる。</p>
+
+  <p>メンバーの削除も止まる。
+  凍結している間は請求そのものが止まっているので、人数を減らす意味がない。</p>
+
+  <p>添付のダウンロードは残す。
+  持ち出せる状態を保つことが、書き込みを止める側の言い分を成り立たせている。</p>
+
+  <h2>請求日の一点だけで判定する</h2>
+
+  <p>凍結は日単位で始まり、日単位で解ける。
+  請求は月まるごとか、ゼロかの二択である。
+  この二つは噛み合わないので、どこか一点を決めて切るしかない。</p>
+
+  <p>切る場所を請求日にした。
+  <strong>請求日に凍結していなければ、その月を満額で請求する。</strong>
+  月の前半が凍結していても、日数を差し引かない。</p>
+
+  <div class="note decide">
+    <span class="note-label">具体例</span>
+    <p>おためし期間が10月31日に終わり、11月1日に凍結。
+    管理者が11月15日にカードを登録して解除。</p>
+    <p>12月1日の請求日に凍結していないので、11月分を満額（11月に在籍した人数&#215;$1.00）請求する。
+    11月前半の14日ぶんは差し引かない。</p>
+    <p>もし12月1日も凍結したままなら、11月分は作らない。
+    そして、あとから遡って請求することもない。</p>
+  </div>
+
+  <p>この規則には抜け穴がある。
+  毎月末にカードを外しておけば、請求日に凍結していることになり、永久に無料で使える。
+  外している間は書き込みが全部止まるので、単価 $1.00 のためにそれを毎月繰り返す相手は現れないと見た。</p>
+
+  <h2>今回やらないこと</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>やらないこと</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">請求書払い（銀行振込）</td><td>「登録は済んだが入金は未確認」という中間状態が生まれ、凍結の判定が二段になる</td></tr>
+      <tr><td class="nowrap">プランの階層</td><td>機能ごとの可否判定が全機能に散る。人数課金1本なら判定は組織の状態ひとつ</td></tr>
+      <tr><td class="nowrap">未払いの督促</td><td>放置された組織を追いかけない。凍結が効いていれば費用は積み上がらない</td></tr>
+      <tr><td class="nowrap">払わない組織のデータ削除</td><td>無期限に置く。削除は取り返しがつかないので、運用が始まってから設計する</td></tr>
+      <tr><td class="nowrap">凍結中に新しい組織を作ることの制限</td><td>組織をまたぐデータの移動手段が無いので、別組織を作っても逃げ道にならない</td></tr>
+      <tr><td class="nowrap">Stripe との疎通の自動試験</td><td>テストキーで手で確かめる。自動化すると外部サービスの都合で CI が落ちる</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>実装したもの</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>場所</th><th>中身</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>schema/11_billing.sql</code></td><td><code>billing_invoices</code> と <code>billing_invoice_members</code>。<code>organizations</code> への列追加</td></tr>
+      <tr><td class="nowrap"><code>src/features/billing/queries.ts</code></td><td>課金人数の集計、状態の判定、請求明細の読み書き</td></tr>
+      <tr><td class="nowrap"><code>src/features/billing/monthly.ts</code></td><td>毎月1日の請求処理。冪等に作る</td></tr>
+      <tr><td class="nowrap"><code>src/features/billing/stripe.ts</code></td><td>Stripe への口。<code>BILLING_MODE</code> で偽物と差し替わる</td></tr>
+      <tr><td class="nowrap"><code>src/features/billing/mail.ts</code></td><td>おためし終了の予告と、凍結の知らせ</td></tr>
+      <tr><td class="nowrap"><code>src/features/billing/FrozenBanner.tsx</code></td><td>凍結中に全ページの上へ出す帯</td></tr>
+      <tr><td class="nowrap"><code>src/app/o/[slug]/billing/page.tsx</code></td><td>支払いと請求明細の画面。組織管理者だけが開ける</td></tr>
+      <tr><td class="nowrap"><code>src/app/api/stripe/webhook/route.ts</code></td><td>請求の成否を受ける。このプロジェクト初の受信口</td></tr>
+      <tr><td class="nowrap"><code>src/lib/db.ts</code></td><td><code>ORG_NOT_FROZEN</code> の断片を足す</td></tr>
+      <tr><td class="nowrap"><code>scripts/exempt-organization.ts</code></td><td><code>pnpm org:exempt</code> と <code>pnpm org:unexempt</code>。外すときは slug の再入力を求める</td></tr>
+      <tr><td class="nowrap"><code>tests/billing.test.ts</code></td><td>単体17件。人数の数え方、凍結、請求の冪等性</td></tr>
+      <tr><td class="nowrap"><code>tests/e2e/billing.spec.ts</code></td><td>ブラウザ7件。帯、入口が消えること、解除して戻ること</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note ok">
+    <span class="note-label">実装して確かめたところ</span>
+    <p>単体 518 件（課金の17件を含む）、ブラウザ 25 件（課金の7件を含む）が通っている。
+    移行は手元のデータベースへ当て、すでにあった3つの組織に
+    おためし期限 2026年10月31日 が入ることを確かめた。</p>
+    <p>ブラウザ試験は <code>BILLING_MODE=fake</code> で走る。
+    Stripe へは出ていかない。本物との疎通はテストキーで手で確かめる。</p>
+  </div>
+
+  <h2>実装して分かったこと</h2>
+
+  <p>凍結の判定を足す場所は、調べたとおり二つで足りた。
+  ただし<strong>書き込みの入口を消して回る側は、二つでは済まなかった</strong>。
+  スレッド、コメント、タグ、プロジェクト、メンバー、ウォッチ。
+  画面の側は、書ける人にだけ出していた欄を、書ける状態のときにだけ出す形へ直して回ることになる。</p>
+
+  <p>タグの管理画面だけは、消すと読むものまで消えた。
+  行そのものが名前を書き換える欄でできていたためである。
+  凍結中は静かな行に置き換えて、名前と件数だけを残した。</p>
+
+  <p><code>THREAD_WRITABLE</code> を定数から関数に変えた。
+  凍結の判定が <code>BILLING_MODE</code> を読むためである。
+  定数のままだと読み込みの時点で環境変数を要求することになり、
+  「イメージを作るのに本番の設定が要る」という依存が戻ってくる。</p>
+
+  <p>おためし期限の既定値は、狙いどおり移行の手当てを兼ねた。
+  バックフィルの UPDATE を書かずに済み、組織を作る側のコードも触っていない。</p>
+
+  <div class="note warn">
+    <span class="note-label">Stripe の SDK が、開発支援ツール向けの文字列を吐く</span>
+    <p><code>stripe</code> の 22.6.1 は、環境変数 <code>CLAUDECODE</code> があるとき、
+    標準エラーへ <code>&lt;claude-code-hint ... value="stripe@claude-plugins-official" /&gt;</code>
+    という一行を書く（<code>node_modules/stripe/cjs/stripe.core.js:140</code>）。</p>
+    <p>指示の形をしているが、依存パッケージが出しているものであって、こちらの意図ではない。
+    従っていない。動作にも影響しないが、サーバーのログに混ざるので書き留めておく。</p>
+  </div>
+
+  <h2>調べて分かったこと</h2>
+
+  <p>外部の API を叩くコードが、このプロジェクトには一行も無い。
+  <code>fetch(</code> の呼び出しがゼロで、Webhook を受ける口も無く、外向きの通信は SMTP だけである。
+  Stripe を入れると、送るほうも受けるほうも今回が最初になる。</p>
+
+  <p>定期実行の仕組みも無い。
+  cron も常駐プロセスも持たず、通知メールはアプリと同じプロセスの中で60秒ごとに回るループが送っている。
+  毎月1日の請求はこのループに相乗りさせるので、置き場は増えない。
+  代わりに「アプリを二つに増やせない」という制約が、通知メールに続いて二つ目を抱えることになる。</p>
+
+  <p>月を単位に足し引きする処理も無かった。
+  期限はすべて時間、日、分で書かれていて、招待は48時間、登録メールの再送間隔は3分である。
+  おためし期間を翌月末で切ると決めたので、月末を求める計算を新しく書く。</p>
+
+  <h2>書き換えるドキュメント</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>文書</th><th>何が変わるか</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><a href="../../issues/billing/index.html">課題 / 課金とプラン</a></td><td>対応済みにする。サイドバーから外す</td></tr>
+      <tr><td class="nowrap"><a href="../../features/billing/index.html">機能 / 課金</a></td><td>新規</td></tr>
+      <tr><td class="nowrap"><a href="../../features/organization/index.html">機能 / 組織とメンバー</a></td><td>組織管理者の「できること」に支払いを足す</td></tr>
+      <tr><td class="nowrap"><a href="../../glossary.html">用語集</a></td><td>6語を足す。アーカイブの説明にあった「凍結」を書き換える</td></tr>
+      <tr><td class="nowrap"><a href="../../features/project/index.html">機能 / プロジェクト</a></td><td>同じ理由で「凍結」を書き換える</td></tr>
+      <tr><td class="nowrap"><a href="../../database/index.html">データベース</a></td><td>課金のセクションを足す</td></tr>
+      <tr><td class="nowrap"><a href="../../ui/pages/o/[slug]/billing/index.html">ページモック</a></td><td>新規。四つの状態と、凍結中の他画面</td></tr>
+      <tr><td class="nowrap"><a href="../../devops/deployment/index.html">デプロイ構成</a></td><td>環境変数と Webhook の口、Stripe 側で切る設定</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="note-label">呼び名が一つ増えた</span>
+    <p>決めた呼び名は6語だったが、書いているうちに7語目が要ることが分かった。
+    <a href="../../glossary.html#billing-month">課金対象月</a>である。</p>
+    <p>「その月に在籍した人数」と「請求日に凍結していない月」は別の月を指しうるので、
+    どちらの月の話をしているかを名前で分けないと、請求の規則を一文で書けない。</p>
+  </div>
+
+  <div class="note">
+    <span class="note-label">「凍結」がすでに使われていた</span>
+    <p>プロジェクトをアーカイブしたときの説明に「プロジェクト単位で凍結する」という一文があった。
+    組織の課金状態に同じ語を当てると、二つの別の状態が同じ名前で呼ばれる。
+    アーカイブ側を「まとめて読み取り専用にする」に書き換え、「凍結」は組織の課金状態だけに使う。</p>
+  </div>
+
+  <h2>あとから変えたこと</h2>
+
+  <p>実装が通ったあとで、値付けと税の扱いを二度動かした。
+  どちらも同じ問いから出ている。<strong>適格請求書発行事業者の登録番号を持っていない。</strong></p>
+
+  <h3>消費税を別に取るのをやめた</h3>
+
+  <p>登録していない事業者が「消費税額」を別記した請求書を出すのは、避けたほうがよい形である。
+  納めていない税を税として請求している見え方になる。</p>
+
+  <p>そこで税額の行を無くし、単価そのものを税込とした。
+  Stripe Tax も使わない。月0.5%の費用と、税の計算に要る住所の必須化が、まとめて消えた。
+  住所そのものは請求書の宛先として集め続けている。</p>
+
+  <p>買い手の側は、この請求書では仕入税額控除を全額は受けられない。
+  経過措置の割合は 2026年10月1日 に80%から50%へ下がり、2029年10月1日 に無くなる。
+  ただし10人の組織でも月 $10 の取引なので、控除しそこねる額は月あたり数十円である。
+  取引をためらう額ではないと見た。</p>
+
+  <div class="note decide">
+    <span class="note-label">登録しなかった理由</span>
+    <p>登録すると課税事業者になり、売上が年1,000万円以下でも消費税を納める側になる。
+    利用者がまだ付いていない段階で、納税義務と事務を先に背負う理由がない。</p>
+    <p>事業が育って課税事業者になる年に、登録へ切り替える。
+    そのとき値付けをどう読み替えるかで揉めないよう、画面にも規約にも「税込」と明記しておく。</p>
+  </div>
+
+  <h3>決済代行に繋いで分かったこと</h3>
+
+  <p>テストキーで実際に繋ぐまで見えなかったものが三つあった。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>ぶつかったもの</th><th>どう直したか</th></tr></thead>
+    <tbody>
+      <tr>
+        <td class="nowrap">Managed Payments</td>
+        <td>アカウントで既定で有効になっていて、カードを預かる画面（<code>mode: 'setup'</code>）が作れない。リクエストごとに切った。アカウントの設定に頼ると、戻された日に支払いの入口だけが黙って壊れる</td>
+      </tr>
+      <tr>
+        <td class="nowrap">請求書の通貨</td>
+        <td>請求書そのものに通貨を渡していなかった。アカウントの既定（JPY）で作られ、あとから入れる USD の明細と食い違って弾かれた。明細側だけに書いてあっても足りない</td>
+      </tr>
+      <tr>
+        <td class="nowrap">一本の失敗が全部を止める</td>
+        <td>上の食い違いで巡回そのものが倒れ、後ろの組織の請求が一件も立たなくなっていた。一件ずつ守るようにし、詰まった数を数えるようにした</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>三つ目が一番危なかった。
+  5分ごとに同じところで倒れ続けるので、誰も見ていなければ気づくのは月末である。
+  請求が立たないことは、画面のどこにも出ない。</p>
+
+  <p>決済が通らなかった理由も、握りつぶしていたのをやめた。
+  凍結された組織を前にして「カードが悪いのか、こちらの作りが悪いのか」を切り分けられない。</p>
+
+  <h3>通貨を USD にした</h3>
+
+  <p>はじめは税別100円で決めていた。
+  グローバルに出すことを想定して、税込 1 ドルへ移した。</p>
+
+  <p>為替次第でおおむね ¥140〜160 になるので、これは実質4〜6割の値上げである。
+  意図した値付けであることを確かめたうえで動かした。</p>
+
+  <div class="note warn">
+    <span class="note-label">100 の意味が変わった</span>
+    <p>円は小数を持たない通貨で、Stripe に渡す <code>100</code> は100円だった。
+    USD は小数を二桁持つので、同じ <code>100</code> が $1.00 になる。</p>
+    <p>数字は変わらないのに単位だけが変わる。
+    この取り違えは、他の通貨の感覚で100倍したときに<strong>100倍の請求</strong>として現れる。
+    <code>plan.ts</code> と <code>billing_invoices</code> の説明に、セントであることを書いた。</p>
+    <p>切り替えの時点で請求の行は0件だったので、過去の記録と食い違ってはいない。</p>
+  </div>
+
+  <p>通貨の列は持たせなかった。すべて USD で受け取ると決めたためである。
+  増やすときは、過去の行がどの通貨だったかを言えるようにしてからになる。</p>
+
+  <h2>関連</h2>
+  <div class="cards">
+    <a class="card" href="../../features/billing/index.html"><span class="card-no">FEATURE</span><p class="card-title">課金</p><p class="card-desc">おためし期間、凍結、請求</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/billing/index.html"><span class="card-no">/billing</span><p class="card-title">支払いと請求</p><p class="card-desc">四つの状態のモック</p></a>
+    <a class="card" href="../../database/billing_invoices/index.html"><span class="card-no">TABLE</span><p class="card-title">billing_invoices</p><p class="card-desc">請求明細</p></a>
+    <a class="card" href="../../database/billing_invoice_members/index.html"><span class="card-no">TABLE</span><p class="card-title">billing_invoice_members</p><p class="card-desc">請求の対象者</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 2026-09-09 19:11</span>
+    <span>最終更新 2026-09-09</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

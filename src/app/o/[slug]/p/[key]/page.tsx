@@ -90,8 +90,8 @@ export default async function ProjectThreads({
           </div>
         </div>
         <span style={{ flex: 1 }} />
-        {/* 畳んだプロジェクトには足せない。押せない札を出しても仕方がない */}
-        {project.archived ? null : (
+        {/* 畳んだプロジェクトと凍結中の組織には足せない。押せない札を出しても仕方がない */}
+        {project.archived || scope.frozen ? null : (
           <Link className="app-btn" href={newThreadPath(slug, project.key)}>
             スレッドを立てる
           </Link>

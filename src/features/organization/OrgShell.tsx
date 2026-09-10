@@ -1,11 +1,15 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { logout } from '#features/authentication/actions.ts';
+import { FrozenBanner } from '#features/billing/FrozenBanner.tsx';
+import { billingPath } from '#features/billing/path.ts';
+import { freezeReason } from '#features/billing/queries.ts';
 import { dashboardPath } from '#features/notification/path.ts';
 import { countUnread } from '#features/notification/queries.ts';
 import { projectPath } from '#features/project/path.ts';
 import { tagsPath } from '#features/tag/path.ts';
 import type { OrgScope } from '#lib/db.ts';
+import { billingMode } from '#lib/env.ts';
 
 /*
  * 組織の中の画面に共通する枠。
@@ -23,7 +27,8 @@ export type ShellNav =
   | 'tags'
   | 'project'
   | 'me'
-  | 'notices';
+  | 'notices'
+  | 'billing';
 
 /** 左帯に並べるプロジェクト。畳んだものは出さない。 */
 export type ShellProject = { key: string; name: string };
@@ -52,7 +57,13 @@ export async function OrgShell({
   currentProjectKey?: string;
   children: ReactNode;
 }) {
+  const showBilling = billingMode() !== 'off';
   const unread = await countUnread(scope);
+  /*
+   * 凍結の帯は、すべての画面の上に出る。
+   * 理由まで引くのは凍結されているときだけなので、普段は一度の問い合わせも増えない。
+   */
+  const reason = scope.frozen ? await freezeReason(scope) : null;
 
   return (
     <div className="app-frame">
@@ -125,9 +136,25 @@ export async function OrgShell({
               設定
             </Link>
           ) : null}
+          {/* 支払いに進めるのは組織管理者だけ。押せない道を見せない */}
+          {scope.isOrgAdmin && showBilling ? (
+            <Link href={billingPath(slug)} className={current === 'billing' ? 'on' : ''}>
+              支払い
+            </Link>
+          ) : null}
         </nav>
 
-        <div className="app-main">{children}</div>
+        <div className="app-main">
+          {scope.frozen ? (
+            <FrozenBanner
+              slug={slug}
+              isOrgAdmin={scope.isOrgAdmin}
+              reason={reason}
+              onBillingPage={current === 'billing'}
+            />
+          ) : null}
+          {children}
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import {
   type OrgScope,
   orgAdminExists,
   orgMemberExists,
+  orgNotFrozen,
   pool,
   projectAdminExists,
   transaction,
@@ -227,6 +228,7 @@ export async function createProject(
            (organization_id, key, name, description, visibility, created_by_user_id)
          SELECT $1, $3, $4, $5, $6, $2
           WHERE ${orgAdminExists('$1', '$2')}
+            AND ${orgNotFrozen('$1')}
          RETURNING id, key`,
         [
           scope.organizationId,
@@ -287,7 +289,8 @@ export async function renameProject(
       WHERE p.id = $3
         AND p.organization_id = $1
         AND p.deleted_at IS NULL
-        AND ${projectAdminExists('p.id', 'p.organization_id', '$2')}`,
+        AND ${projectAdminExists('p.id', 'p.organization_id', '$2')}
+        AND ${orgNotFrozen('$1')}`,
     [scope.organizationId, scope.userId, projectId, trimmed, description.trim()],
   );
 
@@ -315,7 +318,8 @@ export async function changeVisibility(
       WHERE p.id = $3
         AND p.organization_id = $1
         AND p.deleted_at IS NULL
-        AND ${projectAdminExists('p.id', 'p.organization_id', '$2')}`,
+        AND ${projectAdminExists('p.id', 'p.organization_id', '$2')}
+        AND ${orgNotFrozen('$1')}`,
     [scope.organizationId, scope.userId, projectId, visibility],
   );
 
@@ -344,7 +348,8 @@ export async function setArchived(
       WHERE p.id = $3
         AND p.organization_id = $1
         AND p.deleted_at IS NULL
-        AND ${projectAdminExists('p.id', 'p.organization_id', '$2')}`,
+        AND ${projectAdminExists('p.id', 'p.organization_id', '$2')}
+        AND ${orgNotFrozen('$1')}`,
     [scope.organizationId, scope.userId, projectId, archived],
   );
 
@@ -372,7 +377,8 @@ export async function deleteProject(
         AND organization_id = $1
         AND deleted_at IS NULL
         AND archived_at IS NOT NULL
-        AND ${orgAdminExists('$1', '$2')}`,
+        AND ${orgAdminExists('$1', '$2')}
+        AND ${orgNotFrozen('$1')}`,
     [scope.organizationId, scope.userId, projectId],
   );
   if (rowCount === 1) {
@@ -460,7 +466,8 @@ export async function addProjectMember(
         WHERE p.id = $3
           AND p.organization_id = $1
           AND p.deleted_at IS NULL
-          AND ${projectAdminExists('p.id', 'p.organization_id', '$2')}`,
+          AND ${projectAdminExists('p.id', 'p.organization_id', '$2')}
+          AND ${orgNotFrozen('$1')}`,
       [scope.organizationId, scope.userId, projectId],
     );
     if (allowed.rowCount === 0) {
@@ -516,7 +523,8 @@ export async function removeProjectMember(
         AND p.deleted_at IS NULL
         AND pm.user_id = $4
         AND pm.deleted_at IS NULL
-        AND ${projectAdminExists('p.id', 'p.organization_id', '$2')}`,
+        AND ${projectAdminExists('p.id', 'p.organization_id', '$2')}
+        AND ${orgNotFrozen('$1')}`,
     [scope.organizationId, scope.userId, projectId, targetUserId],
   );
 

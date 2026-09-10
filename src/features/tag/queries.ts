@@ -1,7 +1,13 @@
 import type { PoolClient } from 'pg';
 import { z } from 'zod';
-import { THREAD_WRITABLE } from '#features/thread/queries.ts';
-import { type OrgScope, pool, transaction, VISIBLE_PROJECT_IDS } from '#lib/db.ts';
+import { threadWritable } from '#features/thread/queries.ts';
+import {
+  type OrgScope,
+  orgNotFrozen,
+  pool,
+  transaction,
+  VISIBLE_PROJECT_IDS,
+} from '#lib/db.ts';
 import { many } from '#lib/row.ts';
 import { attachTagsTo } from './attach.ts';
 import { isTagColor, NAME_MAX } from './colors.ts';
@@ -18,6 +24,7 @@ import { isTagColor, NAME_MAX } from './colors.ts';
    ========================================================================== */
 
 export type TagProblem =
+  | 'frozen'
   | 'not-found'
   | 'invalid-name'
   | 'invalid-color'
@@ -185,11 +192,14 @@ export async function createTag(
   }
 
   try {
-    await pool.query(`INSERT INTO tags (organization_id, name, color) VALUES ($1, $2, $3)`, [
-      scope.organizationId,
-      name.trim(),
-      color,
-    ]);
+    const { rowCount } = await pool.query(
+      `INSERT INTO tags (organization_id, name, color)
+            SELECT $1, $2, $3 WHERE ${orgNotFrozen('$1')}`,
+      [scope.organizationId, name.trim(), color],
+    );
+    if (rowCount !== 1) {
+      return { ok: false, reason: 'frozen' };
+    }
   } catch (err) {
     // 先に SELECT で確かめる形にすると、二人が同時に押したときに
     // 両方とも「無い」と読んでから両方が入れにいく。索引に判定させる。
@@ -231,7 +241,8 @@ export async function updateTag(
       // updated_at は tags_set_updated_at が入れる（db/functions.sql）
       `UPDATE tags
           SET name = $3, color = $4
-        WHERE id = $2 AND organization_id = $1 AND deleted_at IS NULL`,
+        WHERE id = $2 AND organization_id = $1 AND deleted_at IS NULL
+          AND ${orgNotFrozen('$1')}`,
       [scope.organizationId, tagId, name.trim(), color],
     );
     return rowCount === 1 ? { ok: true } : { ok: false, reason: 'not-found' };
@@ -259,7 +270,8 @@ export async function deleteTag(scope: OrgScope, tagId: string): Promise<TagChan
     const { rowCount } = await client.query(
       `UPDATE tags
           SET deleted_at = now()
-        WHERE id = $2 AND organization_id = $1 AND deleted_at IS NULL`,
+        WHERE id = $2 AND organization_id = $1 AND deleted_at IS NULL
+          AND ${orgNotFrozen('$1')}`,
       [scope.organizationId, tagId],
     );
     if (rowCount !== 1) {
@@ -276,7 +288,7 @@ export async function deleteTag(scope: OrgScope, tagId: string): Promise<TagChan
 
    そのスレッドを書き換えられる人なら誰でもできる。
    担当者や期間と同じ扱いで、アーカイブ済みのスレッドには付け外しできない。
-   条件は THREAD_WRITABLE をそのまま使う。ここに書き写さない。
+   条件は threadWritable() をそのまま使う。ここに書き写さない。
    -------------------------------------------------------------------------- */
 
 /** そのスレッドに書き込めるか。書けないときは理由を区別せず not-found を返す。 */
@@ -286,7 +298,7 @@ async function writable(
   threadId: string,
 ): Promise<boolean> {
   const { rowCount } = await client.query(
-    `SELECT 1 FROM threads t WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
+    `SELECT 1 FROM threads t WHERE t.id = $3 AND ${threadWritable()}`,
     [scope.organizationId, scope.userId, threadId],
   );
   return rowCount === 1;

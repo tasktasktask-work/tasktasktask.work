@@ -16,7 +16,7 @@
   <p class="eyebrow">Features</p>
   <h1 class="title">機能の一覧</h1>
   <p class="lede">
-    10 の機能に分けて書いてある。
+    11 の機能に分けて書いてある。
     どれも「何ができるか」だけでなく「なぜそう決めたか」を残した。
     仕様は選択の結果であり、選ばなかった側を書き残さないと、半年後に同じ議論をやり直すことになる。
   </p>
@@ -46,6 +46,12 @@
     <a class="card" href="dashboard/index.html"><span class="card-no">10</span><p class="card-title">担当スレッド一覧</p><p class="card-desc">プロジェクトをまたいで自分の分だけを集める</p></a>
   </div>
 
+  <h2>使い続ける</h2>
+  <p>おためし期間が終わったあと、料金を受け取り、払われていない組織の書き込みを止めるまで。</p>
+  <div class="cards">
+    <a class="card" href="billing/index.html"><span class="card-no">11</span><p class="card-title">課金</p><p class="card-desc">人数ぶんの後払い。おためし期間、凍結、月ごとの請求</p></a>
+  </div>
+
   <h2>機能をまたぐ決まりごと</h2>
   <p>個々の機能ページに書くと重複するため、ここにまとめる。</p>
   <div class="table-scroll">
@@ -54,6 +60,7 @@
     <tbody>
       <tr><td class="nowrap"><a href="../glossary.html#soft-delete">論理削除</a></td><td>物理削除は行わない。アーカイブを経てから削除し、いつでも復元できる</td><td>全テーブル</td></tr>
       <tr><td class="nowrap"><a href="../glossary.html#archive">アーカイブ</a></td><td>読み取り専用にして既定の表示から外す。削除の前段でもある</td><td>スレッド、プロジェクト</td></tr>
+      <tr><td class="nowrap"><a href="../glossary.html#freeze">凍結</a></td><td>書き込みだけを止める。読み取りと添付のダウンロードは残す</td><td>組織</td></tr>
       <tr><td class="nowrap">組織による境界</td><td>すべてのデータは組織に属し、組織をまたぐ参照は存在しない</td><td>全テーブル</td></tr>
       <tr><td class="nowrap"><a href="../devops/coding-conventions/index.html#datetime">日付と時刻</a></td><td>期間は <code>date</code>、記録の時刻は <code>timestamptz</code>。タイムゾーンなしの <code>timestamp</code> は使わない</td><td>スレッド、コメント、通知</td></tr>
       <tr><td class="nowrap">権限の二段</td><td><a href="../glossary.html#org-admin">組織管理者</a>と組織メンバー。プロジェクト側は管理者だけが別に立つ</td><td>組織、プロジェクト</td></tr>
@@ -63,7 +70,7 @@
 
   <div class="sheet-foot">
     <span>機能</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-09</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

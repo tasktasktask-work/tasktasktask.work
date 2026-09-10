@@ -13,8 +13,16 @@
 
 <main class="sheet">
 <div class="wrap">
-  <p class="eyebrow">Issue &#183; 優先度 低</p>
+  <p class="eyebrow">Issue &#183; 対応済み</p>
   <h1 class="title">課金とプラン</h1>
+
+  <div class="note ok">
+    <span class="note-label">2026-09-09 に対応した</span>
+    <p>この課題は<a href="../../sessions/20260909-1911-billing/index.html">課金を入れる回</a>で解決した。
+    仕様は<a href="../../features/billing/index.html">機能 / 課金</a>にある。</p>
+    <p>下に残してあるのは、先送りにしたときの判断とその理由である。
+    このページで「早めに見ておく」とした課金の単位の一覧が、そのまま今回の決定の根拠になった。</p>
+  </div>
 
   <h2>概要</h2>
   <p>複数の組織が使うマルチテナントの構成だが、料金を受け取る仕組みがない。
@@ -56,15 +64,28 @@
     <li>インフラの費用が無視できない額になったとき</li>
   </ul>
 
+  <h2>実際にどう決着したか</h2>
+
+  <p>この表のうち、選んだのは一行目の<a href="../../glossary.html#billing-headcount">メンバー数</a>である。
+  税込 $1.00 を掛けた額を、後払いで毎月受け取る。
+  数えられない一行目以外の心配、つまり活動量に応じた課金は選ばなかったので、
+  <a href="../audit-log/index.html">監査ログ</a>は前提から外れた。</p>
+
+  <p>もうひとつの懸念だった「制限の判定が各所に入り込む」ほうは、プランを一つに絞ることで避けた。
+  機能ごとの上限を作らず、組織が<a href="../../glossary.html#freeze">凍結</a>されているかどうかだけを見る。
+  判定を書く場所は <code>currentScope()</code> と、書き込みの SQL に足す条件の断片の二つで足りた。</p>
+
   <h2>関連する場所</h2>
   <div class="cards">
     <a class="card" href="../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">課金の単位になりうる</p></a>
-    <a class="card" href="../audit-log/index.html"><span class="card-no">ISSUE</span><p class="card-title">監査ログ</p><p class="card-desc">活動量を数える前提</p></a>
+    <a class="card" href="../audit-log/index.html"><span class="card-no">ISSUE</span><p class="card-title">監査ログ</p><p class="card-desc">活動量を数える前提。今回は不要になった</p></a>
+    <a class="card" href="../../features/billing/index.html"><span class="card-no">FEATURE</span><p class="card-title">課金</p><p class="card-desc">決着した仕様</p></a>
+    <a class="card" href="../../sessions/20260909-1911-billing/index.html"><span class="card-no">SESSION</span><p class="card-title">課金を入れる</p><p class="card-desc">2026-09-09 の決定</p></a>
   </div>
 
   <div class="sheet-foot">
     <span>課題 / 課金とプラン</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-09</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

@@ -40,6 +40,7 @@ export type TagActionState = {
 };
 
 const PROBLEM: Record<TagProblem, string> = {
+  frozen: 'この組織は凍結されています。支払いの手続きが済むまで変更できません',
   'not-found': 'そのタグは見つかりません',
   'invalid-name': 'タグの名前は1文字以上40文字以内で入れてください',
   'invalid-color': 'その色は選べません',

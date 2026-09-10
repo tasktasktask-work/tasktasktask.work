@@ -45,7 +45,8 @@
         { path: "features/tag/index.html",            label: "タグ", d: 2 },
         { path: "features/notification/index.html",   label: "通知とウォッチ", d: 2 },
         { path: "features/gantt/index.html",          label: "ガントチャート", d: 2 },
-        { path: "features/dashboard/index.html",      label: "担当スレッド一覧", d: 2 }
+        { path: "features/dashboard/index.html",      label: "担当スレッド一覧", d: 2 },
+        { path: "features/billing/index.html",        label: "課金", d: 2 }
       ]
     },
     {
@@ -69,7 +70,9 @@
         { path: "database/tags/index.html",                label: "tags", d: 2 },
         { path: "database/thread_tags/index.html",         label: "thread_tags", d: 2 },
         { path: "database/watches/index.html",             label: "watches", d: 2 },
-        { path: "database/notifications/index.html",       label: "notifications", d: 2 }
+        { path: "database/notifications/index.html",       label: "notifications", d: 2 },
+        { path: "database/billing_invoices/index.html",    label: "billing_invoices", d: 2 },
+        { path: "database/billing_invoice_members/index.html", label: "billing_invoice_members", d: 2 }
       ]
     },
     {
@@ -91,6 +94,7 @@
         { path: "ui/pages/o/[slug]/tags/index.html",         label: "タグ", d: 2 },
       { path: "ui/pages/o/[slug]/settings/index.html",     label: "組織の設定", d: 2 },
         { path: "ui/pages/o/[slug]/dashboard/index.html",    label: "担当スレッド", d: 2 },
+        { path: "ui/pages/o/[slug]/billing/index.html",      label: "支払いと請求", d: 2 },
         { path: "ui/pages/me/index.html",                    label: "アカウント", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/index.html",      label: "スレッド一覧", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/new/index.html",   label: "スレッドを立てる", d: 2 },
@@ -133,21 +137,20 @@
         { path: "issues/audit-log/index.html",                 label: "監査ログ", d: 2 },
         { path: "issues/glossary-examples/index.html",         label: "用例の無い用語", d: 2 },
         { path: "issues/i18n/index.html",                      label: "多言語対応", d: 2 },
-        { path: "issues/billing/index.html",                   label: "課金とプラン", d: 2 },
         { path: "issues/wide-screen-slack/index.html",         label: "広い画面での間延び", d: 2 }
       ]
     },
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 20,
+      sessionTotal: 21,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260909-1911-billing/index.html", label: "2026-09-09 課金を入れる", d: 2 },
         { path: "sessions/20260909-1700-organization-signup/index.html", label: "2026-09-09 組織を作る入口", d: 2 },
         { path: "sessions/20260909-1405-thread-detail-layout/index.html", label: "2026-09-09 詳細画面の並び", d: 2 },
         { path: "sessions/20260909-1145-app-frame-width/index.html", label: "2026-09-09 画面の枠", d: 2 },
-        { path: "sessions/20260908-1847-first-deploy/index.html", label: "2026-09-08 初めての本番反映", d: 2 },
-        { path: "sessions/20260908-1549-gantt/index.html", label: "2026-09-08 ガントチャート", d: 2 }
+        { path: "sessions/20260908-1847-first-deploy/index.html", label: "2026-09-08 初めての本番反映", d: 2 }
       ]
     }
   ];

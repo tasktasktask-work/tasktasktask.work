@@ -2,7 +2,7 @@ import type pg from 'pg';
 import { z } from 'zod';
 import { type Prepared, storeAttachments } from '#features/attachment/store.ts';
 import { notifyUsers, notifyWatchers } from '#features/notification/queries.ts';
-import { THREAD_WRITABLE } from '#features/thread/queries.ts';
+import { threadWritable } from '#features/thread/queries.ts';
 import {
   type OrgScope,
   orgAdminExists,
@@ -184,7 +184,7 @@ export async function postComment(
     const writable = await client.query<{ projectId: string }>(
       `SELECT t.project_id AS "projectId"
          FROM threads t
-        WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
+        WHERE t.id = $3 AND ${threadWritable()}`,
       [scope.organizationId, scope.userId, threadId],
     );
     const thread = writable.rows[0];
@@ -278,7 +278,7 @@ export async function setCommentCheck(
       WHERE c.id = $3
         AND c.organization_id = $1
         AND c.deleted_at IS NULL
-        AND ${THREAD_WRITABLE}`,
+        AND ${threadWritable()}`,
     [scope.organizationId, scope.userId, commentId],
   );
   const found = rows[0];

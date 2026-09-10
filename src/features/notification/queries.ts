@@ -1,6 +1,12 @@
 import type pg from 'pg';
 import { z } from 'zod';
-import { type OrgScope, pool, VISIBLE_PROJECT_IDS, visibleProjectIds } from '#lib/db.ts';
+import {
+  type OrgScope,
+  orgNotFrozen,
+  pool,
+  VISIBLE_PROJECT_IDS,
+  visibleProjectIds,
+} from '#lib/db.ts';
 import { many, one } from '#lib/row.ts';
 
 /* ==========================================================================
@@ -233,6 +239,7 @@ export async function openNotification(
         AND t.id = n.thread_id
         AND t.deleted_at IS NULL
         AND t.project_id IN (${VISIBLE_PROJECT_IDS})
+        AND ${orgNotFrozen('$1')}
     RETURNING p.key AS "projectKey", t.number, n.comment_id AS "commentId"`,
     [scope.organizationId, scope.userId, notificationId],
   );
@@ -257,7 +264,8 @@ export async function markAllRead(scope: OrgScope): Promise<number> {
                 FROM threads t
                WHERE t.id = n.thread_id
                  AND t.deleted_at IS NULL
-                 AND t.project_id IN (${VISIBLE_PROJECT_IDS}))`,
+                 AND t.project_id IN (${VISIBLE_PROJECT_IDS}))
+        AND ${orgNotFrozen('$1')}`,
     [scope.organizationId, scope.userId],
   );
   return result.rowCount ?? 0;
@@ -287,11 +295,21 @@ export async function setWatch(
   watching: boolean,
 ): Promise<WatchChange> {
   if (!watching) {
-    // 外すのは、見えるかどうかに関わらず通す。自分の行を消すだけである。
-    await pool.query(`DELETE FROM watches WHERE thread_id = $1 AND user_id = $2`, [
-      threadId,
-      scope.userId,
-    ]);
+    /*
+     * 外すのは、見えるかどうかに関わらず通す。自分の行を消すだけである。
+     * ただし凍結中は通さない。読むための操作だが、実装としては書き込みで、
+     * 例外を支払いの設定だけに絞ると決めてある。
+     */
+    await pool.query(
+      `DELETE FROM watches w
+         USING threads t
+         WHERE w.thread_id = $3
+           AND w.user_id = $2
+           AND t.id = w.thread_id
+           AND t.organization_id = $1
+           AND ${orgNotFrozen('$1')}`,
+      [scope.organizationId, scope.userId, threadId],
+    );
     return { ok: true };
   }
 
@@ -303,6 +321,7 @@ export async function setWatch(
              AND t.organization_id = $1
              AND t.deleted_at IS NULL
              AND t.project_id IN (${VISIBLE_PROJECT_IDS})
+             AND ${orgNotFrozen('$1')}
      ON CONFLICT DO NOTHING`,
     [scope.organizationId, scope.userId, threadId],
   );

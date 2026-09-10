@@ -99,6 +99,7 @@ const roleForm = slugField.extend({ userId: z.uuid(), role: memberRole });
 
 const MEMBER_PROBLEM: Record<string, string> = {
   forbidden: 'メンバーを操作できるのは組織管理者だけです',
+  frozen: 'この組織は凍結されています。支払いの手続きが済むまで変更できません',
   'not-member': 'その人はこの組織のメンバーではありません',
   'last-admin': '組織管理者がいなくなります。先に別の人を組織管理者にしてください。',
 };

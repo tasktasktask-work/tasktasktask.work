@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>支払いと請求 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../../../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Page Mock &#183; /o/{slug}/billing</p>
+  <h1 class="title">支払いと請求</h1>
+  <p class="lede">
+    一枚で足りる画面である。
+    いまどの状態にいるか、次にいくら請求されるか、これまでいくら払ったか。
+    金額は USD で、税額の行は出ない。
+    カード番号を入れる欄はここに無く、決済代行の画面へ送る。
+  </p>
+
+  <h2>おためし期間中</h2>
+
+  <p>まだ請求は一度も立っていない。
+  期限と、いま登録するとどうなるかだけを出す。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/billing</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="app-org">株式会社アクメ <span class="slug">acme</span></span>
+          <span class="sp"></span>
+          <span class="hanko sm">佐</span>
+          <button class="app-btn ghost">ログアウト</button>
+        </div>
+        <div class="app-shell">
+          <nav class="app-side">
+            <h5>プロジェクト</h5>
+            <a href="#">一覧</a>
+            <h5>組織</h5>
+            <a href="#">メンバー</a>
+            <a href="#">設定</a>
+            <a href="#" class="on">支払い</a>
+          </nav>
+          <div class="app-main">
+            <div class="app-head">
+              <div><h2>支払いと請求</h2><div class="sub">開けるのは組織管理者だけです</div></div>
+            </div>
+
+            <div class="app-props" style="max-width:34rem">
+              <div class="row"><span class="k">状態</span><span class="v"><span class="badge ai">おためし中</span> 残り 52 日</span></div>
+              <div class="row"><span class="k">期限</span><span class="v">2026年10月31日</span></div>
+              <div class="row"><span class="k">人数</span><span class="v">4 人</span></div>
+              <div class="row"><span class="k">単価</span><span class="v">$1.00 / 人 / 月（税込）</span></div>
+              <div class="row"><span class="k">初回請求</span><span class="v">2026年12月1日（11月分）</span></div>
+            </div>
+
+            <div class="app-note">
+              <p style="margin:0">いま支払い方法を登録しても、課金の開始は早まりません。
+              最初に請求するのは 2026年11月分です。</p>
+            </div>
+
+            <p><button class="app-btn">支払い方法を登録する</button></p>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>残り日数を大きく出さない。
+  期限までまだ日があるうちに急かしても、登録は早まらず、画面の印象だけが悪くなる。</p>
+
+  <h2>有効</h2>
+
+  <p>支払い方法があり、未払いも無い状態。
+  ここで見たいのは次にいくら来るかと、これまでの記録である。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/billing</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="app-org">株式会社アクメ <span class="slug">acme</span></span>
+          <span class="sp"></span>
+          <span class="hanko sm">佐</span>
+          <button class="app-btn ghost">ログアウト</button>
+        </div>
+        <div class="app-shell">
+          <nav class="app-side">
+            <h5>プロジェクト</h5>
+            <a href="#">一覧</a>
+            <h5>組織</h5>
+            <a href="#">メンバー</a>
+            <a href="#">設定</a>
+            <a href="#" class="on">支払い</a>
+          </nav>
+          <div class="app-main">
+            <div class="app-head">
+              <div><h2>支払いと請求</h2><div class="sub">開けるのは組織管理者だけです</div></div>
+            </div>
+
+            <div class="app-props" style="max-width:34rem">
+              <div class="row"><span class="k">状態</span><span class="v"><span class="badge midori">有効</span></span></div>
+              <div class="row"><span class="k">カード</span><span class="v">VISA &#183;&#183;&#183;&#183; 4242（2029年3月まで）</span></div>
+              <div class="row"><span class="k">今月</span><span class="v">11 人 &#215; $1.00 = $11.00（税込）</span></div>
+              <div class="row"><span class="k">次回請求</span><span class="v">2027年1月1日（12月分）</span></div>
+            </div>
+
+            <div class="app-note">
+              <p style="margin:0">今月の人数は、月が終わるまで動きます。
+              月の途中で入った人も、抜けた人も、その月はまるごと数えます。</p>
+            </div>
+
+            <p><button class="app-btn ghost">カードと住所を変更する</button></p>
+
+            <h4 class="app-section">請求の記録</h4>
+            <div class="app-people">
+              <div class="app-person">
+                <span class="who"><span class="nm">2026年11月分</span><span class="ad">11 人 &#215; $1.00 &#183; $11.00</span></span>
+                <span class="app-role">支払い済み</span>
+                <a class="app-btn ghost" href="#" onclick="return false">請求書 PDF</a>
+              </div>
+              <div class="app-person">
+                <span class="who"><span class="nm">2026年12月分</span><span class="ad">12 人 &#215; $1.00 &#183; $12.00</span></span>
+                <span class="app-role">支払い済み</span>
+                <a class="app-btn ghost" href="#" onclick="return false">請求書 PDF</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>行をたたむと、その月に数えた人が名前で並ぶ。
+  「先月抜けた人の分が乗っていませんか」という問い合わせに、その場で答えられるようにするためである。
+  名前は請求したときのもので、あとで改名されても変わらない。</p>
+
+  <h2>凍結（おためし期間が切れた）</h2>
+
+  <p>書き込みが止まっている。
+  それでも画面は普段どおり見え、上に帯が出る。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/billing</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="app-org">株式会社アクメ <span class="slug">acme</span></span>
+          <span class="sp"></span>
+          <span class="hanko sm">佐</span>
+          <button class="app-btn ghost">ログアウト</button>
+        </div>
+        <div class="app-shell">
+          <nav class="app-side">
+            <h5>プロジェクト</h5>
+            <a href="#">一覧</a>
+            <h5>組織</h5>
+            <a href="#">メンバー</a>
+            <a href="#">設定</a>
+            <a href="#" class="on">支払い</a>
+          </nav>
+          <div class="app-main">
+            <div class="app-note warn">
+              <p><strong>この組織は凍結されています。</strong>
+              おためし期間が 2026年10月31日 に終わりました。
+              閲覧と添付のダウンロードは、これまでどおり行えます。</p>
+            </div>
+
+            <div class="app-head">
+              <div><h2>支払いと請求</h2><div class="sub">開けるのは組織管理者だけです</div></div>
+            </div>
+
+            <div class="app-props" style="max-width:34rem">
+              <div class="row"><span class="k">状態</span><span class="v"><span class="badge shu">凍結</span> 支払い方法が未登録です</span></div>
+              <div class="row"><span class="k">期限</span><span class="v">2026年10月31日（終了済み）</span></div>
+              <div class="row"><span class="k">人数</span><span class="v">11 人</span></div>
+              <div class="row"><span class="k">再開後</span><span class="v">月 $11.00（税込）から</span></div>
+            </div>
+
+            <p><button class="app-btn">支払い方法を登録して再開する</button></p>
+
+            <div class="app-empty">請求の記録はまだありません</div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>凍結（請求に失敗した）</h2>
+
+  <p>カードは預かっているが、決済が通らなかった状態。
+  解けるのは、未払いが片付いたときだけである。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/billing</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="app-org">株式会社アクメ <span class="slug">acme</span></span>
+          <span class="sp"></span>
+          <span class="hanko sm">佐</span>
+          <button class="app-btn ghost">ログアウト</button>
+        </div>
+        <div class="app-shell">
+          <nav class="app-side">
+            <h5>プロジェクト</h5>
+            <a href="#">一覧</a>
+            <h5>組織</h5>
+            <a href="#">メンバー</a>
+            <a href="#">設定</a>
+            <a href="#" class="on">支払い</a>
+          </nav>
+          <div class="app-main">
+            <div class="app-note warn">
+              <p><strong>この組織は凍結されています。</strong>
+              2027年1月1日 の請求が通りませんでした。
+              閲覧と添付のダウンロードは、これまでどおり行えます。</p>
+            </div>
+
+            <div class="app-head">
+              <div><h2>支払いと請求</h2><div class="sub">開けるのは組織管理者だけです</div></div>
+            </div>
+
+            <div class="app-props" style="max-width:34rem">
+              <div class="row"><span class="k">状態</span><span class="v"><span class="badge shu">凍結</span> 未払いが 1 件あります</span></div>
+              <div class="row"><span class="k">未払い</span><span class="v">2026年12月分 &#183; $12.00</span></div>
+              <div class="row"><span class="k">カード</span><span class="v">VISA &#183;&#183;&#183;&#183; 4242（期限切れ）</span></div>
+            </div>
+
+            <div class="app-note">
+              <p style="margin:0">新しいカードを登録すると、まず未払いのぶんを決済します。
+              通れば、その場で書き込みが元に戻ります。</p>
+            </div>
+
+            <p><button class="app-btn">カードを登録して未払いを支払う</button></p>
+
+            <h4 class="app-section">請求の記録</h4>
+            <div class="app-people">
+              <div class="app-person app-pending">
+                <span class="who"><span class="nm">2026年12月分</span><span class="ad">12 人 &#215; $1.00 &#183; $12.00</span></span>
+                <span class="app-role" data-role="admin">未払い</span>
+                <a class="app-btn ghost" href="#" onclick="return false">請求書 PDF</a>
+              </div>
+              <div class="app-person">
+                <span class="who"><span class="nm">2026年11月分</span><span class="ad">11 人 &#215; $1.00 &#183; $11.00</span></span>
+                <span class="app-role">支払い済み</span>
+                <a class="app-btn ghost" href="#" onclick="return false">請求書 PDF</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>凍結中の、ほかの画面</h2>
+
+  <p>帯はすべてのページの上に出る。
+  そして書き込みの入口が消える。
+  押せないボタンを無効にして残すのではなく、消す。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-frame">
+        <div class="app-top">
+          <span class="app-logo"><span class="m">3</span>TASK3</span>
+          <span class="app-org">株式会社アクメ <span class="slug">acme</span></span>
+          <span class="sp"></span>
+          <span class="hanko sm">田</span>
+          <button class="app-btn ghost">ログアウト</button>
+        </div>
+        <div class="app-shell">
+          <nav class="app-side">
+            <h5>プロジェクト</h5>
+            <a href="#" class="on">一覧</a>
+            <h5>組織</h5>
+            <a href="#">メンバー</a>
+          </nav>
+          <div class="app-main">
+            <div class="app-note warn">
+              <p style="margin:0"><strong>この組織は凍結されています。</strong>
+              書き込みができるのは、支払いの手続きが済んでからです。組織管理者にご連絡ください。</p>
+            </div>
+
+            <div class="app-head">
+              <div><h2>プロジェクト</h2><div class="sub">3 件</div></div>
+            </div>
+
+            <div class="app-projects">
+              <a class="app-project" href="#"><span class="key">WEB</span><span class="nm">コーポレートサイト改修</span><span class="ct">42 スレッド</span></a>
+              <a class="app-project" href="#"><span class="key">APP</span><span class="nm">モバイルアプリ</span><span class="ct">18 スレッド</span></a>
+              <a class="app-project" href="#"><span class="key">OPS</span><span class="nm">社内基盤</span><span class="ct">7 スレッド</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <p>この画面は組織メンバーが見たものである。
+  帯にボタンが無く、サイドバーに「支払い」も「設定」も出ていない。
+  「新しいプロジェクト」のボタンも消えている。</p>
+
+  <div class="note decide">
+    <span class="note-label">帯に新しい CSS を作らない</span>
+    <p>画面の中の短い知らせには <code>.app-note</code> がすでにある。
+    凍結の帯もその形をそのまま使い、注意を示す <code>warn</code> を付けるだけにした。</p>
+    <p>請求の記録も、メンバー一覧と同じ行の並び（<code>.app-people</code>）を使う。
+    この画面のために増える class は無い。</p>
+  </div>
+
+  <h2>関連するページ</h2>
+  <div class="cards">
+    <a class="card" href="../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
+    <a class="card" href="../../../../../features/billing/index.html"><span class="card-no">FEATURE</span><p class="card-title">課金</p><p class="card-desc">状態、判定、請求の作り方</p></a>
+    <a class="card" href="../settings/index.html"><span class="card-no">/settings</span><p class="card-title">組織の設定</p><p class="card-desc">同じく組織管理者だけの画面</p></a>
+    <a class="card" href="../../../../../glossary.html#freeze"><span class="card-no">用語</span><p class="card-title">凍結</p><p class="card-desc">アーカイブとの違い</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>ページモック / /o/{slug}/billing</span>
+    <span>最終更新 2026-09-09</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../../../../sidebar.js" defer></script>
+</body>
+</html>

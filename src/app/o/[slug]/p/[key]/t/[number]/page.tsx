@@ -111,7 +111,8 @@ export default async function ThreadPage({
   ]);
   const viewer = { userId: scope.userId, isOrgAdmin: scope.isOrgAdmin };
   const label = threadLabel(project.key, thread.number);
-  const canWrite = writable(thread);
+  // 凍結中は、畳んだスレッドと同じ扱いになる。書けないが読める
+  const canWrite = writable(thread) && !scope.frozen;
   const target = { slug, projectKey: project.key, number: thread.number };
 
   return (
@@ -259,13 +260,14 @@ export default async function ThreadPage({
             <CommentForm target={target} candidates={candidates} />
           ) : (
             <p className="app-hint">
-              アーカイブされているので、新しいコメントは書けません。
-              すでにあるコメントは読めます。
+              {scope.frozen
+                ? '組織が凍結されているので、新しいコメントは書けません。すでにあるコメントは読めます。'
+                : 'アーカイブされているので、新しいコメントは書けません。すでにあるコメントは読めます。'}
             </p>
           )}
 
           {/* 畳んだプロジェクトの中では、畳むことも戻すこともできない */}
-          {thread.projectArchived ? null : (
+          {thread.projectArchived || scope.frozen ? null : (
             <>
               <h3 className="app-section">アーカイブ</h3>
               <ThreadArchiveForm
@@ -279,7 +281,7 @@ export default async function ThreadPage({
           {/* 畳んだあとにしか消せない。押せない押しボタンを見せて断るより、出さない。
               deleteThread はプロジェクト側のアーカイブを見ないので、
               畳んだプロジェクトの中でも、畳んだスレッドは消せる */}
-          {scope.isOrgAdmin && thread.archived ? (
+          {scope.isOrgAdmin && thread.archived && !scope.frozen ? (
             <>
               <h3 className="app-section">削除</h3>
               <ThreadDeleteForm target={target} label={label} title={thread.title} />
@@ -387,11 +389,21 @@ export default async function ThreadPage({
               </span>
             </div>
 
-            {/* ウォッチは自分あての設定である。畳んだスレッドでも付け外しできる */}
+            {/* ウォッチは自分あての設定である。畳んだスレッドでも付け外しできる。
+                凍結中だけは切り替えられない。読むための操作だが、実装は書き込みで、
+                例外を支払いの設定だけに絞ってある */}
             <div className="row">
               <span className="k">ウォッチ</span>
               <span className="v">
-                <WatchForm target={target} watching={watching} />
+                {scope.frozen ? (
+                  watching ? (
+                    '👁 ウォッチ中'
+                  ) : (
+                    'なし'
+                  )
+                ) : (
+                  <WatchForm target={target} watching={watching} />
+                )}
               </span>
             </div>
 

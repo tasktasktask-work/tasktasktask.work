@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>billing_invoices | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">billing_invoices</h1>
+  <p class="lede">
+    ひと組織のひと月ぶんの請求を、一行で表す。
+    <a href="../../glossary.html#billing-headcount">課金人数</a>を数え直さずに済ませるための、確定した<a href="../../glossary.html#billing-invoice">請求明細</a>である。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+
+  <p>課金人数は <code>organization_members</code> から後追いで計算できる。
+  行に <code>created_at</code> と <code>deleted_at</code> があり、物理削除をしない方針が守られているためである。</p>
+
+  <p>それでも計算し直さない。
+  計算し直す作りにすると、確定した請求の正しさが「過去の行が二度と動かないこと」に依存してしまう。
+  移行の手違いひとつで、請求済みの金額と画面の表示が食い違う。
+  数えた時点の結果をここに固定し、以後は読むだけにする。</p>
+
+  <p>もうひとつの役割が冪等性である。
+  請求の処理は60秒ごとに回るループから起動されるので、同じ月に何度も走りうる。
+  <code>(organization_id, billing_month)</code> の一意索引が、二重の請求を database の側で止める。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE billing_invoices (
+  id                 uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id    uuid        NOT NULL REFERENCES organizations (id),
+  billing_month      date        NOT NULL,
+  member_count       integer     NOT NULL,
+  unit_price         integer     NOT NULL,
+  subtotal           integer     NOT NULL,
+  tax_amount         integer,
+  total_amount       integer,
+  status             text        NOT NULL DEFAULT 'pending',
+  stripe_invoice_id  text,
+  invoice_pdf_url    text,
+  paid_at            timestamptz,
+  failed_at          timestamptz,
+  created_at         timestamptz NOT NULL DEFAULT now(),
+  updated_at         timestamptz NOT NULL DEFAULT now(),
+
+  -- 対象月は必ず月初の日付で持つ。月そのものを表す型が無いため。
+  CONSTRAINT billing_invoices_first_of_month
+    CHECK (extract(day from billing_month) = 1),
+
+  -- 課金人数が 0 の請求は作らない。最後の組織管理者は外せないので 1 以上になる。
+  CONSTRAINT billing_invoices_member_count_positive
+    CHECK (member_count &gt;= 1),
+
+  CONSTRAINT billing_invoices_unit_price_positive
+    CHECK (unit_price &gt;= 1),
+
+  -- 単価を変えても、過去の明細が自分で辻褄を持つ。
+  CONSTRAINT billing_invoices_subtotal_matches
+    CHECK (subtotal = member_count * unit_price),
+
+  CONSTRAINT billing_invoices_status_valid
+    CHECK (status IN ('pending', 'open', 'paid', 'unpaid')),
+
+  -- Stripe に載っていない請求は pending だけ。確定したら必ず ID を持つ。
+  CONSTRAINT billing_invoices_open_has_stripe
+    CHECK (status = 'pending' OR stripe_invoice_id IS NOT NULL),
+
+  CONSTRAINT billing_invoices_paid_has_time
+    CHECK ((status = 'paid') = (paid_at IS NOT NULL))
+);
+
+-- 同じ月を二度請求しない。請求処理の冪等性はここが担保する。
+CREATE UNIQUE INDEX billing_invoices_month_key
+  ON billing_invoices (organization_id, billing_month);
+
+-- 凍結の判定が毎リクエスト走るので、未払いの有無だけを引く索引を置く。
+CREATE INDEX billing_invoices_unpaid
+  ON billing_invoices (organization_id) WHERE status = 'unpaid';
+
+CREATE UNIQUE INDEX billing_invoices_stripe_key
+  ON billing_invoices (stripe_invoice_id) WHERE stripe_invoice_id IS NOT NULL;</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>uuid</td><td>主キー</td></tr>
+      <tr><td><code>organization_id</code></td><td>uuid</td><td>請求先の組織</td></tr>
+      <tr><td><code>billing_month</code></td><td>date</td><td><a href="../../glossary.html#billing-month">課金対象月</a>。月初の日付で持つ。2026年11月分なら <code>2026-11-01</code></td></tr>
+      <tr><td><code>member_count</code></td><td>integer</td><td>その月の課金人数。数え直さないための焼き付け</td></tr>
+      <tr><td><code>unit_price</code></td><td>integer</td><td>そのときの単価。<strong>セント</strong>で持つ（<code>100</code> が $1.00）。値上げしても過去の明細が変わらない</td></tr>
+      <tr><td><code>subtotal</code></td><td>integer</td><td>合計。<code>member_count &#215; unit_price</code></td></tr>
+      <tr><td><code>tax_amount</code></td><td>integer</td><td>税額。いまは常に NULL。税を別に取らない</td></tr>
+      <tr><td><code>total_amount</code></td><td>integer</td><td>Stripe が確定した総額。確定後に書き戻す</td></tr>
+      <tr><td><code>status</code></td><td>text</td><td><code>pending</code> / <code>open</code> / <code>paid</code> / <code>unpaid</code>。後述</td></tr>
+      <tr><td><code>stripe_invoice_id</code></td><td>text</td><td>Stripe 側の請求書。確定するまで NULL</td></tr>
+      <tr><td><code>invoice_pdf_url</code></td><td>text</td><td>請求書 PDF。画面から開く</td></tr>
+      <tr><td><code>paid_at</code></td><td>timestamptz</td><td>入金の時刻。Webhook が書く</td></tr>
+      <tr><td><code>failed_at</code></td><td>timestamptz</td><td>失敗の時刻。<a href="../../glossary.html#freeze">凍結</a>が始まった時刻でもある</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <h2>四つの status</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>値</th><th>意味</th><th>組織への影響</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>pending</code></td><td>行はできたが、Stripe の請求書がまだ無い</td><td>無し</td></tr>
+      <tr><td class="nowrap"><code>open</code></td><td>確定して決済を待っている</td><td>無し</td></tr>
+      <tr><td class="nowrap"><code>paid</code></td><td>入金済み</td><td>無し</td></tr>
+      <tr><td class="nowrap"><code>unpaid</code></td><td>決済に失敗した</td><td><strong>組織が凍結される</strong></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p><code>pending</code> があるのは、途中で落ちた場合のためである。
+  行を作ってから Stripe の請求書を確定するまでのあいだにプロセスが落ちると、この状態で残る。
+  次の実行がこの行を拾って続きから進めるので、請求が消えることも二重になることもない。</p>
+
+  <p><code>unpaid</code> だけが組織の状態に効く。
+  この行がひとつでも残っているあいだ、その組織は凍結されている。</p>
+
+  <div class="note">
+    <span class="note-label">通貨の列を持たない</span>
+    <p>金額はすべて USD のセントである。どの国の組織からも同じ通貨で受け取ると決めたので、
+    行ごとに通貨を持たせていない。</p>
+    <p>この判断は、通貨を増やすまで有効である。
+    増やすときは、過去の行がどの通貨だったかを言えるようにしてから増やすことになる。</p>
+  </div>
+
+  <div class="note">
+    <span class="note-label">削除の列を持たない</span>
+    <p>他のテーブルには <code>deleted_at</code> があるが、ここには置かない。
+    請求を消す操作が存在しないためである。
+    間違えた請求は Stripe 側で無効にし、こちらの行は記録として残す。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">organizations ──&lt; billing_invoices ──&lt; billing_invoice_members &gt;── users</pre>
+
+  <p>請求は組織にぶら下がり、その内訳として対象者がぶら下がる。
+  対象者の側が <code>users</code> を指しているが、表示名は別に焼いてあるので、
+  そのユーザーが名前を変えても明細の見え方は変わらない。</p>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../billing_invoice_members/index.html"><span class="card-no">TABLE</span><p class="card-title">billing_invoice_members</p><p class="card-desc">誰を数えたかの内訳</p></a>
+    <a class="card" href="../organizations/index.html"><span class="card-no">TABLE</span><p class="card-title">organizations</p><p class="card-desc">請求先。おためし期限と免除もここ</p></a>
+    <a class="card" href="../organization_members/index.html"><span class="card-no">TABLE</span><p class="card-title">organization_members</p><p class="card-desc">課金人数を数える元</p></a>
+  </div>
+
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/billing/index.html"><span class="card-no">FEATURE</span><p class="card-title">課金</p><p class="card-desc">おためし期間、凍結、請求</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / billing_invoices</span>
+    <span>最終更新 2026-09-09</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

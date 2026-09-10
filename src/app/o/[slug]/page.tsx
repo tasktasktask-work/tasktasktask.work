@@ -62,7 +62,7 @@ export default async function OrganizationHome({
         </div>
       </div>
 
-      {scope.isOrgAdmin ? <NewProjectForm slug={slug} /> : null}
+      {scope.isOrgAdmin && !scope.frozen ? <NewProjectForm slug={slug} /> : null}
 
       {projects.length === 0 ? (
         <p className="app-empty">

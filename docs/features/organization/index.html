@@ -44,7 +44,7 @@
     <thead><tr><th>役割</th><th>できること</th></tr></thead>
     <tbody>
       <tr><td class="nowrap"><span class="badge shu">組織管理者</span></td>
-          <td>組織設定の変更、メンバーの招待と削除、プロジェクトの作成と削除、非公開プロジェクトの閲覧、<a href="../../glossary.html#soft-delete">論理削除</a>と復元、アカウントロックの手動解除</td></tr>
+          <td>組織設定の変更、メンバーの招待と削除、プロジェクトの作成と削除、非公開プロジェクトの閲覧、<a href="../../glossary.html#soft-delete">論理削除</a>と復元、アカウントロックの手動解除、<a href="../../glossary.html#payment-method">支払い方法</a>の登録と変更</td></tr>
       <tr><td class="nowrap"><span class="badge mute">組織メンバー</span></td>
           <td>公開プロジェクトの閲覧と編集、参加している非公開プロジェクトの閲覧と編集、スレッドとコメントの作成</td></tr>
     </tbody>
@@ -56,6 +56,12 @@
 
   <p>「ゲスト」のような第三の役割は用意しない。
   外部の人に一部だけ見せたい場合は、<a href="../../glossary.html#private-project">非公開プロジェクト</a>で代替する。</p>
+
+  <p>支払いのための役割も作らなかった。
+  請求担当を別に置くと <code>role</code> の意味が増え、招待とメンバー管理の画面すべてに影響する。
+  <a href="../../glossary.html#freeze">凍結</a>された組織で支払いに進めるのは組織管理者だけで、
+  それ以外のメンバーには管理者へ連絡を促す案内が出る。
+  詳しくは<a href="../billing/index.html">課金</a>にある。</p>
 
   <h2>参加は招待だけ</h2>
 

@@ -1,4 +1,5 @@
 import pg from 'pg';
+import { billingMode } from './env.ts';
 import { lazy } from './lazy.ts';
 
 /* ==========================================================================
@@ -97,7 +98,55 @@ export type OrgScope = {
   readonly isOrgAdmin: boolean;
   /** 表示のためのタイムゾーン。organizations.timezone の値。 */
   readonly timezone: string;
+  /**
+   * 凍結されているかどうか。支払いが済んでいない組織は書き込みができない。
+   *
+   * isOrgAdmin と同じく、画面の出し分けのためにここへ載せる。
+   * 書き込みの側はこの値を信用せず、SQL の中で orgNotFrozen を通す。
+   */
+  readonly frozen: boolean;
 };
+
+/* --------------------------------------------------------------------------
+   凍結
+
+   おためし期間が終わっても支払い方法が無い組織と、請求に失敗した組織は
+   書き込みができない。読み取りはすべて残る。
+
+   仕様は docs/features/billing/index.html にある。
+   -------------------------------------------------------------------------- */
+
+/**
+ * 組織が凍結されているという条件。organizations を alias で参照する。
+ *
+ * 状態を列に持たず、リクエストのたびにここで計算する。
+ * 日次で更新する形にすると、日付が変わっても切り替わらない時間帯ができる。
+ */
+export function orgFrozenExpr(alias: string): string {
+  return `(${alias}.billing_exempt = false
+       AND ${alias}.trial_ends_on < (now() AT TIME ZONE ${alias}.timezone)::date
+       AND (${alias}.payment_method_set_at IS NULL
+            OR EXISTS (SELECT 1 FROM billing_invoices bi
+                        WHERE bi.organization_id = ${alias}.id
+                          AND bi.status = 'unpaid')))`;
+}
+
+/**
+ * 凍結されていないことを確かめる断片。書き込みの SQL に足す。
+ *
+ * BILLING_MODE=off のときは判定そのものを行わない。
+ * 呼ばれた時点でモードを読む。読み込みの時点で読むと、
+ * next build がその設定を要求することになる。
+ */
+export function orgNotFrozen(orgParam: string): string {
+  if (billingMode() === 'off') {
+    return 'TRUE';
+  }
+  return `NOT EXISTS (
+        SELECT 1 FROM organizations fo
+         WHERE fo.id = ${orgParam}
+           AND ${orgFrozenExpr('fo')})`;
+}
 
 /**
  * その人が組織に所属していることを確かめる断片。

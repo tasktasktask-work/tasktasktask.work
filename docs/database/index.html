@@ -208,6 +208,20 @@ $$;</code></pre>
     <a class="card" href="notifications/index.html"><span class="card-no">TABLE</span><p class="card-title">notifications</p><p class="card-desc">三つのきっかけと既読状態</p></a>
   </div>
 
+  <h2>課金</h2>
+  <p>請求は組織にぶら下がる。
+  <a href="../glossary.html#billing-headcount">課金人数</a>は <code>organization_members</code> から数えられるが、
+  数えた結果はここへ焼いて、以後は読むだけにする。</p>
+  <div class="cards">
+    <a class="card" href="billing_invoices/index.html"><span class="card-no">TABLE</span><p class="card-title">billing_invoices</p><p class="card-desc">月ごとの請求。一意索引が二重請求を止める</p></a>
+    <a class="card" href="billing_invoice_members/index.html"><span class="card-no">TABLE</span><p class="card-title">billing_invoice_members</p><p class="card-desc">誰を数えたか。当時の表示名ごと残す</p></a>
+  </div>
+
+  <p><a href="../glossary.html#freeze">凍結</a>しているかどうかは列に持たない。
+  <code>organizations</code> の四つの列と、<code>billing_invoices</code> に未払いが残っているかどうかから、
+  リクエストのたびに計算する。
+  日次で状態を更新すると、日付が変わっても切り替わらない時間帯ができる。</p>
+
   <h2>採番のしくみ</h2>
 
   <p><a href="../glossary.html#thread-number">スレッド番号</a>は組織の中で通し番号になる。

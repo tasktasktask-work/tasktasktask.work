@@ -41,6 +41,6 @@ Markdown の仕組みはコメントと共通で、二つ作らない。
 - 詳細画面の書き換えの欄は、読み表示と同じ部品が出す（`ThreadTitle` / `ThreadBody`）。
   隠す役は CSS の `:has()` が持つので、両者が隣り合っていることが前提になる。
   あいだに何かを挟むと、読み表示が消えなくなる
-- `THREAD_WRITABLE` はコメント側とタグ側からも使う。書き写さない
+- `threadWritable()` はコメント側とタグ側からも使う。書き写さない
 - 時刻の表示は `#lib/datetime.ts` を通し、組織のタイムゾーンを渡す
 - import には必ず拡張子を書く（[規約](../../../docs/devops/coding-conventions/index.html#imports)）

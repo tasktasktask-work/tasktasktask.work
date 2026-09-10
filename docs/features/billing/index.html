@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>課金 | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Feature 11</p>
+  <h1 class="title">課金</h1>
+  <p class="lede">
+    組織ごとに、人数ぶんの月額を後払いで、USD で受け取る。
+    払わない組織は書き込みだけが止まり、中身は見え続ける。
+    この二つの決定から、あとの形はほとんど決まった。
+  </p>
+
+  <h2>組織の状態は四つ</h2>
+
+  <p>課金から見ると、<a href="../../glossary.html#organization">組織</a>は四つの状態のどれかにいる。
+  どの状態にいるかは列に書き込まず、リクエストのたびに計算する。
+  日付が変わった瞬間に凍結してほしいので、日次で状態を更新する形は採らなかった。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>状態</th><th>条件</th><th>書き込み</th><th>請求</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><span class="badge ai">おためし中</span></td><td>今日が <code>trial_ends_on</code> 以前</td><td>できる</td><td>しない</td></tr>
+      <tr><td class="nowrap"><span class="badge midori">有効</span></td><td>おためし終了後。支払い方法があり、未払いが無い</td><td>できる</td><td>する</td></tr>
+      <tr><td class="nowrap"><span class="badge shu">凍結</span></td><td>おためし終了後。支払い方法が無いか、未払いがある</td><td>できない</td><td>しない</td></tr>
+      <tr><td class="nowrap"><span class="badge mute">課金免除</span></td><td><code>billing_exempt</code> が真</td><td>できる</td><td>しない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+<pre class="figure">おためし中 ──(翌月末を過ぎる)──▶ 凍結 ──(支払い方法の登録)──▶ 有効
+     │                                ▲                          │
+     └──(先にカードを預ける)──────────┘                          │
+                                      └────(請求に失敗)──────────┘
+
+課金免除 ── CLI でのみ出入りする。請求も凍結も行わない</pre>
+
+  <p>課金免除は他の三つと同じ平面には無い。
+  他の状態を上書きする印で、社内で使う組織、デモ用の組織、支払いの取り決めが特殊な相手に必ず要る。
+  画面からは操作できず、<code>pnpm org:exempt</code> と <code>pnpm org:unexempt</code> でだけ切り替える。</p>
+
+  <h2>おためし期間は翌月末で切る</h2>
+
+  <p><a href="../../glossary.html#trial">おためし期間</a>は、組織を作った日から翌月末までである。
+  9月9日に作った組織なら10月31日まで、9月30日に作った組織も10月31日まで。
+  登録日によって長さが21日から61日まで変わるが、そこは受け入れた。</p>
+
+  <p>長さを揃えるより、終わりを月末に揃えるほうが後段が楽になる。
+  終わりが月末なら、最初の<a href="../../glossary.html#billing-month">課金対象月</a>が月単位できれいに決まるからである。
+  10月31日に終わるなら、最初の課金対象月は11月、最初の請求は12月1日。
+  月の途中で終わると、その月を請求するかどうかという判断が毎回発生する。</p>
+
+  <p>おためし期間中でも<a href="../../glossary.html#payment-method">支払い方法</a>は登録できる。
+  早く登録しても課金の開始は早まらない。</p>
+
+  <h2>課金人数は、その月に在籍した実人数</h2>
+
+  <p>請求の根拠になる数を<a href="../../glossary.html#billing-headcount">課金人数</a>と呼ぶ。
+  対象月のあいだに一度でも在籍した人を、ひとり1と数える。</p>
+
+  <p>月の途中で増えた人も、去った人も、その月はまるごと課金する。
+  日割りをしない代わりに、増減のどちらも同じ扱いにした。
+  按分を入れると、請求額の内訳を説明するために在籍日数の一覧が必要になる。</p>
+
+  <p>招待を送っただけの人は数えない。
+  受諾して <code>organization_members</code> に行ができたときに、はじめて一人になる。</p>
+
+<pre><code>SELECT count(DISTINCT m.user_id)
+  FROM organization_members m
+ WHERE m.organization_id = $1
+   AND m.created_at &lt; $3                                -- 翌月1日 0:00
+   AND (m.deleted_at IS NULL OR m.deleted_at &gt;= $2)     -- 対象月1日 0:00</code></pre>
+
+  <p>境界の日時は組織のタイムゾーンで作る。
+  <code>DISTINCT</code> が要るのは、抜けてから戻った人が行を二つ持つためである。
+  <a href="../../features/organization/index.html">招待の受諾</a>は畳んだ行を起こさず、新しい行を足す作りになっている。</p>
+
+  <div class="note">
+    <span class="note-label">数え直さない</span>
+    <p>この式は過去を数えられるが、請求のたびに走らせることはしない。
+    走らせると、確定した請求の正しさが「過去の行が二度と動かないこと」に依存する。
+    数えた結果は<a href="../../glossary.html#billing-invoice">請求明細</a>（<a href="../../database/billing_invoices/index.html">billing_invoices</a>）に焼き、
+    誰を数えたかは<a href="../../database/billing_invoice_members/index.html">対象者の行</a>に残す。
+    人が抜けたあとも、当時の表示名のまま明細に並ぶ。</p>
+  </div>
+
+  <h2>凍結は組織まるごとの読み取り専用</h2>
+
+  <p><a href="../../glossary.html#freeze">凍結</a>された組織では、読み取りがすべて生き、書き込みがすべて止まる。
+  例外は支払いの設定だけである。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>止まる</th><th>残る</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>スレッドの作成、編集、アーカイブ<br>コメントの投稿<br>添付のアップロード<br>プロジェクトの作成と編集<br>タグの作成と付与<br>メンバーの招待と削除<br>組織設定の変更<br>通知を既読にする<br>チェックボックスの開閉<br>ウォッチの切り替え</td>
+        <td>すべての一覧と詳細の閲覧<br>絞り込みと並べ替え<br>ガントチャート<br>添付のダウンロード<br>支払いの設定<br>請求明細の閲覧</td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>既読もチェックボックスもウォッチも、読むための操作でありながら実装は書き込みである。
+  例外に加えると、次にメンバーの削除を加えたくなり、線を引く場所が無くなる。
+  そのため止める側に置いた。凍結中の組織では、通知が未読のまま溜まる。</p>
+
+  <p>メンバーの削除を止めても人質にはならない。
+  凍結している間は請求そのものが止まっているので、人数を減らして請求を抑える必要がないからである。</p>
+
+  <p>添付のダウンロードを残したのは、持ち出せる状態を保つためである。
+  中身を見られないまま支払いを迫る形にはしない。</p>
+
+  <h3>判定を入れる場所は二つ</h3>
+
+  <p>ひとつめは <code>currentScope()</code> である。
+  <code>/o/{slug}/</code> 配下のすべてのページと、組織スコープを要する Server Action が、例外なくここを通る。
+  ここで組織の課金状態を解決し、<code>OrgScope</code> に <code>frozen</code> として載せる。
+  画面はこの値で書き込みの入口を消し、Server Action は早い段階で断る。</p>
+
+  <p>ふたつめが SQL の中である。
+  <code>OrgScope</code> は呼び出し側で組み立てられるので、書き込みの側はその値を信用しない。
+  この方針は<a href="../../devops/coding-conventions/index.html#trust">コーディング規約</a>にすでにある。</p>
+
+<pre><code>-- src/lib/db.ts に置く断片
+export const ORG_NOT_FROZEN = `NOT EXISTS (
+  SELECT 1 FROM organizations fo
+   WHERE fo.id = $1
+     AND fo.billing_exempt = false
+     AND fo.trial_ends_on &lt; (now() AT TIME ZONE fo.timezone)::date
+     AND (fo.payment_method_set_at IS NULL
+          OR EXISTS (SELECT 1 FROM billing_invoices bi
+                      WHERE bi.organization_id = fo.id
+                        AND bi.status = 'unpaid')))`;</code></pre>
+
+  <p>スレッド、コメント、タグの付与、添付は <code>THREAD_WRITABLE</code> という条件を共有しているので、
+  そこへ <code>AND</code> で足せば四つの機能に一度に効く。
+  プロジェクト、タグの定義、メンバー、組織設定、通知、ウォッチは別の SQL なので、それぞれに足す。</p>
+
+  <div class="note warn">
+    <span class="note-label">アーカイブとは別のもの</span>
+    <p><a href="../../glossary.html#archive">アーカイブ</a>も読み取り専用にする仕組みだが、掛かる粒度が違う。
+    アーカイブはスレッドとプロジェクトに掛かり、凍結は組織に掛かる。
+    理由も違う。アーカイブは終わったものを畳む操作で、凍結は支払いが済んでいない状態の表示である。
+    同じ「読み取り専用」でも、別の語で呼び分ける。</p>
+  </div>
+
+  <h2>請求は毎月1日に、こちらが作る</h2>
+
+  <p>Stripe には顧客と支払い方法だけを預ける。
+  サブスクリプションは使わない。</p>
+
+  <p>使えない理由は座席数の扱いにある。
+  サブスクリプションの座席数は請求時点の値で課金されるので、
+  月の途中で10人から8人に減った組織は8人分になる。
+  日割りを切っても、最後に残った数が請求額を決めるという点は変わらない。
+  月の途中で去った二人ぶんを取る方法が無い。</p>
+
+  <p>そこで月が変わったら、前月分の請求書をこちらで作って確定させる。
+  日付の境目は日本標準時に固定する。
+  請求は事業者側の暦で切るものなので、組織のタイムゾーンによって締め日がずれる形にはしない。</p>
+
+  <p>巡回は日で区切らない。
+  「1日に走らせる」形にすると、その日にアプリが落ちていた月だけ請求が飛ぶ。
+  対象月はいつ走らせても前月なので、月が変わってから最初の一巡が請求を立て、
+  二巡目以降は選ぶ組織が 0 件になる。</p>
+
+<pre class="figure">5分ごとの巡回（対象月は常に前月。JST）
+  │
+  ├─ 対象の組織を選ぶ
+  │    課金免除でない
+  │    trial_ends_on が対象月の1日より前   ← おためし終了月の翌月以降
+  │    いま凍結していない                  ← 請求日の一点で判定する
+  │    その月の請求明細がまだ無い          ← 二度目以降は 0 件になる
+  │
+  ├─ 課金人数を数え、billing_invoices に行を作る（status = pending）
+  │    UNIQUE (organization_id, billing_month) が二重作成を防ぐ
+  │
+  ├─ 対象者を billing_invoice_members へ焼く（user_id と当時の表示名）
+  │
+  └─ Stripe の請求書を作って確定する（冪等キー billing:{org}:{YYYY-MM}）
+       status = open。税額を別に足さないので、金額はここで確定する</pre>
+
+  <h3 id="stuck">詰まった請求を作り直す</h3>
+
+  <p>決済代行に載せられなかった請求は <code>pending</code> のまま残り、次の巡回がもう一度試す。
+  相手が一時的に落ちていただけなら、それで通る。</p>
+
+  <p>通らないのは、渡した内容そのものが間違っている場合である。
+  そのときは<strong>行を作り直すしかない</strong>。
+  冪等キーを請求の行の id から作っているためで、
+  同じ行で作り直しても、決済代行は前回と同じ請求書を返してくる（キーは24時間覚えられている）。
+  内容を直して送っても、返ってくるものは変わらない。</p>
+
+<pre><code>-- 詰まった行と、その内訳を消す。次の巡回が新しい id で作り直す
+DELETE FROM billing_invoice_members
+ WHERE billing_invoice_id IN (SELECT id FROM billing_invoices WHERE status = 'pending');
+DELETE FROM billing_invoices WHERE status = 'pending';</code></pre>
+
+  <p>消してよいのは <code>pending</code> だけである。
+  この状態の行は決済代行に載っていないので、消しても請求の記録は失われない。
+  決済代行の側に残った下書きは、そのまま置いても課金されない。</p>
+
+  <p>一本が詰まっても、巡回そのものは止まらない。
+  一件ずつ守ってあるので、後ろに並んでいる組織の請求は立つ。
+  詰まった数は巡回の記録に「詰まり」として出る。</p>
+
+  <p>手で一度だけ回すこともできる（<code>pnpm billing:run</code>）。
+  普段は要らないが、決済代行と繋いだ直後の疎通を確かめるときと、
+  アプリが長く落ちていたあとに待たずに追いつかせたいときに使う。
+  何度打っても、同じ月の請求は一本しか立たない。</p>
+
+  <p>途中で落ちても壊れないようにしてある。
+  行だけできて Stripe の請求書ができていない状態は <code>status = 'pending'</code> として残り、
+  次の実行がその行を拾って続きから進める。
+  同じ月を二度処理しても、請求は一本しか立たない。</p>
+
+  <h3>請求日の一点だけで判定する</h3>
+
+  <p>凍結は日単位で始まって日単位で解けるのに、請求は月まるごとかゼロかである。
+  この二つを噛み合わせるために、判定する時点を請求日の一点に決めた。</p>
+
+  <div class="note decide">
+    <span class="note-label">請求日に凍結していなければ、その月を満額で請求する</span>
+    <p>おためし期間が10月31日に終わり、11月1日に凍結。11月15日にカードを登録して解除。</p>
+    <p>12月1日の請求日に凍結していないので、11月分を満額（11月の課金人数&#215;$1.00）請求する。
+    前半14日ぶんは差し引かない。</p>
+    <p>12月1日も凍結したままなら、11月分は作らない。あとから遡って請求することもない。</p>
+  </div>
+
+  <p>毎月末にカードを外せば請求日に凍結していることになり、実質ずっと無料で使える。
+  外しているあいだ書き込みが全部止まるので、単価 $1.00 のためにこれを毎月繰り返す動機は薄いと判断した。</p>
+
+  <h3>金額</h3>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>項目</th><th>値</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">単価</td><td>税込 $1.00 / 人 / 月</td></tr>
+      <tr><td class="nowrap">請求額</td><td>課金人数 &#215; $1.00</td></tr>
+      <tr><td class="nowrap">消費税</td><td>別に取らない。単価そのものが税込である</td></tr>
+      <tr><td class="nowrap">通貨</td><td>USD。どの国の組織からも同じ通貨で受け取る</td></tr>
+      <tr><td class="nowrap">保存の単位</td><td>セントの整数。<code>100</code> が $1.00</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>税額を別に取らないのは、<strong>適格請求書発行事業者の登録をしていない</strong>ためである。
+  納めていない税を税として請求する形にはしない。
+  そのため Stripe Tax は使わず、請求書にも消費税額の行が出ない。</p>
+
+  <p>買い手の側は、この請求書では仕入税額控除を全額は受けられない。
+  経過措置で 2029年9月30日 までは一部が控除でき、その割合は下がっていく。
+  ただし 10人の組織でも月 $10 の取引なので、控除しそこねる額は月あたり数十円である。</p>
+
+  <p>金額は<strong>セントの整数</strong>で持つ。USD は小数を二桁持つ通貨で、
+  Stripe に渡す金額もセント単位である。
+  円のような小数を持たない通貨とは、同じ <code>100</code> でも意味が違う。</p>
+
+  <p>請求先の住所は、税の計算に要らなくなった今も集めている。
+  請求書の宛先になり、カード会社の不正検知にも効くためである。</p>
+
+  <h2>支払い方法と、失敗したときの道</h2>
+
+  <p>カード番号がこちらのフォームを通る設計は採らない。
+  登録も変更も Stripe の画面へ送る。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>操作</th><th>行き先</th><th>戻り</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">はじめて登録する</td><td>Stripe Checkout（住所の入力を含む）</td><td><code>/o/{slug}/billing?checkout=done</code></td></tr>
+      <tr><td class="nowrap">カードや住所を変える</td><td>Stripe Customer Portal</td><td><code>/o/{slug}/billing</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Checkout は <code>mode: 'setup'</code> で開く。ここでは課金せず、カードを預かるだけである。
+  アカウントで Managed Payments が有効だとこの mode が弾かれるので、
+  リクエストごとに切ってある。</p>
+
+  <p>登録の完了は Checkout からの戻りでその場で確かめ、<code>payment_method_set_at</code> を立てる。
+  このとき SetupIntent でカードが実際に使えることも確認する。
+  おためし期間が翌月末まである以上、登録から最初の請求まで1ヶ月以上空くことがあり、
+  そのあいだ使えないカードを預かったまま気づかない状態を避けるためである。</p>
+
+  <p>Stripe に自動で追いかけさせない。
+  1回目の失敗で凍結すると決めたので、数日後に勝手に再試行が成功すると、凍結だけが取り残される。
+  請求書を <code>auto_advance: false</code> で作り、決済をこちらから一度だけ呼ぶことで、
+  その経路に入らないようにしてある。ダッシュボード側の設定に依らない。</p>
+
+  <p>請求に失敗した組織は即座に凍結する。
+  失敗した請求は <code>unpaid</code> のまま残り、これが凍結の理由であり続ける。
+  管理者が新しいカードを登録すると、まずその未払いを決済する。
+  成功すれば凍結が解け、失敗すれば凍結のままである。</p>
+
+  <p>凍結の解け方が二つある形になる。
+  支払い方法が無いことによる凍結は登録で解け、未払いによる凍結は決済の成功で解ける。
+  督促はしない。</p>
+
+  <h2>Webhook</h2>
+
+  <p>外部から通信を受ける口は、このプロジェクトでは初めてになる。</p>
+
+<pre><code>POST /api/stripe/webhook
+
+  署名を検証する（STRIPE_WEBHOOK_SECRET）
+  invoice.paid           → billing_invoices を paid にする
+  invoice.payment_failed → unpaid にし、凍結を知らせるメールを送る</code></pre>
+
+  <p>受けるのはこの二つだけで、他は無視する。
+  支払い方法の登録完了は Checkout からの戻りで確かめられるので、Webhook には頼らない。</p>
+
+  <p>同じイベントが二度届いても結果は変わらない。
+  状態がすでに <code>unpaid</code> なら、メールを送り直さない。</p>
+
+  <h2>知らせるメール</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>いつ</th><th>宛先</th><th>きっかけ</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap">おためし終了の7日前</td><td>組織管理者全員</td><td>5分ごとの巡回</td></tr>
+      <tr><td class="nowrap">おためし終了の前日</td><td>組織管理者全員</td><td>5分ごとの巡回</td></tr>
+      <tr><td class="nowrap">おためし切れで凍結した日</td><td>組織管理者全員</td><td>5分ごとの巡回</td></tr>
+      <tr><td class="nowrap">請求に失敗して凍結したとき</td><td>組織管理者全員</td><td>Webhook</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>上の三つは <code>billing_notice_stage</code> という一つの列で重複を防ぐ。
+  0から3へ単調に増えるだけなので、送信済みの記録に別のテーブルを立てずに済む。</p>
+
+  <p>四つめは Webhook から直接送る。
+  一つの請求が失敗するのは一度きりなので、状態が <code>unpaid</code> へ移った瞬間だけ送れば重複しない。</p>
+
+  <p>巡回は通知メールとは別のループで回す。
+  始める場所は同じ（<code>src/instrumentation.ts</code>）で、置き場は増えない。
+  間隔だけが違う。通知は60秒、課金は5分である。</p>
+
+  <p>これらは <code>notifications</code> テーブルには載せない。
+  あのテーブルはスレッドの出来事を伝えるためのもので、宛先も組織のメンバー全員ではない。</p>
+
+  <h2>環境による切り替え</h2>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th><code>BILLING_MODE</code></th><th>ふるまい</th><th>使う場所</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>off</code></td><td>課金の判定をしない。すべての組織が書き込める。請求も走らない。課金の画面は 404</td><td>ローカル開発</td></tr>
+      <tr><td class="nowrap"><code>fake</code></td><td>Stripe を呼ばない。押すとその場で登録済みになる偽のボタンを出す</td><td>E2E</td></tr>
+      <tr><td class="nowrap"><code>stripe</code></td><td>本物の Stripe を使う</td><td>本番</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>メール送信の <code>MAIL_TRANSPORT</code> と同じ形にしてある。
+  作法を増やさないためで、値の検証も同じ場所で行う。</p>
+
+  <p><code>fake</code> があるのは、ブラウザでの試験のためである。
+  凍結された組織で投稿欄が消えていること、帯が出ていること、管理者だけがボタンを見ることは、
+  実際に描画しないと確かめられない。
+  Stripe そのものとの疎通は自動試験の対象にせず、テストキーで手で確かめる。</p>
+
+  <h2>関連する画面</h2>
+
+  <div class="cards">
+    <a class="card" href="../../ui/pages/o/[slug]/billing/index.html"><span class="card-no">/o/{slug}/billing</span><p class="card-title">支払いと請求</p><p class="card-desc">組織管理者だけが開ける。四つの状態</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/index.html"><span class="card-no">/o/{slug}</span><p class="card-title">プロジェクト一覧</p><p class="card-desc">凍結中は帯が出て、作成のボタンが消える</p></a>
+  </div>
+
+  <h2>関連するコンポーネント</h2>
+
+  <p>凍結中の帯は、新しい CSS を持たない。
+  画面の中で使われている <code>.app-note.warn</code> の形をそのまま使う。</p>
+
+  <p>組織管理者には支払いへ進むボタンが付き、それ以外のメンバーには付かない。
+  押せないボタンを見せない、という<a href="../../ui/principles.html">画面の方針</a>に従っている。
+  支払いの画面そのものでは、同じ場所へのボタンを繰り返さず、案内の一文に替える。</p>
+
+  <p>書き込みの入口は無効にせず消す。
+  タグの管理画面のように、消すと読むものまで無くなる場所では、
+  欄を静かな行に置き換える。名前と件数は読めるまま残る。
+  ウォッチの切り替えも同じで、いま付いているかどうかだけが文字で出る。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">組織管理者が見る帯</span></div>
+    <div class="mock-body"><div style="padding:1rem">
+      <div class="app-note warn">
+        <p><strong>この組織は凍結されています。</strong>
+        おためし期間が2026年10月31日に終わりました。閲覧と添付のダウンロードはこれまでどおり行えます。</p>
+        <p style="margin-top:.6rem"><a class="app-btn" href="#" onclick="return false">支払い方法を登録する</a></p>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">組織メンバーが見る帯</span></div>
+    <div class="mock-body"><div style="padding:1rem">
+      <div class="app-note warn">
+        <p><strong>この組織は凍結されています。</strong>
+        書き込みができるのは、支払いの手続きが済んでからです。組織管理者にご連絡ください。</p>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../../database/organizations/index.html"><span class="card-no">TABLE</span><p class="card-title">organizations</p><p class="card-desc">おためし期限、免除、Stripe の顧客</p></a>
+    <a class="card" href="../../database/billing_invoices/index.html"><span class="card-no">TABLE</span><p class="card-title">billing_invoices</p><p class="card-desc">月ごとの請求明細</p></a>
+    <a class="card" href="../../database/billing_invoice_members/index.html"><span class="card-no">TABLE</span><p class="card-title">billing_invoice_members</p><p class="card-desc">誰を数えたかの記録</p></a>
+    <a class="card" href="../../database/organization_members/index.html"><span class="card-no">TABLE</span><p class="card-title">organization_members</p><p class="card-desc">課金人数を数える元</p></a>
+  </div>
+
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">課金の単位であり、支払える人を決める</p></a>
+    <a class="card" href="../notification/index.html"><span class="card-no">FEATURE</span><p class="card-title">通知とウォッチ</p><p class="card-desc">請求の巡回が相乗りするループ</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>機能 / 課金</span>
+    <span>最終更新 2026-09-09</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

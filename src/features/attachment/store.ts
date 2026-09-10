@@ -11,7 +11,7 @@ import { newKey, remove, write } from './storage.ts';
    そちらは comments の挿入と同じ取引の中で走らせたいためである。
 
    queries.ts は書き込みの可否を #features/thread/queries.ts の
-   THREAD_WRITABLE で判定する。その判定を持ったまま
+   threadWritable() で判定する。その判定を持ったまま
    #features/comment/queries.ts から呼ぶと、二つの模組が互いを参照する。
    ここには判定を置かない。呼ぶ側が先に済ませている前提の関数である。
 

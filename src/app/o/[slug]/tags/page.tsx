@@ -53,15 +53,26 @@ export default async function TagsPage({ params }: { params: Promise<{ slug: str
         </div>
       </div>
 
-      <NewTagForm slug={slug} />
+      {/* 凍結中は書けない。押せない欄を見せずに消す */}
+      {scope.frozen ? null : <NewTagForm slug={slug} />}
 
       {tags.length === 0 ? (
         <p className="app-empty">タグはまだありません。</p>
       ) : (
         <div className="app-people">
-          {tags.map((tag) => (
-            <TagRowForms key={tag.id} slug={slug} tag={tag} />
-          ))}
+          {tags.map((tag) =>
+            scope.frozen ? (
+              /* 凍結中は書き換えの欄を出さない。名前と件数は読めるまま残す */
+              <div className="app-person" key={tag.id}>
+                <span className="who">
+                  <span className="nm">{tag.name}</span>
+                  <span className="ad">{tag.usage} 件</span>
+                </span>
+              </div>
+            ) : (
+              <TagRowForms key={tag.id} slug={slug} tag={tag} />
+            ),
+          )}
         </div>
       )}
 

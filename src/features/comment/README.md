@@ -32,7 +32,7 @@
 
 - データにさわる関数は、組織のスコープ（`OrgScope`）を第一引数に取る
 - 閲覧できるプロジェクトの判定は `#lib/db.ts` の `VISIBLE_PROJECT_IDS` を使う。ここに書き写さない
-- 書き込みの条件は `#features/thread/queries.ts` の `THREAD_WRITABLE` を使う。
+- 書き込みの条件は `#features/thread/queries.ts` の `threadWritable()` を使う。
   コメントもチェックも、スレッドと同じ条件で止まる
 - 画面に出す前に必ず `prepare` を通す。
   通さないと、利用者が書いた `<mention>` がこちらのものと区別できなくなる

@@ -110,6 +110,7 @@ async function member(org: Org, role: MemberRole, name = '佐藤 明日香'): Pr
     userId: user,
     isOrgAdmin: role === 'admin',
     timezone: 'Asia/Tokyo',
+    frozen: false,
   };
 }
 
@@ -387,7 +388,13 @@ describe('プロジェクトを作る', () => {
     const outsider = await newUser('外の人');
 
     const result = await createProject(
-      { organizationId: org.id, userId: outsider, isOrgAdmin: true, timezone: 'Asia/Tokyo' },
+      {
+        organizationId: org.id,
+        userId: outsider,
+        isOrgAdmin: true,
+        timezone: 'Asia/Tokyo',
+        frozen: false,
+      },
       { ...input, key: newKey() },
     );
     assert.deepEqual(result, { ok: false, reason: 'forbidden' });

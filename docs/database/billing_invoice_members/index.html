@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>billing_invoice_members | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Table</p>
+  <h1 class="title">billing_invoice_members</h1>
+  <p class="lede">
+    請求のときに数えた人を、ひとりずつ残す。
+    「この金額は誰の分ですか」という問い合わせに答えるためだけの行である。
+  </p>
+
+  <h2>なぜこのテーブルが必要か</h2>
+
+  <p>請求書には人数と金額しか載らない。
+  ところが実際に届く問い合わせは、金額そのものより「先月抜けた人が入っていませんか」という形をとる。</p>
+
+  <p>そのときに <code>organization_members</code> を数え直して答えるわけにはいかない。
+  数え直した結果は、請求した時点の数と一致する保証がない。
+  請求と同じ瞬間に対象者を書き出しておけば、答えは読むだけで済む。</p>
+
+  <p>表示名まで焼くのは、人が名前を変えるからである。
+  <code>user_id</code> だけを残すと、あとで明細を開いたときに当時と違う名前が並ぶ。
+  請求の根拠は、そのときの姿のまま置いておく。</p>
+
+  <h2>DDL</h2>
+<pre><code>CREATE TABLE billing_invoice_members (
+  id                 uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
+  billing_invoice_id uuid        NOT NULL REFERENCES billing_invoices (id),
+  user_id            uuid        NOT NULL REFERENCES users (id),
+  display_name       text        NOT NULL,
+  created_at         timestamptz NOT NULL DEFAULT now(),
+
+  CONSTRAINT billing_invoice_members_name_not_blank
+    CHECK (btrim(display_name) &lt;&gt; '')
+);
+
+-- 同じ人を二度数えない。抜けてから戻った人は所属の行を二つ持つ。
+CREATE UNIQUE INDEX billing_invoice_members_uniq
+  ON billing_invoice_members (billing_invoice_id, user_id);</code></pre>
+
+  <h2>カラム</h2>
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>カラム</th><th>型</th><th>説明</th></tr></thead>
+    <tbody>
+      <tr><td><code>id</code></td><td>uuid</td><td>主キー</td></tr>
+      <tr><td><code>billing_invoice_id</code></td><td>uuid</td><td>どの月の請求か</td></tr>
+      <tr><td><code>user_id</code></td><td>uuid</td><td>数えた人。すでに組織を抜けていることもある</td></tr>
+      <tr><td><code>display_name</code></td><td>text</td><td>請求した時点の表示名。以後は変わらない</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="note">
+    <span class="note-label"><code>updated_at</code> を持たない</span>
+    <p>他のテーブルには <code>updated_at</code> があり、トリガが値を埋めている。
+    ここには置かない。書いたあと二度と変えない行だからである。
+    更新の時刻を持たせると、更新しうるように読めてしまう。</p>
+  </div>
+
+  <div class="note">
+    <span class="note-label">一意索引が二重計上を止める</span>
+    <p>組織を抜けてから招待し直された人は、<code>organization_members</code> に行を二つ持つ。
+    <a href="../../features/organization/index.html">招待の受諾</a>が畳んだ行を起こさず、新しい行を足す作りだからである。</p>
+    <p>数えるクエリの側でも <code>count(DISTINCT user_id)</code> にしているが、
+    書き出す側にも一意索引を置いて二重に止める。
+    片方が壊れても、請求の人数と内訳の行数がずれない。</p>
+  </div>
+
+  <h2>関係</h2>
+<pre class="figure">billing_invoices ──&lt; billing_invoice_members &gt;── users</pre>
+
+  <p><code>users</code> への外部キーは持つが、表示のために辿ることはない。
+  名前は <code>display_name</code> に焼いてあるので、明細を描くのに結合は要らない。
+  外部キーは、実在しない人を数えていないことを database に確かめさせるためだけに置いている。</p>
+
+  <h2>関連するテーブル</h2>
+  <div class="cards">
+    <a class="card" href="../billing_invoices/index.html"><span class="card-no">TABLE</span><p class="card-title">billing_invoices</p><p class="card-desc">月ごとの請求。人数と金額</p></a>
+    <a class="card" href="../users/index.html"><span class="card-no">TABLE</span><p class="card-title">users</p><p class="card-desc">数えた人のアカウント</p></a>
+    <a class="card" href="../organization_members/index.html"><span class="card-no">TABLE</span><p class="card-title">organization_members</p><p class="card-desc">在籍の記録。数える元になる</p></a>
+  </div>
+
+  <h2>関連する機能</h2>
+  <div class="cards">
+    <a class="card" href="../../features/billing/index.html"><span class="card-no">FEATURE</span><p class="card-title">課金</p><p class="card-desc">課金人数の数え方</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>データベース / billing_invoice_members</span>
+    <span>最終更新 2026-09-09</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

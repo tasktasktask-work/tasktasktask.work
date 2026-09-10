@@ -17,7 +17,8 @@
   <h1 class="title">organizations</h1>
   <p class="lede">
     テナントの境界。すべてのデータがこの下に入る。
-    加えて、<a href="../../glossary.html#thread-number">スレッド番号</a>の採番元でもある。
+    加えて、<a href="../../glossary.html#thread-number">スレッド番号</a>の採番元であり、
+    <a href="../../glossary.html#trial">おためし期間</a>の期限を持つ場所でもある。
   </p>
 
   <h2>なぜこのテーブルが必要か</h2>
@@ -34,6 +35,17 @@
   language            text        NOT NULL DEFAULT 'ja',
   timezone            text        NOT NULL DEFAULT 'Asia/Tokyo',
   next_thread_number  integer     NOT NULL DEFAULT 1,
+
+  -- 課金 --------------------------------------------------------------
+  -- 既定値が「翌月末」を返すので、新しい組織にも既存の行にも同じ規則が当たる。
+  trial_ends_on       date        NOT NULL DEFAULT
+    ((date_trunc('month', now() AT TIME ZONE 'Asia/Tokyo')
+      + interval '2 month' - interval '1 day')::date),
+  billing_exempt        boolean     NOT NULL DEFAULT false,
+  stripe_customer_id    text,
+  payment_method_set_at timestamptz,
+  billing_notice_stage  smallint    NOT NULL DEFAULT 0,
+
   deleted_at          timestamptz,
   created_at          timestamptz NOT NULL DEFAULT now(),
   updated_at          timestamptz NOT NULL DEFAULT now(),
@@ -45,11 +57,19 @@
   CONSTRAINT organizations_language_supported
     CHECK (language IN ('ja')),
   CONSTRAINT organizations_next_number_positive
-    CHECK (next_thread_number &gt;= 1)
+    CHECK (next_thread_number &gt;= 1),
+
+  -- 0=未送信 1=7日前 2=前日 3=凍結。単調に増えるだけなので一列で足りる。
+  CONSTRAINT organizations_notice_stage_range
+    CHECK (billing_notice_stage BETWEEN 0 AND 3)
 );
 
 CREATE UNIQUE INDEX organizations_slug_key
-  ON organizations (slug) WHERE deleted_at IS NULL;</code></pre>
+  ON organizations (slug) WHERE deleted_at IS NULL;
+
+-- ひとつの Stripe 顧客が二つの組織に結びつかないようにする。
+CREATE UNIQUE INDEX organizations_stripe_customer_key
+  ON organizations (stripe_customer_id) WHERE stripe_customer_id IS NOT NULL;</code></pre>
 
   <h2>カラム</h2>
   <div class="table-scroll">
@@ -62,6 +82,11 @@ CREATE UNIQUE INDEX organizations_slug_key
       <tr><td><code>language</code></td><td>text</td><td>表示言語。初期リリースでは <code>ja</code> のみ許可する</td></tr>
       <tr><td><code>timezone</code></td><td>text</td><td>日時表示に使う。IANA のタイムゾーン名</td></tr>
       <tr><td><code>next_thread_number</code></td><td>integer</td><td>次に払い出すスレッド番号。行ロックを取って加算する</td></tr>
+      <tr><td><code>trial_ends_on</code></td><td>date</td><td><a href="../../glossary.html#trial">おためし期間</a>の最終日。この日まで無料で書き込める</td></tr>
+      <tr><td><code>billing_exempt</code></td><td>boolean</td><td><a href="../../glossary.html#billing-exempt">課金免除</a>。請求も<a href="../../glossary.html#freeze">凍結</a>も行わない。CLI でのみ切り替える</td></tr>
+      <tr><td><code>stripe_customer_id</code></td><td>text</td><td>Stripe の顧客。支払い方法を登録しようとした時点で作られる</td></tr>
+      <tr><td><code>payment_method_set_at</code></td><td>timestamptz</td><td><a href="../../glossary.html#payment-method">支払い方法</a>を預かった時刻。NULL なら未登録</td></tr>
+      <tr><td><code>billing_notice_stage</code></td><td>smallint</td><td>おためし終了を知らせるメールを、どこまで送ったか</td></tr>
       <tr><td><code>deleted_at</code></td><td>timestamptz</td><td><a href="../../glossary.html#soft-delete">論理削除</a>の時刻</td></tr>
     </tbody>
   </table>
@@ -86,6 +111,18 @@ CREATE UNIQUE INDEX organizations_slug_key
     対応言語を増やすときに CHECK も一緒に更新する、という手順を強制するために制約を置いた。</p>
   </div>
 
+  <div class="note">
+    <span class="note-label">おためし期限の既定値が、移行の手当てを兼ねる</span>
+    <p><code>trial_ends_on</code> の既定値は「今日の属する月の翌月末」を返す。
+    9月に評価すれば10月31日、9月30日でも10月31日である。</p>
+    <p>この式を既定値に置いたことで、列を足す移行がそのまま既存組織への付与になる。
+    すでに動いている組織は、移行を当てた日から翌月末まで書き込みを続けられる。
+    <code>created_at</code> を起点にすると、移行の瞬間にすべての組織が凍結する。</p>
+    <p>タイムゾーンは組織ごとの <code>timezone</code> ではなく日本標準時に固定した。
+    自分の行の他の列を既定値の式から参照できないという事情もあるが、
+    請求を事業者側の暦で切ると決めたこととも揃っている。</p>
+  </div>
+
   <h2>関係</h2>
 <pre class="figure">organizations ──┬─&lt; organization_members &gt;── users
                 ├─&lt; projects
@@ -94,7 +131,8 @@ CREATE UNIQUE INDEX organizations_slug_key
                 ├─&lt; threads        （project 経由でも辿れるが直接も持つ）
                 ├─&lt; comments
                 ├─&lt; attachments
-                └─&lt; notifications</pre>
+                ├─&lt; notifications
+                └─&lt; billing_invoices</pre>
 
   <p>スレッドやコメントは <code>projects</code> を辿れば組織にたどり着ける。
   それでも <code>organization_id</code> を直接持たせているのは、権限判定を結合なしの等値条件で書けるようにするためである。</p>
@@ -104,16 +142,18 @@ CREATE UNIQUE INDEX organizations_slug_key
     <a class="card" href="../organization_members/index.html"><span class="card-no">TABLE</span><p class="card-title">organization_members</p><p class="card-desc">所属と役割</p></a>
     <a class="card" href="../projects/index.html"><span class="card-no">TABLE</span><p class="card-title">projects</p><p class="card-desc">この組織のプロジェクト</p></a>
     <a class="card" href="../threads/index.html"><span class="card-no">TABLE</span><p class="card-title">threads</p><p class="card-desc">number の一意性はここで担保される</p></a>
+    <a class="card" href="../billing_invoices/index.html"><span class="card-no">TABLE</span><p class="card-title">billing_invoices</p><p class="card-desc">月ごとの請求明細</p></a>
   </div>
 
   <h2>関連する機能</h2>
   <div class="cards">
     <a class="card" href="../../features/organization/index.html"><span class="card-no">FEATURE</span><p class="card-title">組織とメンバー</p><p class="card-desc">複数所属、招待、役割</p></a>
+    <a class="card" href="../../features/billing/index.html"><span class="card-no">FEATURE</span><p class="card-title">課金</p><p class="card-desc">おためし期間、凍結、請求</p></a>
   </div>
 
   <div class="sheet-foot">
     <span>データベース / organizations</span>
-    <span>最終更新 2026-09-05</span>
+    <span>最終更新 2026-09-09</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

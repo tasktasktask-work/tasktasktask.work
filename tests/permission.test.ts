@@ -398,6 +398,7 @@ describe('listThreads を通した確認', () => {
         userId,
         isOrgAdmin,
         timezone: 'Asia/Tokyo',
+        frozen: false,
       });
 
       // メンバーには公開だけが見える

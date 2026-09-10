@@ -69,26 +69,31 @@ export default async function ProjectSettingsPage({
         canManage={project.canManage}
       />
 
-      <RenameProjectForm
-        slug={slug}
-        projectKey={project.key}
-        name={project.name}
-        description={project.description}
-      />
+      {/* 凍結中は、この画面から変えられるものが何も無い */}
+      {scope.frozen ? null : (
+        <>
+          <RenameProjectForm
+            slug={slug}
+            projectKey={project.key}
+            name={project.name}
+            description={project.description}
+          />
 
-      <h3 className="app-section">公開設定</h3>
-      <VisibilityForm
-        slug={slug}
-        projectKey={project.key}
-        visibility={project.visibility}
-        memberCount={project.memberCount}
-      />
+          <h3 className="app-section">公開設定</h3>
+          <VisibilityForm
+            slug={slug}
+            projectKey={project.key}
+            visibility={project.visibility}
+            memberCount={project.memberCount}
+          />
 
-      <h3 className="app-section">アーカイブ</h3>
-      <ArchiveForm slug={slug} projectKey={project.key} archived={project.archived} />
+          <h3 className="app-section">アーカイブ</h3>
+          <ArchiveForm slug={slug} projectKey={project.key} archived={project.archived} />
+        </>
+      )}
 
       {/* 削除だけは組織管理者に残してある。押せる人にしか出さない。 */}
-      {scope.isOrgAdmin ? (
+      {scope.isOrgAdmin && !scope.frozen ? (
         <>
           <h3 className="app-section">削除</h3>
           <DeleteForm

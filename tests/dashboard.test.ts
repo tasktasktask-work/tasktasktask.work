@@ -85,6 +85,7 @@ async function member(org: Org, role: MemberRole): Promise<OrgScope> {
     userId: user,
     isOrgAdmin: role === 'admin',
     timezone: 'Asia/Tokyo',
+    frozen: false,
   };
 }
 

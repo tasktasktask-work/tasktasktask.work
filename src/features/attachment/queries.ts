@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { THREAD_WRITABLE } from '#features/thread/queries.ts';
+import { threadWritable } from '#features/thread/queries.ts';
 import {
   type OrgScope,
   orgAdminExists,
@@ -185,7 +185,7 @@ export async function attachToThread(
 
   return transaction(async (client) => {
     const { rowCount } = await client.query(
-      `SELECT 1 FROM threads t WHERE t.id = $3 AND ${THREAD_WRITABLE}`,
+      `SELECT 1 FROM threads t WHERE t.id = $3 AND ${threadWritable()}`,
       [scope.organizationId, scope.userId, threadId],
     );
     if (rowCount !== 1) {
@@ -222,7 +222,7 @@ export async function deleteAttachment(
         AND (a.uploaded_by_user_id = $2 OR ${orgAdminExists('$1', '$2')})
         AND EXISTS (SELECT 1 FROM threads t
                      WHERE t.id = ${OWNER_THREAD}
-                       AND ${THREAD_WRITABLE})
+                       AND ${threadWritable()})
     RETURNING a.storage_key AS "storageKey"`,
     [scope.organizationId, scope.userId, attachmentId],
   );

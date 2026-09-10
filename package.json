@@ -24,6 +24,9 @@
     "schema:hash": "node scripts/atlas.mjs migrate hash --env local",
     "schema:functions": "node --env-file-if-exists=.env scripts/apply-functions.mjs",
     "org:create": "node --experimental-strip-types --env-file-if-exists=.env scripts/create-organization.ts",
+    "org:exempt": "node --experimental-strip-types --env-file-if-exists=.env scripts/exempt-organization.ts --on",
+    "org:unexempt": "node --experimental-strip-types --env-file-if-exists=.env scripts/exempt-organization.ts",
+    "billing:run": "node --experimental-strip-types --env-file-if-exists=.env scripts/run-billing.ts",
     "test": "node --experimental-strip-types --env-file-if-exists=.env --test 'tests/*.test.ts'",
     "e2e": "node --env-file-if-exists=.env node_modules/@playwright/test/cli.js test"
   },
@@ -37,6 +40,7 @@
     "react-dom": "^19.1.0",
     "sharp": "^0.35.4",
     "streamdown": "^2.6.0",
+    "stripe": "^22.6.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {

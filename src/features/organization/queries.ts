@@ -4,9 +4,12 @@ import {
   isUniqueViolation,
   type OrgScope,
   orgAdminExists,
+  orgFrozenExpr,
+  orgNotFrozen,
   pool,
   transaction,
 } from '#lib/db.ts';
+import { billingMode } from '#lib/env.ts';
 import { many, one } from '#lib/row.ts';
 import { checkSlug, type SlugProblem } from './slug.ts';
 
@@ -62,6 +65,7 @@ const scopeRow = z.object({
   organizationId: z.uuid(),
   timezone: z.string(),
   role: memberRole,
+  frozen: z.boolean(),
 });
 
 /**
@@ -74,12 +78,16 @@ const scopeRow = z.object({
  * isOrgAdmin はここで一度だけ決める。
  * ただし書き込みの側はこの値を信用せず、SQL の中でもう一度確かめる。
  * 呼ぶ側が組み立てたスコープを渡せてしまうためである。
+ *
+ * 凍結も同じ扱いにする。ここで一度引いて画面の出し分けに使い、
+ * 書き込みの SQL では orgNotFrozen をもう一度通す。
  */
 export async function resolveScope(userId: string, slug: string): Promise<OrgScope | null> {
   const result = await pool.query(
     `SELECT o.id AS "organizationId",
             o.timezone,
-            m.role
+            m.role,
+            ${orgFrozenExpr('o')} AS frozen
        FROM organizations o
        JOIN organization_members m
          ON m.organization_id = o.id
@@ -100,6 +108,8 @@ export async function resolveScope(userId: string, slug: string): Promise<OrgSco
     userId,
     isOrgAdmin: row.role === 'admin',
     timezone: row.timezone,
+    // BILLING_MODE=off のときは、判定そのものを行わない
+    frozen: billingMode() === 'off' ? false : row.frozen,
   };
 }
 
@@ -236,7 +246,8 @@ export async function renameOrganization(scope: OrgScope, name: string): Promise
         SET name = $3
       WHERE id = $1
         AND deleted_at IS NULL
-        AND ${orgAdminExists('$1', '$2')}`,
+        AND ${orgAdminExists('$1', '$2')}
+        AND ${orgNotFrozen('$1')}`,
     [scope.organizationId, scope.userId, trimmed],
   );
 
@@ -291,7 +302,24 @@ export async function listMembers(scope: OrgScope): Promise<MemberRow[]> {
 
 export type MemberChange =
   | { ok: true }
-  | { ok: false; reason: 'forbidden' | 'not-member' | 'last-admin' };
+  | { ok: false; reason: 'forbidden' | 'not-member' | 'last-admin' | 'frozen' };
+
+/**
+ * 凍結されているかどうかを、トランザクションの中で確かめる。
+ *
+ * 役割の変更とメンバーの削除は、行を掴んでから条件を見る形になっている。
+ * 掴む前に判定を挟むと、掴んだあとに凍結された場合をすり抜ける。
+ */
+async function frozenNow(client: pg.PoolClient, organizationId: string): Promise<boolean> {
+  if (billingMode() === 'off') {
+    return false;
+  }
+  const { rows } = await client.query<{ frozen: boolean }>(
+    `SELECT ${orgFrozenExpr('o')} AS frozen FROM organizations o WHERE o.id = $1`,
+    [organizationId],
+  );
+  return rows[0]?.frozen ?? false;
+}
 
 /**
  * 役割を変える。
@@ -309,6 +337,10 @@ export async function changeMemberRole(
     const admins = await lockAdmins(client, scope);
     if (admins === null) {
       return { ok: false, reason: 'forbidden' };
+    }
+
+    if (await frozenNow(client, scope.organizationId)) {
+      return { ok: false, reason: 'frozen' };
     }
 
     const target = await currentRole(client, scope.organizationId, targetUserId);
@@ -349,6 +381,10 @@ export async function removeMember(
     const admins = await lockAdmins(client, scope);
     if (admins === null) {
       return { ok: false, reason: 'forbidden' };
+    }
+
+    if (await frozenNow(client, scope.organizationId)) {
+      return { ok: false, reason: 'frozen' };
     }
 
     const target = await currentRole(client, scope.organizationId, targetUserId);

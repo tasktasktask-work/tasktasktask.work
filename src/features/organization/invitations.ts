@@ -9,6 +9,7 @@ import {
   isUniqueViolation,
   type OrgScope,
   orgAdminExists,
+  orgNotFrozen,
   pool,
   transaction,
 } from '#lib/db.ts';
@@ -63,7 +64,7 @@ export async function inviteMember(
 
   const outcome = await transaction<InviteResult>(async (client) => {
     const { rows } = await client.query<{ allowed: boolean; member: boolean; name: string }>(
-      `SELECT ${orgAdminExists('$1', '$2')} AS allowed,
+      `SELECT (${orgAdminExists('$1', '$2')} AND ${orgNotFrozen('$1')}) AS allowed,
               EXISTS (
                 SELECT 1
                   FROM organization_members m
@@ -178,7 +179,8 @@ export async function revokeInvitation(
         AND i.organization_id = $1
         AND i.accepted_at IS NULL
         AND i.revoked_at IS NULL
-        AND ${orgAdminExists('$1', '$2')}`,
+        AND ${orgAdminExists('$1', '$2')}
+        AND ${orgNotFrozen('$1')}`,
     [scope.organizationId, scope.userId, invitationId],
   );
   return rowCount === 1 ? { ok: true } : { ok: false, reason: 'not-found' };

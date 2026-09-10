@@ -293,6 +293,65 @@ docker compose up -d</code></pre>
   Next.js の動的ページは <code>Transfer-Encoding: chunked</code> で返る。
   1.0 のままだと本文の終わりが分からず、接続が閉じるまで待つことになる。</p>
 
+  <h2>Stripe を繋ぐ</h2>
+
+  <p>課金を動かすのは <code>BILLING_MODE=stripe</code> のときだけである。
+  <code>off</code> にしてある間は判定そのものを行わず、すべての組織が書き込める。
+  切り替えるのは環境変数ひとつで、<a href="../../features/billing/index.html">課金</a>に詳しい。</p>
+
+  <div class="table-scroll">
+  <table>
+    <thead><tr><th>変数</th><th>中身</th></tr></thead>
+    <tbody>
+      <tr><td class="nowrap"><code>BILLING_MODE</code></td><td><code>off</code> / <code>fake</code> / <code>stripe</code></td></tr>
+      <tr><td class="nowrap"><code>STRIPE_SECRET_KEY</code></td><td>ダッシュボードの「開発者 &gt; API キー」</td></tr>
+      <tr><td class="nowrap"><code>STRIPE_WEBHOOK_SECRET</code></td><td>Webhook の署名の秘密</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <p>Webhook の送り先は <code>https://tasktasktask.work/api/stripe/webhook</code> である。
+  購読するのは <code>invoice.paid</code> と <code>invoice.payment_failed</code> の二つだけでよい。
+  署名を確かめる前には何も読まないし、何も書かない。</p>
+
+  <div class="note warn">
+    <span class="note-label">Managed Payments に弾かれる</span>
+    <p>アカウントで Managed Payments が既定で有効になっていると、
+    支払い方法を預かる画面が作れない。
+    <code>mode: 'setup'</code> は受け付けず、<code>payment</code> か <code>subscription</code> にしろと返る。</p>
+    <p>この実装はどちらにも寄せられない。登録の時点で課金しないので <code>payment</code> ではなく、
+    サブスクリプションも使っていない。預かるのはカードだけである。</p>
+    <p><strong>リクエストごとに切ってある</strong>（<code>managed_payments: { enabled: false }</code>）ので、
+    ダッシュボードの設定を変える必要は無い。
+    アカウント側でも既定を切れるが、そちらに頼っていない。
+    設定が戻された日に、支払いの入口だけが黙って壊れるためである。</p>
+    <p>他の API でも同じ理由で弾かれたときは、まずリクエストの側で切れないかを見る。</p>
+  </div>
+
+  <div class="note">
+    <span class="note-label">自動再試行は、探して切らなくてよい</span>
+    <p>一度の失敗で凍結すると決めてあるので、数日後に再試行が通ると、
+    入金は済んでいるのに凍結だけが残る。これは避けたい。</p>
+    <p>ただし、その心配は<strong>コードの側ですでに閉じている</strong>。
+    請求書を <code>auto_advance: false</code> で作り、決済は <code>invoices.pay()</code> で
+    一度だけ呼ぶので、Stripe が次の試行を予約する経路に入らない。
+    ダッシュボードの Smart Retries はサブスクリプション向けの設定で、
+    この実装はサブスクリプションを使っていない。</p>
+    <p>確かめたいときは、テストカード <code>4000 0000 0000 0341</code> で一度失敗させ、
+    その請求書の「次回の支払い試行日」が空欄であることを見る。
+    日付が入っていたら、そのときに設定を探せばよい。</p>
+    <p>Stripe Tax は使わない。
+    適格請求書発行事業者の登録をしていないので、税を別記した請求書を出さない。
+    単価そのものが税込である。</p>
+    <p>決済は USD で行う。金額はセントの整数で渡す（<code>100</code> が $1.00）。
+    請求先の住所は税の計算には要らないが、請求書の宛先として集めている。</p>
+  </div>
+
+  <p>請求の確定は app の中で 5 分ごとに回る巡回が行う。
+  cron も常駐プロセスも要らない代わりに、
+  <strong>app を二つに増やすと、同じ月を二つの巡回が掴みうる</strong>。
+  通知メールに続いて、増やせない理由がもう一つ増えたことになる。</p>
+
   <h2>バックアップ</h2>
 
   <div class="table-scroll">

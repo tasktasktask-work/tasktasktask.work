@@ -32,7 +32,8 @@ DECLARE
 BEGIN
   FOREACH t IN ARRAY ARRAY[
     'organizations', 'users', 'organization_members',
-    'projects', 'project_members', 'threads', 'tags'
+    'projects', 'project_members', 'threads', 'tags',
+    'billing_invoices'
   ] LOOP
     EXECUTE format('DROP TRIGGER IF EXISTS %I ON %I', t || '_set_updated_at', t);
     EXECUTE format(

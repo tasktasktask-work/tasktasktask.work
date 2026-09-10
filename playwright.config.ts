@@ -56,7 +56,19 @@ export default defineConfig({
            */
           command: 'node scripts/e2e-server.mjs',
           url: `${local}/login`,
-          env: { PORT: String(PORT), HOSTNAME: '0.0.0.0' },
+          /*
+           * 課金は偽物で動かす。Stripe へは出ていかない。
+           * 凍結された組織で投稿欄が消えていることは、描画しないと確かめられない。
+           *
+           * APP_ORIGIN もここへ向ける。決済から戻る先は絶対 URL で組み立てるので、
+           * .env の値のままだと、この試験用サーバーの外へ出ていく。
+           */
+          env: {
+            PORT: String(PORT),
+            HOSTNAME: '0.0.0.0',
+            BILLING_MODE: 'fake',
+            APP_ORIGIN: local,
+          },
           reuseExistingServer: false,
           timeout: 60_000,
           stdout: 'pipe',

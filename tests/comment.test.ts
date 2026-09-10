@@ -102,6 +102,7 @@ async function member(org: Org, role: MemberRole, name = '佐藤 明日香'): Pr
     userId: user,
     isOrgAdmin: role === 'admin',
     timezone: 'Asia/Tokyo',
+    frozen: false,
   };
 }
 

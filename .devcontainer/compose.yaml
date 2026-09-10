@@ -10,8 +10,6 @@ services:
       - .claude:/home/vscode/.claude
       - .claude.json:/home/vscode/.claude.json
       - ..:/workspace
-    env_file:
-      - .env
     networks:
       app-network:
       localhost-postgresql-network:

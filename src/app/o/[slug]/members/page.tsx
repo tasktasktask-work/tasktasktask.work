@@ -51,7 +51,7 @@ export default async function MembersPage({ params }: { params: Promise<{ slug: 
         </div>
       </div>
 
-      {scope.isOrgAdmin ? <InviteForm slug={slug} /> : null}
+      {scope.isOrgAdmin && !scope.frozen ? <InviteForm slug={slug} /> : null}
 
       <div className="app-people">
         {members.map((member) => (
@@ -70,7 +70,7 @@ export default async function MembersPage({ params }: { params: Promise<{ slug: 
               </span>
             ) : null}
 
-            {scope.isOrgAdmin ? (
+            {scope.isOrgAdmin && !scope.frozen ? (
               <>
                 <RoleForm
                   slug={slug}

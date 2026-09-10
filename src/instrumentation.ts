@@ -1,7 +1,7 @@
 /*
  * サーバが立ち上がるときに一度だけ呼ばれる。
  *
- * 通知メールの巡回をここから始める。
+ * 通知メールと課金の巡回をここから始める。
  * デプロイ構成に常駐プロセスも定期実行も無く、
  * 足すとイメージの配り方から見直すことになる。
  * アプリと同じプロセスで回せば、置き場を増やさずに済む。
@@ -17,4 +17,12 @@ export async function register(): Promise<void> {
   }
   const { startNotificationMailLoop } = await import('#features/notification/mailer.ts');
   startNotificationMailLoop();
+
+  /*
+   * 課金の巡回。前月ぶんの請求と、おためし終了の知らせ。
+   * 通知メールとは別の間隔で回すので、ループを分けてある。
+   * 置き場は同じで、BILLING_MODE=off のときは始まらない。
+   */
+  const { startBillingLoop } = await import('#features/billing/monthly.ts');
+  startBillingLoop();
 }

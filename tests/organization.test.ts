@@ -121,7 +121,13 @@ async function scopeOf(org: Org, user: string): Promise<OrgScope> {
 
 /** 呼ぶ側が偽ったスコープ。SQL 側が信用しないことを確かめるために使う。 */
 function fakedAdminScope(org: Org, user: string): OrgScope {
-  return { organizationId: org.id, userId: user, isOrgAdmin: true, timezone: 'Asia/Tokyo' };
+  return {
+    organizationId: org.id,
+    userId: user,
+    isOrgAdmin: true,
+    timezone: 'Asia/Tokyo',
+    frozen: false,
+  };
 }
 
 async function newInvitation(

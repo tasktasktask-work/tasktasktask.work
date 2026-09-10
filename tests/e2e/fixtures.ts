@@ -209,6 +209,39 @@ export async function reap(tag: string): Promise<void> {
 }
 
 /**
+ * 蒔いた組織を凍結させる。
+ *
+ * おためし期限を過ぎたことにするだけである。支払い方法は預けていない。
+ * 画面の側の判定はリクエストのたびに走るので、これで次の一手から凍る。
+ */
+export async function freeze(organizationId: string): Promise<void> {
+  const c = client();
+  await c.connect();
+  try {
+    await c.query(`UPDATE organizations SET trial_ends_on = CURRENT_DATE - 1 WHERE id = $1`, [
+      organizationId,
+    ]);
+  } finally {
+    await c.end();
+  }
+}
+
+/** 組織管理者から降ろす。凍結の帯が役割で変わることを確かめるのに使う。 */
+export async function demote(organizationId: string, userId: string): Promise<void> {
+  const c = client();
+  await c.connect();
+  try {
+    await c.query(
+      `UPDATE organization_members SET role = 'member'
+        WHERE organization_id = $1 AND user_id = $2`,
+      [organizationId, userId],
+    );
+  } finally {
+    await c.end();
+  }
+}
+
+/**
  * 種を蒔いた状態でひとつ試験を走らせ、終わったら消す。
  *
  * 接続先を与えられているときは、この道具を使う試験ごと外す。

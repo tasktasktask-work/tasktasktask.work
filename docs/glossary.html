@@ -41,6 +41,7 @@
     <a class="card" href="#watch"><span class="card-no">06</span><p class="card-title">ウォッチ</p><p class="card-desc">通知を受け取る意思表示</p></a>
     <a class="card" href="#archive"><span class="card-no">07</span><p class="card-title">アーカイブ</p><p class="card-desc">畳んで視界から外す操作</p></a>
     <a class="card" href="#gantt"><span class="card-no">08</span><p class="card-title">ガントチャート</p><p class="card-desc">課題の期間を時間軸に並べた図</p></a>
+    <a class="card" href="#freeze"><span class="card-no">09</span><p class="card-title">凍結</p><p class="card-desc">支払いが済むまで書き込みだけを止める</p></a>
   </div>
 
   <!-- ================================================================= -->
@@ -829,12 +830,12 @@
     そのため、活動中の子を持つアーカイブ済みスレッドは、一覧に読み取り専用として出しておく。
     子だけが宙に浮いて見えなくなる状態を避けるためである。</p>
     <p>プロジェクトをアーカイブすると、配下のスレッドがまとめて読み取り専用になる。
-    こちらは個々のスレッドのアーカイブ状態を書き換えず、プロジェクト単位で凍結する。</p>
+    こちらは個々のスレッドのアーカイブ状態を書き換えず、プロジェクト単位でまとめて読み取り専用にする。</p>
     <div class="dialogue">
       <p><span class="who">PM</span><span>この課題、ガントで枠線だけになってます。消したわけじゃないですよね。</span></p>
       <p><span class="who">開発者</span><span>畳んだ課題です。中身が動いている子がぶら下がっているので、その親としてだけ残しています。</span></p>
     </div>
-    <div class="rel"><span class="rel-label">関連する用語</span><a href="#soft-delete">論理削除</a><a href="#thread">スレッド</a><a href="#project">プロジェクト</a><a href="#progress">進捗率</a><a href="#row-fold">折りたたみ</a></div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#soft-delete">論理削除</a><a href="#thread">スレッド</a><a href="#project">プロジェクト</a><a href="#progress">進捗率</a><a href="#row-fold">折りたたみ</a><a href="#freeze">凍結</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/thread/index.html">スレッド</a>／<a href="features/project/index.html">プロジェクト</a></div>
   </article>
 
@@ -927,6 +928,130 @@
     </div>
     <div class="rel"><span class="rel-label">関連する用語</span><a href="#magic-link">マジックリンク</a><a href="#notification">通知</a></div>
     <div class="rel"><span class="rel-label">関連する機能</span><a href="features/authentication/index.html">認証</a></div>
+  </article>
+
+  <!-- ================================================================= -->
+  <h2>課金</h2>
+
+  <article class="term" id="trial">
+    <h3>おためし期間<span class="reading">trial period</span></h3>
+    <p><a href="#organization">組織</a>を作った日から翌月末までの、料金のかからない期間を<strong>おためし期間</strong>と呼ぶ。
+    9月9日に作った組織も、9月30日に作った組織も、期限は10月31日である。</p>
+    <p>登録した日によって長さが21日から61日まで変わる。
+    それでも終わりを月末に揃えたのは、最初の<a href="#billing-month">課金対象月</a>が月単位で決まるからである。
+    月の途中で終わると、その月を請求するかどうかという判断が毎回発生する。</p>
+    <p>この期間が過ぎても<a href="#payment-method">支払い方法</a>が登録されていなければ、組織は<a href="#freeze">凍結</a>される。
+    期間中に登録しておくこともできるが、課金の開始は早まらない。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>月初に登録したほうが得ってことですか。</span></p>
+      <p><span class="who">開発者</span><span>逆です。月末に作ったほうが長く使えます。終わりが翌月末で固定なので。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#freeze">凍結</a><a href="#billing-month">課金対象月</a><a href="#payment-method">支払い方法</a><a href="#organization">組織</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/billing/index.html">課金</a></div>
+  </article>
+
+  <article class="term" id="freeze">
+    <h3>凍結<span class="reading">freeze</span></h3>
+    <p>組織の書き込みだけが止まり、読み取りがすべて残っている状態を<strong>凍結</strong>と呼ぶ。
+    <a href="#trial">おためし期間</a>が終わっても<a href="#payment-method">支払い方法</a>が無い場合と、請求に失敗した場合に起きる。</p>
+    <p>止まるのはスレッドとコメントの作成、添付のアップロード、メンバーの招待と削除、組織設定の変更である。
+    通知を既読にすることも、チェックボックスを開閉することもできない。
+    どれも読むための操作だが、実装としては書き込みだからである。</p>
+    <p>閲覧、絞り込み、ガントチャート、添付のダウンロードは残る。
+    中身を見られないまま支払いを迫る形にはしない、というのがこの線の引き方の理由である。</p>
+    <p><a href="#archive">アーカイブ</a>も読み取り専用にする仕組みだが、別のものとして扱う。
+    アーカイブはスレッドとプロジェクトに掛かり、凍結は組織まるごとに掛かる。
+    アーカイブは終わったものを畳む操作で、凍結は支払いが済んでいないという状態の表示である。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>凍結されたら、過去の課題も見られなくなるんですか。</span></p>
+      <p><span class="who">開発者</span><span>見られます。ダウンロードもできます。書けなくなるだけです。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#trial">おためし期間</a><a href="#archive">アーカイブ</a><a href="#payment-method">支払い方法</a><a href="#billing-exempt">課金免除</a><a href="#org-admin">組織管理者</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/billing/index.html">課金</a></div>
+  </article>
+
+  <article class="term" id="billing-headcount">
+    <h3>課金人数<span class="reading">billable headcount</span></h3>
+    <p><a href="#billing-month">課金対象月</a>のあいだに一度でも組織に在籍した人の数を<strong>課金人数</strong>と呼ぶ。
+    請求額はこの数に単価を掛けたものである。単価は税込 $1.00 で、通貨はどの国の組織でも USD である。</p>
+    <p>月の途中で増えた人も、去った人も、その月はまるごと数える。
+    日割りをしないので、増える側と減る側を同じ扱いにした。</p>
+    <p><a href="#invitation">招待</a>を送っただけの人は数えない。
+    受諾して所属の行ができたときに、はじめて一人になる。</p>
+    <div class="dialogue">
+      <p><span class="who">経理</span><span>先月20日で辞めた人の分が請求に乗っています。</span></p>
+      <p><span class="who">開発者</span><span>その月に在籍していれば満額です。日割りはしていません。誰を数えたかは請求明細から見られます。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#billing-month">課金対象月</a><a href="#billing-invoice">請求明細</a><a href="#invitation">招待</a><a href="#organization">組織</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/billing/index.html">課金</a>／<a href="features/organization/index.html">組織とメンバー</a></div>
+  </article>
+
+  <article class="term" id="billing-month">
+    <h3>課金対象月<span class="reading">billing month</span></h3>
+    <p>料金の計算の単位になるひと月を<strong>課金対象月</strong>と呼ぶ。
+    請求は後払いで、6月分は7月1日に確定する。</p>
+    <p>最初の課金対象月は、<a href="#trial">おためし期間</a>が終わった月の翌月である。
+    10月31日に終わるなら11月が最初で、その請求は12月1日に立つ。</p>
+    <p>請求日に組織が<a href="#freeze">凍結</a>していれば、その月の請求は作らない。
+    あとから遡って請求することもない。
+    逆に、月の前半だけ凍結していて請求日には解けていれば、その月は満額で請求する。
+    凍結は日単位で動き、請求は月単位でしか動かないので、判定する時点を請求日の一点に決めてある。</p>
+    <div class="dialogue">
+      <p><span class="who">経理</span><span>15日に支払い方法を登録したので、今月は半月分ですよね。</span></p>
+      <p><span class="who">開発者</span><span>満額です。日数では割りません。凍結したまま月をまたいだ場合だけ、その月は請求しません。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#billing-headcount">課金人数</a><a href="#trial">おためし期間</a><a href="#freeze">凍結</a><a href="#billing-invoice">請求明細</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/billing/index.html">課金</a></div>
+  </article>
+
+  <article class="term" id="billing-invoice">
+    <h3>請求明細<span class="reading">invoice record</span></h3>
+    <p>ひと月ぶんの請求を、対象月、<a href="#billing-headcount">課金人数</a>、単価、金額、そして数えた相手ごと記録したものを<strong>請求明細</strong>と呼ぶ。</p>
+    <p>金額はセントの整数で持つ。<code>100</code> が $1.00 である。
+    消費税額の欄は空のままになる。適格請求書発行事業者の登録をしていないので、税を別に取らない。</p>
+    <p>人数はあとから計算し直せる。それでも数えた結果を書き留める。
+    計算し直す作りにすると、確定した請求の正しさが「過去の所属の記録が二度と動かないこと」に依存してしまうからである。</p>
+    <p>数えた相手は、そのときの表示名ごと残す。
+    <a href="#organization">組織</a>を抜けたあとでも、名前を変えたあとでも、明細の見え方は変わらない。</p>
+    <div class="dialogue">
+      <p><span class="who">経理</span><span>3月分の11人が誰なのか、いま確認できますか。</span></p>
+      <p><span class="who">開発者</span><span>できます。当時の名前のまま11人ぶん残っています。もう抜けた人も含めて。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#billing-headcount">課金人数</a><a href="#billing-month">課金対象月</a><a href="#payment-method">支払い方法</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/billing/index.html">課金</a></div>
+  </article>
+
+  <article class="term" id="payment-method">
+    <h3>支払い方法<span class="reading">payment method</span></h3>
+    <p>決済代行に預けたカードを<strong>支払い方法</strong>と呼ぶ。
+    カード番号がこのシステムを通ることはなく、登録も変更も決済代行の画面で行う。</p>
+    <p>預けるのも変えるのも<a href="#org-admin">組織管理者</a>だけである。
+    請求のためだけの役割は作らなかった。
+    管理者は複数人置けるので、ひとりが辞めても支払いが止まらない。</p>
+    <p>登録すると<a href="#freeze">凍結</a>が解ける。
+    ただし未払いが残っている場合は、その決済が通るまで凍結したままである。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>経理の人にカードだけ登録してもらうことはできますか。</span></p>
+      <p><span class="who">開発者</span><span>その人を組織管理者にする必要があります。支払い専用の役割は用意していません。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#freeze">凍結</a><a href="#org-admin">組織管理者</a><a href="#billing-invoice">請求明細</a><a href="#trial">おためし期間</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/billing/index.html">課金</a></div>
+  </article>
+
+  <article class="term" id="billing-exempt">
+    <h3>課金免除<span class="reading">billing exemption</span></h3>
+    <p>請求も<a href="#freeze">凍結</a>も行わないと決めた組織の設定を<strong>課金免除</strong>と呼ぶ。
+    社内で使う組織、デモ用の組織、支払いの取り決めが特殊な相手に使う。</p>
+    <p>画面からは操作できない。手元での実行だけで切り替える。
+    誤って外すと相手の業務がその場で止まるので、実行のたびに組織名を出して確認を求める。</p>
+    <p>期限は付けない。
+    「いつ切れるか」を持たせると、例外を管理するための例外がもう一つ増える。</p>
+    <div class="dialogue">
+      <p><span class="who">PM</span><span>取引先に3ヶ月だけ無償で使ってもらいたいんですが。</span></p>
+      <p><span class="who">開発者</span><span>免除に期限は付けられません。3ヶ月後に手で外す運用になります。</span></p>
+    </div>
+    <div class="rel"><span class="rel-label">関連する用語</span><a href="#freeze">凍結</a><a href="#trial">おためし期間</a><a href="#organization">組織</a></div>
+    <div class="rel"><span class="rel-label">関連する機能</span><a href="features/billing/index.html">課金</a></div>
   </article>
 
   <!-- ================================================================= -->
@@ -1036,7 +1161,7 @@
 
   <div class="sheet-foot">
     <span>TASK3 / 用語集</span>
-    <span>最終更新 2026-09-08</span>
+    <span>最終更新 2026-09-09</span>
     <span>語を足したら本文からのリンクも張ること</span>
   </div>
 
