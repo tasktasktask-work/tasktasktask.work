@@ -1,14 +1,18 @@
 import type { Metadata } from 'next';
 import { formatMoney, UNIT_PRICE } from '#features/billing/plan.ts';
-import { PublicPage, Todo } from '#features/public/PublicPage.tsx';
+import { BUSINESS, ON_REQUEST } from '#features/public/business.ts';
+import { Fact, PublicPage } from '#features/public/PublicPage.tsx';
 
 export const metadata: Metadata = { title: '特定商取引法に基づく表記' };
 
 /*
  * 日本から有料のサービスを売るために要る表記。
  *
- * 事業者の名前や所在地は、こちらでは決められない。
- * Todo で囲んであるところを埋めてから公開すること。
+ * 運営統括責任者・所在地・電話番号は広告に載せず、請求があれば開示する扱いにしている。
+ * そのぶん、請求を受ける窓口（事業者名と連絡先）は必ず出す。
+ * 窓口が無いと「請求により開示」が仕組みとして成り立たない。
+ *
+ * 値は #features/public/business.ts にまとめてある。
  */
 export default function LegalPage() {
   return (
@@ -18,19 +22,13 @@ export default function LegalPage() {
     >
       <div className="app-props">
         <Row k="販売事業者">
-          <Todo>事業者名を記入してください</Todo>
+          <Fact value={BUSINESS.name} label="事業者名" />
         </Row>
-        <Row k="運営統括責任者">
-          <Todo>氏名を記入してください</Todo>
-        </Row>
-        <Row k="所在地">
-          <Todo>所在地を記入してください</Todo>
-        </Row>
+        <Row k="運営統括責任者">{ON_REQUEST}</Row>
+        <Row k="所在地">{ON_REQUEST}</Row>
+        <Row k="電話番号">{ON_REQUEST}</Row>
         <Row k="連絡先">
-          <Todo>メールアドレスを記入してください</Todo>
-        </Row>
-        <Row k="電話番号">
-          <Todo>電話番号を記入してください</Todo>
+          <Fact value={BUSINESS.email} label="メールアドレス" />
         </Row>
         <Row k="販売価格">1人あたり 1ヶ月 {formatMoney(UNIT_PRICE)}（税込）</Row>
         <Row k="対価以外に必要な費用">
@@ -46,6 +44,13 @@ export default function LegalPage() {
         </Row>
         <Row k="動作環境">最新版の Google Chrome、Microsoft Edge、Safari、Firefox</Row>
       </div>
+
+      <h2>請求による開示について</h2>
+
+      <p>
+        運営統括責任者の氏名、所在地、および電話番号は、上記の連絡先へご請求いただければ、
+        遅滞なく書面または電子メールにて開示します。
+      </p>
 
       <h2>無料でお試しいただける期間</h2>
 

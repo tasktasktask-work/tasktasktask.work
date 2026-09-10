@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { PublicPage, Todo } from '#features/public/PublicPage.tsx';
+import { BUSINESS } from '#features/public/business.ts';
+import { Fact, PublicPage } from '#features/public/PublicPage.tsx';
 
 export const metadata: Metadata = { title: 'プライバシーポリシー' };
 
@@ -22,7 +23,7 @@ export default function PrivacyPage() {
     <PublicPage
       title="プライバシーポリシー"
       lede="TASK3 で取り扱う個人情報について、取得するもの、使う目的、預ける先を記載します。"
-      revised={<Todo>公開日を記入してください</Todo>}
+      revised={<Fact value={BUSINESS.publishedOn} label="公開日" />}
     >
       <h2>1. 取得する情報</h2>
 
@@ -76,41 +77,28 @@ export default function PrivacyPage() {
       </p>
 
       <div className="app-props">
-        <div className="row">
-          <span className="k" style={{ width: '9rem' }}>
-            決済
-          </span>
-          <span className="v">
-            Stripe, Inc. — カード情報、請求先の氏名・住所、メールアドレス
-          </span>
-        </div>
-        <div className="row">
-          <span className="k" style={{ width: '9rem' }}>
-            メール送信
-          </span>
-          <span className="v">Cloudflare, Inc. — 宛先のメールアドレス、本文</span>
-        </div>
-        <div className="row">
-          <span className="k" style={{ width: '9rem' }}>
-            サーバー
-          </span>
-          <span className="v">
-            <Todo>利用しているサーバー事業者名を記入してください</Todo> — 本サービスのデータ全般
-          </span>
-        </div>
-        <div className="row">
-          <span className="k" style={{ width: '9rem' }}>
-            書体の配信
-          </span>
-          <span className="v">
-            Google LLC — 画面を表示する際に、閲覧しているブラウザから同社へ接続します
-          </span>
-        </div>
+        <Entrusted
+          what="サーバー"
+          who={<Fact value={BUSINESS.hostingProvider} label="サーバー事業者名" />}
+          where="日本国内"
+        >
+          本サービスのデータ全般
+        </Entrusted>
+        <Entrusted what="決済" who="Stripe, Inc." where="アメリカ合衆国">
+          カード情報、請求先の氏名・住所、メールアドレス
+        </Entrusted>
+        <Entrusted what="メール送信" who="Cloudflare, Inc." where="アメリカ合衆国">
+          宛先のメールアドレス、本文
+        </Entrusted>
+        <Entrusted what="書体の配信" who="Google LLC" where="アメリカ合衆国">
+          画面を表示する際に、閲覧しているブラウザから同社へ接続します
+        </Entrusted>
       </div>
 
       <p>
-        これらの事業者は日本国外にサーバーを置いている場合があります。
-        いずれも、委託した範囲を超えて情報を利用することはありません。
+        本サービスのデータを保管するサーバーは日本国内にあります。
+        決済、メールの送信、書体の配信については、アメリカ合衆国にある事業者へ取り扱いを委託しています。
+        いずれの事業者も、委託した範囲を超えて情報を利用することはありません。
       </p>
 
       <h2>5. 組織の中での見え方</h2>
@@ -159,7 +147,7 @@ export default function PrivacyPage() {
             事業者名
           </span>
           <span className="v">
-            <Todo>事業者名を記入してください</Todo>
+            <Fact value={BUSINESS.name} label="事業者名" />
           </span>
         </div>
         <div className="row">
@@ -167,10 +155,41 @@ export default function PrivacyPage() {
             連絡先
           </span>
           <span className="v">
-            <Todo>メールアドレスを記入してください</Todo>
+            <Fact value={BUSINESS.email} label="メールアドレス" />
           </span>
         </div>
       </div>
     </PublicPage>
+  );
+}
+
+/**
+ * 委託先を一行で出す。
+ *
+ * 所在国まで書くのは、日本国外にある事業者へ預けているものが
+ * どれなのかを、読む側が数えられるようにするためである。
+ */
+function Entrusted({
+  what,
+  who,
+  where,
+  children,
+}: {
+  what: string;
+  who: React.ReactNode;
+  where: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="row">
+      <span className="k" style={{ width: '7rem' }}>
+        {what}
+      </span>
+      <span className="v">
+        <span>
+          {who}（{where}）— {children}
+        </span>
+      </span>
+    </div>
   );
 }

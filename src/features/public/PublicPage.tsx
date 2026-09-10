@@ -64,3 +64,12 @@ export function PublicPage({
 export function Todo({ children }: { children: ReactNode }) {
   return <span className="todo">〔{children}〕</span>;
 }
+
+/**
+ * 事業者の情報を一つ出す。埋まっていなければ印を出す。
+ *
+ * 呼ぶ側で毎回 null を見分けると、片方だけ書き忘れる。
+ */
+export function Fact({ value, label }: { value: string | null; label: string }) {
+  return value === null ? <Todo>{label}を記入してください</Todo> : <>{value}</>;
+}

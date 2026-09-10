@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { formatMoney, UNIT_PRICE } from '#features/billing/plan.ts';
-import { PublicPage, Todo } from '#features/public/PublicPage.tsx';
+import { BUSINESS } from '#features/public/business.ts';
+import { Fact, PublicPage } from '#features/public/PublicPage.tsx';
 
 export const metadata: Metadata = { title: '利用規約' };
 
@@ -12,14 +13,11 @@ export const metadata: Metadata = { title: '利用規約' };
  */
 export default function TermsPage() {
   return (
-    <PublicPage
-      title="利用規約"
-      revised={(<Todo>公開日を記入してください</Todo>) as unknown as string}
-    >
+    <PublicPage title="利用規約" revised={<Fact value={BUSINESS.publishedOn} label="公開日" />}>
       <h2>第1条（適用）</h2>
       <p>
         本規約は、
-        <Todo>事業者名</Todo>
+        <Fact value={BUSINESS.name} label="事業者名" />
         （以下「当社」）が提供する課題管理サービス「TASK3」（以下「本サービス」）の利用条件を定めるものです。
         本サービスをご利用いただく方（以下「利用者」）は、本規約に同意したものとみなします。
       </p>
@@ -110,7 +108,7 @@ export default function TermsPage() {
         </li>
         <li>
           当社は本サービスの内容を変更し、また提供を終了することがあります。終了する場合は、
-          <Todo>予告期間を記入してください（例: 3ヶ月）</Todo>
+          <Fact value={BUSINESS.noticeBeforeShutdown} label="予告期間（例: 3ヶ月）" />
           前までに利用者へ通知し、データを取り出すための期間を設けます。
         </li>
       </ol>
@@ -136,7 +134,7 @@ export default function TermsPage() {
       <h2>第11条（準拠法・裁判管轄）</h2>
       <p>
         本規約は日本法に準拠します。本サービスに関して紛争が生じた場合、
-        <Todo>裁判所名を記入してください（例: 東京地方裁判所）</Todo>
+        <Fact value={BUSINESS.court} label="裁判所名（例: 東京地方裁判所）" />
         を第一審の専属的合意管轄裁判所とします。
       </p>
     </PublicPage>
