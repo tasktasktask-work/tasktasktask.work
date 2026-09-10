@@ -42,9 +42,15 @@
         <div class="app-main">
           <div class="app-head">
             <div><h2>検索基盤の刷新</h2><div class="sub">WEB / 公開 / 19件</div></div>
-            <span style="flex:1"></span>
-            <button class="app-btn">スレッドを立てる</button>
           </div>
+
+          <form class="app-new" onsubmit="return false">
+            <select aria-label="種別">
+              <option>課題</option><option>議論</option><option>質問</option>
+            </select>
+            <input type="text" placeholder="スレッドのタイトル" aria-label="タイトル">
+            <button class="app-btn">立てる</button>
+          </form>
 
           <div class="app-tabs">
             <a href="#" class="on">スレッド</a>
@@ -127,6 +133,24 @@
     </div></div>
   </div>
 
+  <h2>立てる欄</h2>
+
+  <p>見出しとタブのあいだに、種別とタイトルだけの一行がある。
+  ここで立てても画面は変わらない。
+  タイトル欄が空に戻り、選んだ種別はそのまま残るので、続けて何件でも立てられる。</p>
+
+  <p>本文と担当者と期間とタグは、立てた先の画面にある。
+  立てる時点で本文が固まっていないスレッドのほうが多い。
+  <a href="../../../../../../glossary.html#giron">議論</a>と<a href="../../../../../../glossary.html#shitsumon">質問</a>は、
+  何が決まっていないのかを言えないから相談として置くものである。</p>
+
+  <p>立てた番号は欄の下に一行だけ出て、押すと詳細が開く。
+  絞り込みの条件から外れると、立てた行は一覧に出てこない。
+  種別を課題に寄せているときに議論を立てる場合がそれにあたる。
+  条件を勝手に外すと、いま見ていた集合が消えるので、知らせのほうで受ける。</p>
+
+  <p>畳んだプロジェクトと凍結中の組織では、欄そのものを出さない。</p>
+
   <h2>平らに並べる理由</h2>
 
   <p>階層に深さの制限がないため、入れ子で表示すると深いところが読めなくなる。
@@ -186,7 +210,6 @@
   <div class="cards">
     <a class="card" href="../../../../index.html"><span class="card-no">UI</span><p class="card-title">ページモック</p><p class="card-desc">一覧へ戻る</p></a>
     <a class="card" href="t/[number]/index.html"><span class="card-no">PAGE</span><p class="card-title">スレッド詳細</p><p class="card-desc">行をクリックした先</p></a>
-    <a class="card" href="new/index.html"><span class="card-no">PAGE</span><p class="card-title">スレッドを立てる</p><p class="card-desc">右上の押しボタンの先</p></a>
     <a class="card" href="gantt/index.html"><span class="card-no">PAGE</span><p class="card-title">ガント</p><p class="card-desc">同じデータの階層表示</p></a>
     <a class="card" href="settings/index.html"><span class="card-no">PAGE</span><p class="card-title">プロジェクトの設定</p><p class="card-desc">公開設定、アーカイブ、削除</p></a>
     <a class="card" href="members/index.html"><span class="card-no">PAGE</span><p class="card-title">プロジェクトのメンバー</p><p class="card-desc">非公開の顔ぶれ</p></a>
@@ -194,7 +217,7 @@
 
   <div class="sheet-foot">
     <span>UI / スレッド一覧</span>
-    <span>最終更新 2026-09-08</span>
+    <span>最終更新 2026-09-10</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

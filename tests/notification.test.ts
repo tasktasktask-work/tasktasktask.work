@@ -11,7 +11,7 @@ import {
   setWatch,
 } from '#features/notification/queries.ts';
 import type { MemberRole } from '#features/organization/queries.ts';
-import { createThread, setAssignee, setThreadArchived } from '#features/thread/queries.ts';
+import { setAssignee, setThreadArchived } from '#features/thread/queries.ts';
 import { type OrgScope, pool } from '#lib/db.ts';
 
 /*
@@ -324,28 +324,6 @@ describe('担当者から積まれる行', () => {
 
     await setAssignee(admin, thread.id, admin.userId);
     assert.deepEqual(await rowsFor(thread.id), []);
-  });
-
-  it('立てるときに指名しても届く', async () => {
-    const { admin, other, project } = await stage();
-
-    const made = await createThread(admin, project.id, {
-      type: 'kadai',
-      title: '検索APIの実装',
-      body: '',
-      tagIds: [],
-      parentNumber: null,
-      assigneeUserId: other.userId,
-      startsOn: null,
-      endsOn: null,
-    });
-    assert.equal(made.ok, true);
-
-    const { rows } = await pool.query<{ kind: string; user_id: string }>(
-      `SELECT kind, user_id FROM notifications WHERE organization_id = $1`,
-      [admin.organizationId],
-    );
-    assert.deepEqual(rows, [{ kind: 'assigned', user_id: other.userId }]);
   });
 
   it('見えなくなった人は担当者に設定しても届かない', async () => {

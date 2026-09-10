@@ -444,15 +444,7 @@ describe('スレッドを引く', () => {
    -------------------------------------------------------------------------- */
 
 describe('スレッドを立てる', () => {
-  const base = {
-    title: '検索APIの実装',
-    body: '前方一致から始める',
-    parentNumber: null,
-    assigneeUserId: null,
-    startsOn: null,
-    endsOn: null,
-    tagIds: [],
-  };
+  const base = { title: '検索APIの実装', parentNumber: null };
 
   it('プロジェクトが見えていれば、組織管理者でなくても立てられる', async () => {
     const org = await newOrg();
@@ -515,33 +507,6 @@ describe('スレッドを立てる', () => {
     assert.equal(result.ok === false && result.reason, 'invalid-title');
   });
 
-  it('課題以外は期間を持てない', async () => {
-    const org = await newOrg();
-    const admin = await member(org, 'admin');
-    const project = await newProject(org, admin.userId);
-
-    const result = await createThread(admin, project.id, {
-      ...base,
-      type: 'giron',
-      startsOn: '2026-09-01',
-      endsOn: '2026-09-30',
-    });
-    assert.equal(result.ok === false && result.reason, 'period-not-allowed');
-  });
-
-  it('期間は片方だけでは入れられない', async () => {
-    const org = await newOrg();
-    const admin = await member(org, 'admin');
-    const project = await newProject(org, admin.userId);
-
-    const result = await createThread(admin, project.id, {
-      ...base,
-      type: 'kadai',
-      startsOn: '2026-09-01',
-    });
-    assert.equal(result.ok === false && result.reason, 'invalid-period');
-  });
-
   it('親は同じプロジェクトのものに限る', async () => {
     const org = await newOrg();
     const admin = await member(org, 'admin');
@@ -573,18 +538,21 @@ describe('スレッドを立てる', () => {
     assert.equal(result.ok === false && result.reason, 'parent-archived');
   });
 
-  it('組織の外の人は担当者に置けない', async () => {
+  it('立てた直後の本文は空である', async () => {
     const org = await newOrg();
     const admin = await member(org, 'admin');
     const project = await newProject(org, admin.userId);
-    const stranger = await newUser('他社の人');
 
-    const result = await createThread(admin, project.id, {
-      ...base,
-      type: 'kadai',
-      assigneeUserId: stranger,
-    });
-    assert.equal(result.ok === false && result.reason, 'not-org-member');
+    const result = await createThread(admin, project.id, { ...base, type: 'kadai' });
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      // 立てる欄にあるのは種別とタイトルだけである。本文は詳細画面で書く
+      const row = await value<string>(
+        'SELECT body FROM threads WHERE organization_id = $1 AND number = $2',
+        [org.id, result.number],
+      );
+      assert.equal(row, '');
+    }
   });
 });
 
@@ -742,6 +710,19 @@ describe('スレッドを書き換える', () => {
     const result = await setPeriod(admin, thread.id, {
       startsOn: '2026-09-19',
       endsOn: '2026-09-08',
+    });
+    assert.equal(result.ok === false && result.reason, 'invalid-period');
+  });
+
+  it('期間は片方だけでは入れられない', async () => {
+    const org = await newOrg();
+    const admin = await member(org, 'admin');
+    const project = await newProject(org, admin.userId);
+    const thread = await addThread(org, project.id, admin.userId, 'kadai');
+
+    const result = await setPeriod(admin, thread.id, {
+      startsOn: '2026-09-01',
+      endsOn: null,
     });
     assert.equal(result.ok === false && result.reason, 'invalid-period');
   });

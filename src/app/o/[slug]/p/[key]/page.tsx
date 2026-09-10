@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { LoginScreen } from '#features/authentication/LoginScreen.tsx';
 import { OrgShell } from '#features/organization/OrgShell.tsx';
@@ -7,7 +6,7 @@ import { currentScope } from '#features/organization/scope.ts';
 import { ProjectTabs } from '#features/project/ProjectTabs.tsx';
 import { listProjectLinks, resolveProject } from '#features/project/queries.ts';
 import { listProjectTags } from '#features/tag/queries.ts';
-import { newThreadPath } from '#features/thread/path.ts';
+import { QuickThreadForm } from '#features/thread/QuickThreadForm.tsx';
 import { listThreads, type ThreadType } from '#features/thread/queries.ts';
 import { ThreadFilters, type ThreadQuery } from '#features/thread/ThreadFilters.tsx';
 import { ThreadRows } from '#features/thread/ThreadRows.tsx';
@@ -89,14 +88,13 @@ export default async function ProjectThreads({
             {project.kadai + project.giron + project.shitsumon}件
           </div>
         </div>
-        <span style={{ flex: 1 }} />
-        {/* 畳んだプロジェクトと凍結中の組織には足せない。押せない札を出しても仕方がない */}
-        {project.archived || scope.frozen ? null : (
-          <Link className="app-btn" href={newThreadPath(slug, project.key)}>
-            スレッドを立てる
-          </Link>
-        )}
       </div>
+
+      {/* 立てる欄は見出しとタブのあいだに置く。
+          畳んだプロジェクトと凍結中の組織には足せないので、欄ごと出さない */}
+      {project.archived || scope.frozen ? null : (
+        <QuickThreadForm slug={slug} projectKey={project.key} />
+      )}
 
       <ProjectTabs
         slug={slug}

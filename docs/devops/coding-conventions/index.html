@@ -224,13 +224,14 @@ export function startNotificationMailLoop(): void</code></pre>
   <h2 id="module-cycle">互いを呼びそうになったら、判定の無い側を切り出す</h2>
 
   <p>機能が増えると、二つの模組が互いを必要とする場面が出る。
-  タグとスレッドがそうだった。スレッドを立てるときにタグを付けるので
-  <code>#features/thread/queries.ts</code> がタグ側を呼ぶ。
+  タグとスレッドがそうだった。
+  2026-09-10 までは、スレッドを立てるときにタグも付けられたので
+  <code>#features/thread/queries.ts</code> がタグ側を呼んでいた。
   一方でタグ側は、書き込みの可否を判定するために
-  <code>THREAD_WRITABLE</code> を読む。</p>
+  <code>THREAD_WRITABLE</code> を読む。互いを参照する形である。</p>
 
   <p>逃げ道は二つある。判定を書き写すか、書き写さずに済む形へ分けるかである。
-  <a href="#visibility">書き写さない</a>ほうを採る。</p>
+  <a href="#visibility">書き写さない</a>ほうを採った。</p>
 
 <pre><code>src/features/tag/
   queries.ts   THREAD_WRITABLE を読む。判定を持つ側
@@ -240,9 +241,19 @@ src/features/thread/queries.ts
   attach.ts だけを読む</code></pre>
 
   <p>切り出す境目は「判定を持つかどうか」に置く。
-  <code>attach.ts</code> の関数は、呼ぶ側が可否を確かめ終えている前提で書く。
+  切り出した側の関数は、呼ぶ側が可否を確かめ終えている前提で書く。
   そのことを模組の先頭に書いておかないと、
   次に触る人が「ここには判定が無い」を欠落と読む。</p>
+
+  <div class="note">
+    <span class="note-label">いまは輪が無い</span>
+    <p><a href="../../sessions/20260910-0951-quick-thread-create/index.html">立てる欄を一行にした</a>とき、
+    立てると同時にタグを付ける道が消えた。
+    スレッド側からタグ側への呼び出しが一本も無くなったので、
+    <code>attach.ts</code> は <code>tag/queries.ts</code> の中へ畳み戻してある。</p>
+    <p>規約は残す。同じ形は、片方の機能が相手の入口を借りるたびに戻ってくる。
+    子スレッドの作成欄にタグを足せば、この輪もそのまま戻る。</p>
+  </div>
 
   <p>画面の側から読まれるものにも同じ切り分けが要る。
   色見本の定義は <code>colors.ts</code> にある。

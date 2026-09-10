@@ -21,28 +21,6 @@ export function threadPath(
   return `/o/${slug}/p/${key}/t/${number}${anchor}` as Route;
 }
 
-/**
- * スレッドを立てる画面。
- *
- * 種別と親を問い合わせで渡す。
- * 「関連する課題を作成する」から来たときは、親が入った状態で開く。
- */
-export function newThreadPath(
-  slug: string,
-  key: string,
-  options: { type?: string; parent?: number } = {},
-): Route {
-  const query = new URLSearchParams();
-  if (options.type) {
-    query.set('type', options.type);
-  }
-  if (options.parent !== undefined) {
-    query.set('parent', String(options.parent));
-  }
-  const tail = query.size > 0 ? `?${query}` : '';
-  return `/o/${slug}/p/${key}/new${tail}` as Route;
-}
-
 /** WEB-128 の形。表示に使う。 */
 export function threadLabel(projectKey: string, number: number): string {
   return `${projectKey}-${number}`;

@@ -130,12 +130,7 @@ async function newThread(
   const made = await createThread(scope, projectId, {
     type: 'kadai',
     title,
-    body: '',
     parentNumber: null,
-    assigneeUserId: null,
-    startsOn: null,
-    endsOn: null,
-    tagIds: [],
   });
   assert.equal(made.ok, true);
   if (!made.ok) {
@@ -532,23 +527,15 @@ describe('スレッドに付ける', () => {
     assert.deepEqual(await listThreadTags(scope, thread), []);
   });
 
-  it('立てるときに付けられる', async () => {
+  it('付けたタグが一覧の行に出る', async () => {
     const org = await newOrg();
     const scope = await member(org);
     const project = await newProject(org, scope.userId);
     const id = await tag(scope, 'backend');
 
-    const made = await createThread(scope, project.id, {
-      type: 'kadai',
-      title: '検索の要件',
-      body: '',
-      parentNumber: null,
-      assigneeUserId: null,
-      startsOn: null,
-      endsOn: null,
-      tagIds: [id],
-    });
-    assert.equal(made.ok, true);
+    // 立てる欄には種別とタイトルしか無い。タグは立てたあとに付ける
+    const thread = await newThread(scope, project.id, '検索の要件');
+    assert.deepEqual(await setThreadTags(scope, thread, [id]), { ok: true });
 
     const rows = await listThreads(scope, project.id);
     assert.deepEqual(

@@ -97,7 +97,6 @@
         { path: "ui/pages/o/[slug]/billing/index.html",      label: "支払いと請求", d: 2 },
         { path: "ui/pages/me/index.html",                    label: "アカウント", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/index.html",      label: "スレッド一覧", d: 2 },
-        { path: "ui/pages/o/[slug]/p/[key]/new/index.html",   label: "スレッドを立てる", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/members/index.html",  label: "プロジェクトのメンバー", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/settings/index.html", label: "プロジェクトの設定", d: 2 },
         { path: "ui/pages/o/[slug]/p/[key]/t/[number]/index.html", label: "スレッド詳細", d: 2 },
@@ -143,14 +142,14 @@
     {
       /* 直近 5 件まで。溢れた分は削除し、総件数を表示する。 */
       label: "セッション",
-      sessionTotal: 21,
+      sessionTotal: 22,
       items: [
         { path: "sessions/index.html", label: "履歴" },
+        { path: "sessions/20260910-0951-quick-thread-create/index.html", label: "2026-09-10 立てる入口", d: 2 },
         { path: "sessions/20260909-1911-billing/index.html", label: "2026-09-09 課金を入れる", d: 2 },
         { path: "sessions/20260909-1700-organization-signup/index.html", label: "2026-09-09 組織を作る入口", d: 2 },
         { path: "sessions/20260909-1405-thread-detail-layout/index.html", label: "2026-09-09 詳細画面の並び", d: 2 },
-        { path: "sessions/20260909-1145-app-frame-width/index.html", label: "2026-09-09 画面の枠", d: 2 },
-        { path: "sessions/20260908-1847-first-deploy/index.html", label: "2026-09-08 初めての本番反映", d: 2 }
+        { path: "sessions/20260909-1145-app-frame-width/index.html", label: "2026-09-09 画面の枠", d: 2 }
       ]
     }
   ];

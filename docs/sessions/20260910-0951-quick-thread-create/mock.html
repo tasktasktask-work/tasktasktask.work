@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>修正イメージ | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+<style>
+  /* 右の欄だけを切り出して見せるための幅。製品にはこの規則を持ち込まない。
+     .app-new と .p-child-new は docs/theme.css の @shared に入れてあるので、
+     この見本と実際の画面は同じ規則で描かれる */
+  .mk-aside { max-width: 18rem; }
+</style>
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-10 09:51 &#183; 修正イメージ</p>
+  <h1 class="title">立てる欄と、右の欄の並び</h1>
+  <p class="lede">
+    立てるための移動が無くなる。
+    埋めるのは種別とタイトルで、残りは立てた先の画面にある。
+  </p>
+
+  <p><a href="index.html">&larr; セッションへ戻る</a></p>
+
+  <h2>スレッド一覧</h2>
+
+  <p>見出しの右にあった押しボタンが消え、タブの上に一行のフォームが入る。
+  絞り込みの帯とは色で分かれる。
+  絞り込みは紙の地、立てる欄は札の地に朱の縦罫が一本入る。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">https://tasktasktask.work/o/acme/p/WEB</span></div>
+    <div class="mock-body"><div class="mock-inner">
+      <div class="app-top">
+        <span class="app-logo"><span class="m">3</span>TASK3</span>
+        <span class="app-org">株式会社アクメ <span class="slug">acme</span> &#9662;</span>
+        <span class="sp"></span>
+        <span class="app-bell">&#128276;<span class="n">3</span></span>
+        <span class="hanko sm">佐</span>
+      </div>
+      <div class="app-shell">
+        <nav class="app-side">
+          <h5>プロジェクト</h5>
+          <a href="#" class="on"><span class="k">WEB</span>検索基盤の刷新</a>
+          <a href="#"><span class="k">BILL</span>請求まわり</a>
+          <h5>わたし</h5>
+          <a href="#">担当スレッド</a>
+          <a href="#">通知</a>
+        </nav>
+        <div class="app-main">
+          <div class="app-head">
+            <div><h2>検索基盤の刷新</h2><div class="sub">WEB / 公開 / 19件</div></div>
+          </div>
+
+          <form class="app-new" onsubmit="return false">
+            <select aria-label="種別">
+              <option>課題</option><option>議論</option><option>質問</option>
+            </select>
+            <input type="text" placeholder="スレッドのタイトル" aria-label="タイトル">
+            <button class="app-btn">立てる</button>
+          </form>
+
+          <div class="app-tabs">
+            <a href="#" class="on">スレッド</a>
+            <a href="#">ガント</a>
+            <a href="#">メンバー</a>
+            <a href="#">設定</a>
+          </div>
+
+          <div class="app-filters">
+            <select><option>種別 すべて</option><option>課題</option><option>議論</option><option>質問</option></select>
+            <select><option>担当者 すべて</option><option>未設定</option><option>佐藤 明日香</option></select>
+            <select><option>タグ すべて</option><option>backend</option><option>設計</option></select>
+            <label><input type="checkbox"> 完了も表示</label>
+            <label><input type="checkbox"> アーカイブ済みも表示</label>
+            <button class="app-btn ghost">絞り込む</button>
+            <span class="sp"></span>
+            <span style="color:var(--ink-faint);font-family:var(--font-mono);font-size:.7rem">更新の新しい順</span>
+          </div>
+
+          <div class="p-list">
+            <div class="p-row">
+              <span class="p-type" data-type="giron">議論</span>
+              <a class="ttl" href="#">検索の要件をどうするか</a>
+              <span class="p-oc" data-oc="open">オープン</span>
+              <span class="hanko sm">佐</span>
+              <span class="p-id">WEB-3</span>
+              <span class="meta"><span class="p-tag" style="--tag-color:#2c4a75">設計</span><a class="rel-link" href="#">子 2件 &#8594;</a><span>更新 9/4 13:40</span></span>
+            </div>
+            <div class="p-row">
+              <span class="p-type" data-type="kadai">課題</span>
+              <a class="ttl" href="#">検索APIの実装</a>
+              <span class="p-progress"><span class="bar"><span class="fill" style="width:40%"></span></span><span class="num">40%</span></span>
+              <span class="hanko sm">佐</span>
+              <span class="p-id">WEB-7</span>
+              <span class="meta"><span class="p-tag" style="--tag-color:#c8402c">backend</span><a class="rel-link" href="#">&#8592; 親 WEB-3</a><span>9/8 &#8211; 9/19</span></span>
+            </div>
+            <div class="p-row">
+              <span class="p-type" data-type="shitsumon">質問</span>
+              <a class="ttl" href="#">全角の正規化はどこでやっている？</a>
+              <span class="p-oc" data-oc="close">クローズ</span>
+              <span class="hanko sm">鈴</span>
+              <span class="p-id">WEB-9</span>
+              <span class="meta"><a class="rel-link" href="#">&#8592; 親 WEB-7</a><span>更新 9/2 10:05</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+  </div>
+
+  <h2>立てた直後</h2>
+
+  <p>画面は動かない。
+  タイトル欄が空に戻り、選んでいた種別はそのまま残る。
+  立てた番号は欄の下に一行だけ出て、押すと詳細が開く。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">議論を立てた直後</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <form class="app-new" onsubmit="return false">
+        <select aria-label="種別">
+          <option>課題</option><option selected>議論</option><option>質問</option>
+        </select>
+        <input type="text" placeholder="スレッドのタイトル" aria-label="タイトル">
+        <button class="app-btn">立てる</button>
+        <span class="told"><a href="#">WEB-12</a> を立てました</span>
+      </form>
+    </div>
+  </div>
+
+  <p>絞り込みで種別を課題に寄せているときは、いま立てた議論が一覧に出てこない。
+  そのときも同じ知らせが出る。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">課題だけを表示しているとき</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <form class="app-new" onsubmit="return false">
+        <select aria-label="種別">
+          <option>課題</option><option selected>議論</option><option>質問</option>
+        </select>
+        <input type="text" placeholder="スレッドのタイトル" aria-label="タイトル">
+        <button class="app-btn">立てる</button>
+        <span class="told"><a href="#">WEB-12</a> を立てました</span>
+      </form>
+      <div class="app-filters" style="margin-top:.9rem">
+        <select><option selected>課題</option><option>議論</option><option>質問</option></select>
+        <select><option>担当者 すべて</option></select>
+        <select><option>タグ すべて</option></select>
+        <button class="app-btn ghost">絞り込む</button>
+      </div>
+      <div class="p-list">
+        <div class="p-row">
+          <span class="p-type" data-type="kadai">課題</span>
+          <a class="ttl" href="#">検索APIの実装</a>
+          <span class="p-progress"><span class="bar"><span class="fill" style="width:40%"></span></span><span class="num">40%</span></span>
+          <span class="hanko sm">佐</span>
+          <span class="p-id">WEB-7</span>
+          <span class="meta"><span>9/8 &#8211; 9/19</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>入力が空のまま押したときは、同じ位置に断りが出る。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">タイトルが空のとき</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <form class="app-new" onsubmit="return false">
+        <select aria-label="種別"><option>課題</option><option>議論</option><option>質問</option></select>
+        <input type="text" placeholder="スレッドのタイトル" aria-label="タイトル">
+        <button class="app-btn">立てる</button>
+        <span class="err">タイトルを入力してください</span>
+      </form>
+    </div>
+  </div>
+
+  <h2>子スレッドの欄</h2>
+
+  <p>文はいまのままである。
+  3つの語がラジオになっていて、押すとタイトル欄が下に出る。
+  押した語が種別なので、開いた先で選び直すことはない。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">押す前</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <div class="app-aside mk-aside">
+        <section>
+          <h3>子スレッド <span class="n">2</span></h3>
+          <a class="p-child" href="#">
+            <span class="p-type" data-type="shitsumon">質問</span>
+            <span class="ttl">全角の正規化はどこでやっている？</span>
+            <span class="meta"><span class="p-id">WEB-9</span><span class="p-oc" data-oc="open">オープン</span><span class="hanko sm">佐</span></span>
+          </a>
+          <a class="p-child" href="#">
+            <span class="p-type" data-type="kadai">課題</span>
+            <span class="ttl">検索結果のページングを実装する</span>
+            <span class="meta"><span class="p-id">WEB-12</span><span class="p-progress" data-zero="false"><span class="bar"><span class="fill" style="width:20%"></span></span><span class="num">20%</span></span><span class="hanko sm">田</span><span class="badge ki">親からはみ出し</span></span>
+          </a>
+          <div class="foot">
+            <form class="p-child-new" onsubmit="return false">
+              <p class="pick">このスレッドを親にして<br>
+                <input type="radio" name="mk-a" id="mk-a1"><label for="mk-a1">課題</label> /
+                <input type="radio" name="mk-a" id="mk-a2"><label for="mk-a2">議論</label> /
+                <input type="radio" name="mk-a" id="mk-a3"><label for="mk-a3">質問</label> を作成する
+              </p>
+              <div class="compose">
+                <input type="text" placeholder="タイトル" aria-label="タイトル">
+                <button class="app-btn ghost">立てる</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">「議論」を押したあと</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <div class="app-aside mk-aside">
+        <section>
+          <h3>子スレッド <span class="n">2</span></h3>
+          <a class="p-child" href="#">
+            <span class="p-type" data-type="shitsumon">質問</span>
+            <span class="ttl">全角の正規化はどこでやっている？</span>
+            <span class="meta"><span class="p-id">WEB-9</span><span class="p-oc" data-oc="open">オープン</span><span class="hanko sm">佐</span></span>
+          </a>
+          <a class="p-child" href="#">
+            <span class="p-type" data-type="kadai">課題</span>
+            <span class="ttl">検索結果のページングを実装する</span>
+            <span class="meta"><span class="p-id">WEB-12</span><span class="p-progress" data-zero="false"><span class="bar"><span class="fill" style="width:20%"></span></span><span class="num">20%</span></span><span class="hanko sm">田</span></span>
+          </a>
+          <div class="foot">
+            <form class="p-child-new" onsubmit="return false">
+              <p class="pick">このスレッドを親にして<br>
+                <input type="radio" name="mk-b" id="mk-b1"><label for="mk-b1">課題</label> /
+                <input type="radio" name="mk-b" id="mk-b2" checked><label for="mk-b2">議論</label> /
+                <input type="radio" name="mk-b" id="mk-b3"><label for="mk-b3">質問</label> を作成する
+              </p>
+              <div class="compose">
+                <input type="text" placeholder="タイトル" aria-label="タイトル" value="正規化の方針をどこまで揃えるか">
+                <button class="app-btn ghost">立てる</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <h2>右の欄の並び</h2>
+
+  <p>上から、添付を足す欄、属性、親スレッド、子スレッドになる。
+  親は子と同じ形の行で出す。
+  そのすぐ下に、番号で付け替える欄がある。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">スレッド詳細 &#183; 右の欄</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <div class="app-aside mk-aside">
+        <section>
+          <h3>添付を足す</h3>
+          <form class="p-attach-drop" onsubmit="return false">
+            <div class="zone">
+              ここへ落とすか、ファイルを選んでください
+              <input type="file" multiple aria-label="添付するファイル">
+            </div>
+            <p class="note">1ファイル 10.0 MB、一度に合計 30.0 MB まで。形式は問いません</p>
+          </form>
+        </section>
+
+        <div class="app-props">
+          <div class="row"><span class="k">進捗率</span><span class="v">
+            <form onsubmit="return false"><input type="number" value="40" style="width:4.5rem"><span style="font-size:.78rem;color:var(--ink-soft)">%</span><button class="app-btn ghost">保存</button></form>
+          </span></div>
+          <div class="row"><span class="k">担当者</span><span class="v">
+            <form onsubmit="return false"><select><option>未設定</option><option selected>佐藤 明日香</option></select><button class="app-btn ghost">変更</button></form>
+          </span></div>
+          <div class="row"><span class="k">タグ</span><span class="v">
+            <span class="p-tag-pick">
+              <form class="on" onsubmit="return false">
+                <span class="p-tag" style="--tag-color:#c8402c">backend<button aria-label="backend を外す">&#215;</button></span>
+              </form>
+            </span>
+          </span></div>
+          <div class="row"><span class="k">期間</span><span class="v">
+            <form onsubmit="return false"><input type="date" value="2026-09-08" style="width:8.2rem"><input type="date" value="2026-09-19" style="width:8.2rem"><button class="app-btn ghost">保存</button></form>
+          </span></div>
+          <div class="row"><span class="k">ウォッチ</span><span class="v">
+            <form onsubmit="return false"><button class="app-btn ghost">ウォッチする</button></form>
+          </span></div>
+          <div class="row"><span class="k">更新</span><span class="v">
+            <span style="font-family:var(--font-mono);font-size:.74rem">2026-09-09 18:20</span>
+          </span></div>
+        </div>
+
+        <section>
+          <h3>親スレッド</h3>
+          <a class="p-child" href="#">
+            <span class="p-type" data-type="giron">議論</span>
+            <span class="ttl">検索の要件をどうするか</span>
+            <span class="meta"><span class="p-id">WEB-3</span></span>
+          </a>
+          <div class="foot">
+            <form class="p-parent" onsubmit="return false">
+              <input type="text" value="WEB-3" aria-label="親スレッド">
+              <button class="app-btn ghost">保存</button>
+            </form>
+            <p class="app-hint">空にすると親から外れます</p>
+          </div>
+        </section>
+
+        <section>
+          <h3>子スレッド <span class="n">2</span></h3>
+          <a class="p-child" href="#">
+            <span class="p-type" data-type="shitsumon">質問</span>
+            <span class="ttl">全角の正規化はどこでやっている？</span>
+            <span class="meta"><span class="p-id">WEB-9</span><span class="p-oc" data-oc="open">オープン</span><span class="hanko sm">佐</span></span>
+          </a>
+          <a class="p-child" href="#">
+            <span class="p-type" data-type="kadai">課題</span>
+            <span class="ttl">検索結果のページングを実装する</span>
+            <span class="meta"><span class="p-id">WEB-12</span><span class="p-progress" data-zero="false"><span class="bar"><span class="fill" style="width:20%"></span></span><span class="num">20%</span></span><span class="hanko sm">田</span><span class="badge ki">親からはみ出し</span></span>
+          </a>
+          <div class="foot">
+            <form class="p-child-new" onsubmit="return false">
+              <p class="pick">このスレッドを親にして<br>
+                <input type="radio" name="mk-c" id="mk-c1"><label for="mk-c1">課題</label> /
+                <input type="radio" name="mk-c" id="mk-c2"><label for="mk-c2">議論</label> /
+                <input type="radio" name="mk-c" id="mk-c3"><label for="mk-c3">質問</label> を作成する
+              </p>
+              <div class="compose">
+                <input type="text" placeholder="タイトル" aria-label="タイトル">
+                <button class="app-btn ghost">立てる</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <p>親が居ないスレッドでは、行の代わりに「なし」が出る。
+  付け替えの欄はそのままで、番号を入れれば親が付く。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">親が居ないとき</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <div class="app-aside mk-aside">
+        <section>
+          <h3>親スレッド</h3>
+          <div class="foot" style="color:var(--ink-faint);font-size:.8rem">なし</div>
+          <div class="foot">
+            <form class="p-parent" onsubmit="return false">
+              <input type="text" placeholder="WEB-3" aria-label="親スレッド">
+              <button class="app-btn ghost">保存</button>
+            </form>
+          </div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <p>アーカイブ済みのスレッドと、凍結中の組織では、立てる欄も付け替えの欄も出ない。
+  <a href="../../ui/principles.html">できない操作は消す</a>という方針のままである。</p>
+
+  <div class="sheet-foot">
+    <span>セッション / 立てる入口を、一覧の中へ</span>
+    <span>修正イメージ</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

@@ -1,5 +1,6 @@
 import Link from 'next/link';
-import { newThreadPath, threadLabel, threadPath } from './path.ts';
+import { ChildThreadForm } from './ChildThreadForm.tsx';
+import { threadLabel, threadPath } from './path.ts';
 import type { ThreadRow, ThreadType } from './queries.ts';
 
 /*
@@ -96,31 +97,7 @@ export function ThreadChildren({
       {/* 番号を書き写させない。書き写さない人が出て、親子が切れる */}
       {canWrite ? (
         <div className="foot">
-          <p className="app-hint">
-            このスレッドを親にして
-            <br />
-            <Link
-              href={newThreadPath(slug, projectKey, { type: 'kadai', parent: parentNumber })}
-            >
-              課題
-            </Link>
-            {' / '}
-            <Link
-              href={newThreadPath(slug, projectKey, { type: 'giron', parent: parentNumber })}
-            >
-              議論
-            </Link>
-            {' / '}
-            <Link
-              href={newThreadPath(slug, projectKey, {
-                type: 'shitsumon',
-                parent: parentNumber,
-              })}
-            >
-              質問
-            </Link>
-            {' を作成する'}
-          </p>
+          <ChildThreadForm slug={slug} projectKey={projectKey} parentNumber={parentNumber} />
         </div>
       ) : null}
     </section>

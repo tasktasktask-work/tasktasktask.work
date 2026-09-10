@@ -10,7 +10,7 @@ import { currentScope } from '#features/organization/scope.ts';
 import { ProjectTabs } from '#features/project/ProjectTabs.tsx';
 import { projectPath } from '#features/project/path.ts';
 import { listProjectLinks, resolveProject } from '#features/project/queries.ts';
-import { newThreadPath, threadLabel, threadPath } from '#features/thread/path.ts';
+import { threadLabel, threadPath } from '#features/thread/path.ts';
 import { todayIn } from '#lib/datetime.ts';
 
 /**
@@ -87,10 +87,12 @@ export default async function ProjectGantt({
     return shell(
       <p className="app-empty">
         このプロジェクトにはまだ課題がありません。
+        {/* ここには立てる欄を置かない。
+            期間の無い課題はガントに出ないので、立てた結果がこの画面に現れない */}
         {project.archived ? null : (
           <>
             {' '}
-            <Link href={newThreadPath(slug, project.key, { type: 'kadai' })}>課題を立てる</Link>
+            <Link href={projectPath(slug, project.key)}>スレッド一覧で課題を立てる</Link>
           </>
         )}
       </p>,

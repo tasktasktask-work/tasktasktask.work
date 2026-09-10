@@ -9,8 +9,8 @@
 
 - タグの作成、名前と色の変更、削除（`queries.ts`）
 - 色見本（`colors.ts`）。画面の側でも読むので、`pg` を持ち込まない
-- スレッドへの結び付け（`attach.ts`）
-- 属性欄と管理画面（`TagPicker.tsx` / `TagAdmin.tsx` / `TagBoxes.tsx`）
+- スレッドへの結び付け（`queries.ts` の `attachTagsTo`）
+- 属性欄と管理画面（`TagPicker.tsx` / `TagAdmin.tsx`）
 
 ## 決まりごと
 
@@ -19,14 +19,19 @@
 - スレッドへ書けるかどうかは `#features/thread/queries.ts` の `threadWritable()` を使う
 - import には必ず拡張子を書く（[規約](../../../docs/devops/coding-conventions/index.html#imports)）
 
-## `attach.ts` を分けてある理由
+## 結び付けを分けてあった話
 
-スレッドを立てるときにもタグを付けるので、`#features/thread/queries.ts` が
-タグ側を呼ぶ。ところが `queries.ts` は書き込みの可否を判定するために
-`threadWritable()` を読む。両方を一つの模組に置くと、二つが互いを参照する。
+2026-09-10 まで、行を入れるだけの `attach.ts` を切り出してあった。
+スレッドを立てるときにタグも付けられたので `#features/thread/queries.ts` が
+タグ側を呼び、一方でこの模組は `threadWritable()` を読む。
+互いを参照する形を避けるための分割だった
+（[規約](../../../docs/devops/coding-conventions/index.html#module-cycle)）。
 
-`attach.ts` には判定を置かない。呼ぶ側が先に済ませている前提で、
-行を入れるだけの関数にしてある。
+立てる欄が種別とタイトルだけになり、スレッド側からの呼び出しが消えたので、
+`attachTagsTo` は `queries.ts` の中の非公開の関数へ畳み戻した。
+判定を持たないことは変わらない。呼ぶ側が先に `writable()` を済ませている。
+
+子スレッドの作成欄にタグを足すと、同じ輪が戻る。そのときはまた切り出す。
 
 ## 消すと結びも消える
 

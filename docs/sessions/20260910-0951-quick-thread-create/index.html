@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>立てる入口を、一覧の中へ | TASK3 設計ドキュメント</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;700;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../theme.css">
+</head>
+<body>
+
+<main class="sheet">
+<div class="wrap">
+  <p class="eyebrow">Session &#183; 2026-09-10 09:51</p>
+  <h1 class="title">立てる入口を、一覧の中へ</h1>
+
+  <p style="margin-bottom:1.6rem"><span class="state" data-state="done">done</span></p>
+
+  <p class="lede">
+    「全角の正規化はどこでやっていますか」を質問として残すのに、いまは別の画面へ移動することになる。
+    その画面には7つの欄がある。埋めるのは種別とタイトルの2つだけである。
+  </p>
+
+  <h2>専用の画面を選んだ理由は、半分だけ正しい</h2>
+
+  <p>立てる画面のコードには、なぜ一覧の中に畳まなかったかが書いてある。</p>
+
+  <blockquote>一覧の上に畳んで置かず、専用の画面にしてある。
+  本文を書く場所が要るためで、数行の入力欄に押し込むと
+  「あとで本文を足す」前提の空のスレッドが並ぶ。</blockquote>
+
+  <p>本文を書く場所が要るのは、そのとおりである。
+  課題の定義は本文にしか書けず、コメントで代用すると後から読む人が経緯の中を掘ることになる。</p>
+
+  <p>ところが、この理由が支えているのは「本文を書ける場所を用意すること」までである。
+  そこから「立てる前に書かせること」までは、もう一歩ある。
+  その一歩は、種別によって成り立たない。
+  課題なら、立てる時点でやることの形が言える。
+  議論と質問は逆で、何が決まっていないのかが言えないから相談として置く。
+  <a href="../../features/thread/index.html">スレッド</a>が課題を基本単位に置かなかったのは、まさにその形をしていない話に場所を与えるためだった。
+  その入口が、本文を先に要求している。</p>
+
+  <p>空のスレッドが並ぶ、という心配のほうも、条件が変わっている。
+  <a href="../20260909-1405-thread-detail-layout/index.html">前回のセッション</a>で、本文を直す入口を本文の直下へ移した。
+  立てた直後に開く画面で、本文の位置に「編集」がある。
+  以前は、その入口は画面の最下部にあった。</p>
+
+  <h2>決めたこと</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>何を</th><th>どう決めたか</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap">立てる入口</td>
+          <td>一覧の <code>app-head</code> と <code>app-tabs</code> のあいだに、種別とタイトルだけの一行フォームを置く</td>
+          <td>押しボタンを置き換える。押して開く形にすると手数が減らない</td>
+        </tr>
+        <tr>
+          <td class="nowrap">立てる画面</td>
+          <td><code>/p/{key}/new</code> を消す</td>
+          <td>入口が一覧と詳細に移ると、この画面を指す導線が無くなる</td>
+        </tr>
+        <tr>
+          <td class="nowrap">作成後の行き先</td>
+          <td>一覧に留まる。種別の選択は残し、タイトル欄だけ空に戻す</td>
+          <td>3件続けて立てるとき、毎回種別を選び直すことになる</td>
+        </tr>
+        <tr>
+          <td class="nowrap">作成の知らせ</td>
+          <td>フォームの下に「WEB-12 を立てました」を出し、番号をリンクにする</td>
+          <td>絞り込み中は、立てた行が一覧に出ない。本文を書きに行く道も同時に要る</td>
+        </tr>
+        <tr>
+          <td class="nowrap">子を立てる導線</td>
+          <td>詳細の右の欄はいまの文のままにして、押した語で種別が決まるフォームを開く</td>
+          <td>3語が並んでいるのに、開いた先でもう一度種別を選ばせることになる</td>
+        </tr>
+        <tr>
+          <td class="nowrap">親スレッド</td>
+          <td>属性の表から出し、子スレッドの真上に独立した欄として置く</td>
+          <td>属性の6行目にあると、詳細を開くまで存在に気づけない</td>
+        </tr>
+        <tr>
+          <td class="nowrap">添付を足す</td>
+          <td>右の欄の一番上へ移す</td>
+          <td>押す回数が多い。高さが変わらないので、上に積んでも下の欄が動かない</td>
+        </tr>
+        <tr>
+          <td class="nowrap">立てる処理</td>
+          <td><code>createThread</code> の引数を種別とタイトルと親の3つにする</td>
+          <td>画面から常に空が渡る引数を5つ抱えることになる</td>
+        </tr>
+        <tr>
+          <td class="nowrap">タグの選択欄</td>
+          <td><code>TagBoxes.tsx</code> を消す</td>
+          <td>立てる画面だけが使っていた。タグを付けるのは詳細の <code>TagPicker</code> に一本化する</td>
+        </tr>
+        <tr>
+          <td class="nowrap">ガントの空状態</td>
+          <td>「課題を立てる」をスレッド一覧へのリンクに変える</td>
+          <td>簡易フォームで立てた課題は期間を持たないので、ガントには出てこない</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>実物の見え方は<a href="mock.html">修正イメージ</a>にある。
+  一覧の一行、立てた直後、子スレッド欄の開閉、右の欄の並び。</p>
+
+  <h2>絞り込みの中で立てると、行が出てこない</h2>
+
+  <p>一覧に留まると決めた時点で、一つ壊れる。
+  種別が議論のものだけを表示しているときに課題を立てると、立てた行は条件に合わない。
+  既定では完了とアーカイブ済みも隠しているので、条件を触っていない画面でも起こりうる。</p>
+
+  <p>絞り込みを自動で外す案は採らない。
+  いま見ていた集合が、立てた拍子に消える。
+  割り振りを決める会議の最中に「未設定だけ」を出しているとして、そこで質問を一つ立てたら一覧が全件に戻る、という挙動になる。</p>
+
+  <p>代わりに、フォームの直下へ知らせを出す。</p>
+
+  <blockquote>WEB-12 を立てました</blockquote>
+
+  <p>番号はリンクで、押すと詳細が開く。
+  絞り込みの有無にかかわらず常に出すので、「出るはずの行が出ていない」ことを人が判断せずに済む。
+  残すのは直近の1件だけである。
+  3件続けて立てたときに知らせが3行積まれると、フォームの位置が下へずれていく。</p>
+
+  <h2>子スレッドは、押した語が種別になる</h2>
+
+  <p>詳細の右の欄には、いまこう出ている。</p>
+
+  <blockquote>このスレッドを親にして<br>課題 / 議論 / 質問 を作成する</blockquote>
+
+  <p>3つの語はそれぞれ、種別を問い合わせに載せて立てる画面へ飛ぶリンクだった。
+  行き先が消えるので、その場でフォームを開く形にする。
+  このとき、開いた先に種別の選択欄を置くと、3語を押した意味が消える。</p>
+
+  <p>語そのものを <code>radio</code> にする。
+  押した語がフォームの <code>type</code> の値になり、選択欄は要らない。
+  タイトル欄を出す役は CSS が持つ。</p>
+
+  <pre><code>/* どれか一つが選ばれるまで、タイトル欄は出ない */
+.p-child-new .compose { display: none; }
+.p-child-new:has(input:checked) .compose { display: block; }</code></pre>
+
+  <p>JavaScript が動かなくても、ラジオを押せば欄が出て、送信できる。
+  <a href="../20260909-1405-thread-detail-layout/index.html">タイトルと本文の書き換え</a>で <code>details</code> と <code>:has()</code> を使ったのと同じ理由で、開閉に JavaScript を要求しない。</p>
+
+  <p>立てたあとも、選んだ語は選ばれたままにする。
+  子の課題を3つ並べるときに、毎回「課題」を押し直すことになるためである。
+  知らせは出さない。
+  すぐ上の一覧に行が増えるので、それが結果になる。</p>
+
+  <h2>親が居る場所</h2>
+
+  <p>親の付け替えは、いまも詳細の右の欄でできる。
+  属性の表の6行目、進捗率と担当者とタグと期間の下に「親」という行があり、<code>WEB-3</code> と打って保存すると輪の検査を通って書き換わる。
+  この機能を「無い」と受け取られていた。</p>
+
+  <p>見つからない理由は二つある。
+  一つは位置で、属性の表の中では、進捗率や担当者と同じ重みの1行にしか見えない。
+  もう一つは、いまの親が誰なのかが読めないことである。
+  欄にあるのは番号だけで、タイトルはパンくずの側にしか出ていない。</p>
+
+  <p>表から出して、子スレッドの真上に独立した欄として置く。
+  見出しは「親スレッド」で、中身は子スレッドの行と同じ形にする。
+  種別の札、タイトル、番号。
+  そのすぐ下に、付け替えの入力欄を置く。</p>
+
+  <p>並べると、親子が上下の位置関係そのものになる。</p>
+
+  <div class="mock">
+    <div class="mock-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">右の欄 &#183; 前と後</span></div>
+    <div style="background:var(--card);padding:1rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;align-items:start;font-size:.72rem">
+        <div style="display:flex;flex-direction:column;gap:.3rem">
+          <div style="color:var(--ink-faint);font-family:var(--font-mono);font-size:.66rem;margin-bottom:.2rem">前</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">属性 6行<span style="color:var(--shu)">（親を含む）</span></div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--shu)">添付を足す</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">子スレッド</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:.3rem">
+          <div style="color:var(--ink-faint);font-family:var(--font-mono);font-size:.66rem;margin-bottom:.2rem">後</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--shu)">添付を足す</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">属性 5行</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem;color:var(--shu)">親スレッド</div>
+          <div style="border:1px solid var(--rule);padding:.45rem .6rem">子スレッド</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p>添付を足す欄が一番上へ来る。
+  <a href="../20260909-1405-thread-detail-layout/index.html">前回</a>この欄を右へ移したとき、「高さの変わらないものを上に積む」と書いた。
+  子スレッドは0件から十数件まで伸びるので、下に置く。
+  添付の欄は高さが固定なので、属性の上へ移しても下の欄の位置は動かない。
+  理由はそのまま生きている。</p>
+
+  <p>親の種別を出すために、詳細を引く問い合わせに <code>parent.type</code> を足す。
+  親への <code>LEFT JOIN</code> は番号とタイトルのために既にあるので、列が一つ増えるだけである。</p>
+
+  <h2>立てる処理から、5つの引数が落ちる</h2>
+
+  <p>いまの <code>createThread</code> は、8つの値を受け取って一度の取引で書く。
+  種別、タイトル、本文、親、担当者、開始日、終了日、タグ。
+  簡易フォームが送るのは、このうち3つだけになる。</p>
+
+  <p>残りの5つを引数に残すこともできる。
+  画面から常に空が渡るだけで、実装が二重になるわけではない。
+  ただ、そうすると読む人が「どこから担当者が渡るのか」を探すことになり、答えは「どこからも渡らない」である。
+  だから削る。</p>
+
+  <pre><code>export type CreateThread = {
+  readonly type: ThreadType;
+  readonly title: string;
+  /** 親のスレッド番号。同じプロジェクトのものに限る。 */
+  readonly parentNumber: number | null;
+};</code></pre>
+
+  <p>本文の列は <code>NOT NULL DEFAULT ''</code> なので、挿入から外すだけで空文字が入る。
+  期間の検査（<code>checkPeriod</code>）と担当者の在籍の検査（<code>isAssignable</code>）は、それぞれ <code>setPeriod</code> と <code>setAssignee</code> の側に同じものがある。
+  立てる側から消えるだけで、判定そのものは残る。</p>
+
+  <div class="note warn">
+    <span class="note-label">通知が一つ、届かなくなる</span>
+    <p>いまは立てると同時に担当者を指名でき、そのとき <code>assigned</code> の通知が飛ぶ。
+    指名する欄が消えるので、この道は通らなくなる。
+    <a href="../../features/notification/index.html">通知</a>そのものは消えない。
+    立てた直後に詳細で担当者を選べば、<code>setAssignee</code> の側から同じ行が積まれる。
+    増えるのは、指名までの手数が一つ増えることだけである。</p>
+  </div>
+
+  <h2>タグとスレッドの輪が、ほどける</h2>
+
+  <p><a href="../../devops/coding-conventions/index.html">コーディング規約</a>に「互いを呼びそうになったら、判定の無い側を切り出す」という項がある。
+  その実例が、いま消えようとしている。</p>
+
+  <blockquote>タグとスレッドがそうだった。スレッドを立てるときにタグを付けるので
+  <code>#features/thread/queries.ts</code> がタグ側を呼ぶ。
+  一方でタグ側は、書き込みの可否を判定するために <code>THREAD_WRITABLE</code> を読む。</blockquote>
+
+  <p>この輪を切るために <code>tag/attach.ts</code> がある。
+  判定を持たず、行を入れるだけの関数を置いた側である。
+  <code>tagIds</code> が引数から落ちると、スレッド側からタグ側への呼び出しは一本も残らない。</p>
+
+  <p><code>attach.ts</code> は <code>tag/queries.ts</code> へ畳み戻す。
+  ファイルとしては死んでいない。
+  <code>attachTagByName</code> と <code>setThreadTags</code> が呼び続けるので、同じ模組の中の非公開の関数になるだけである。
+  分けておく理由だけが無くなる。</p>
+
+  <p>規約は残す。
+  実例の側に、いつ輪が消えたのかを書き足す。
+  子スレッドのフォームにタグを足したくなれば、同じ呼び出しが戻ってくる。
+  そのときはもう一度切り出すことになり、規約はそのために書いてある。</p>
+
+  <h2>実装するもの</h2>
+
+  <p>意匠の正本は <code>docs/theme.css</code> である。
+  規則はそちらを直し、<code>pnpm styles:sync</code> で <code>src/styles/</code> へ写す。</p>
+
+  <h3>CSS</h3>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>規則</th><th>何をするか</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap"><code>.app-new</code></td>
+          <td>新設。一覧の一行フォーム。<code>@shared:shell</code> へ置く</td>
+          <td><code>app-head</code> と <code>app-tabs</code> のあいだに入る帯で、既存のどの規則とも役割が違う</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>.p-child-new</code></td>
+          <td>新設。ラジオを語に見せ、<code>:has(input:checked)</code> でタイトル欄を出す。<code>@shared:product</code> へ置く</td>
+          <td><code>.p-child</code> の隣に置く。子スレッド欄の中でしか使わない</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>.p-child</code></td>
+          <td>触らない。親スレッド欄でも同じ規則を使う</td>
+          <td>親も子も、一件を辿るための行である。形を分ける理由がない</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>.p-parent</code></td>
+          <td>新設。親を付け替える欄の入力とボタンの大きさ</td>
+          <td>属性の表から出たので、<code>.app-props input</code> の体裁を借りられなくなる。
+              組んでみるまで見えなかった</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>.app-head</code></td>
+          <td>触らない</td>
+          <td>押しボタンが消えるだけで、規則は変わらない</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>スレッド</h3>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>ファイル</th><th>何をするか</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap"><code>thread/queries.ts</code></td>
+          <td><code>CreateThread</code> を3つの値に縮める。期間と担当者とタグの検査、立てるときの通知を落とす。
+              <code>resolveThread</code> に <code>parentType</code> を足す</td>
+          <td>画面から渡らない値を受け取らない。親の種別の札を出すために列が要る</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>thread/actions.ts</code></td>
+          <td><code>createThreadAction</code> から <code>redirect</code> を外し、立てた番号を返す。
+              受け取る欄を <code>type</code> / <code>title</code> / <code>parent</code> に絞る</td>
+          <td>一覧に留まるので、行き先ではなく結果を返すことになる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>QuickThreadForm.tsx</code></td>
+          <td>新設。一覧の一行フォームと、立てた番号の知らせ</td>
+          <td>種別を <code>select</code> で選び、作成後も選択を保つ</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>ChildThreadForm.tsx</code></td>
+          <td>新設。「このスレッドを親にして 課題 / 議論 / 質問 を作成する」の文ごと持つ</td>
+          <td>3語がラジオなので、文そのものがフォームの中に入る</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>NewThreadForm.tsx</code></td>
+          <td>消す</td>
+          <td>7欄のフォームを出す先が無くなる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>ThreadProps.tsx</code></td>
+          <td><code>ParentForm</code> を残し、属性の表の外から呼ばれる形にする</td>
+          <td>付け替えの欄そのものは変わらない。置き場所だけが変わる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>ThreadChildren.tsx</code></td>
+          <td>足元の3つのリンクを <code>ChildThreadForm</code> に差し替える</td>
+          <td>行き先の画面が無くなる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>thread/path.ts</code></td>
+          <td><code>newThreadPath</code> を消す。<code>parseThreadNumber</code> は残す</td>
+          <td>親の欄が <code>WEB-3</code> と <code>3</code> の両方を受け続ける</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>p/[key]/page.tsx</code></td>
+          <td>押しボタンを消し、<code>ProjectTabs</code> の上にフォームを置く</td>
+          <td>今回の主対象</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>p/[key]/new/page.tsx</code></td>
+          <td>ディレクトリごと消す</td>
+          <td>指す導線が無くなる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>t/[number]/page.tsx</code></td>
+          <td>右の欄を並べ替え、親の欄を独立させる</td>
+          <td>添付、属性、親、子の順にする</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>p/[key]/gantt/page.tsx</code></td>
+          <td>空状態のリンクをスレッド一覧へ向ける</td>
+          <td>期間の無い課題はガントに出ないので、ここでは立てさせない</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>タグ</h3>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>ファイル</th><th>何をするか</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap"><code>tag/TagBoxes.tsx</code></td>
+          <td>消す</td>
+          <td>呼ぶ画面が無くなる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>tag/attach.ts</code></td>
+          <td><code>tag/queries.ts</code> の中の非公開の関数へ畳み戻す</td>
+          <td>スレッド側から呼ばれなくなり、輪が消える</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><code>tag/TagPicker.tsx</code></td>
+          <td>触らない</td>
+          <td>タグを付ける場所が、ここだけになる</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>永続化するデータは変えない</h2>
+
+  <p>カラムの追加も削除もない。移行も要らない。
+  <code>threads.body</code> は <code>NOT NULL DEFAULT ''</code> のままで、挿入の側が値を渡さなくなるだけである。
+  すでにある行には触れない。</p>
+
+  <h2>組んでみて分かったこと</h2>
+
+  <p>二つあった。どちらも画面と試験を動かすまで見えなかった。</p>
+
+  <p><strong>親の入力欄が、素の見た目に戻った。</strong>
+  属性の表の中では <code>.app-props input</code> が大きさと罫を与えていた。
+  表から出した先にその規則は無いので、ブラウザの既定の入力欄が出る。
+  <code>.p-parent</code> を新しく置いて、表に居た頃と同じ大きさに揃えた。</p>
+
+  <p><strong>詳細画面に「タイトル」の名札が二つになった。</strong>
+  スレッド自身のタイトルと、子として立てるスレッドのタイトルである。
+  既存のブラウザ試験は前者を <code>getByLabel('タイトル')</code> で拾っていて、
+  部分一致なので両方に当たるようになった。
+  試験の側を完全一致へ寄せた。画面のほうは、二つあるのが正しい状態である。</p>
+
+  <h2>試験</h2>
+
+  <p>単体は件数が減った。
+  立てるときの期間と担当者を確かめていた3件は、同じ判定を <code>setPeriod</code> と <code>setAssignee</code> の側で確かめている。
+  代わりに「立てた直後の本文は空である」を足した。
+  本文の列を挿入から外したので、既定値が入ることを確かめるものが要る。</p>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>試験</th><th>どうするか</th><th>なぜ</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap">課題以外は期間を持てない（立てる）</td>
+          <td>消す</td>
+          <td>「議論に期間は入れられない」が <code>setPeriod</code> の側にある</td>
+        </tr>
+        <tr>
+          <td class="nowrap">期間は片方だけでは入れられない（立てる）</td>
+          <td><code>setPeriod</code> の側へ移す</td>
+          <td>この形だけ、書き換えの側に無い</td>
+        </tr>
+        <tr>
+          <td class="nowrap">組織の外の人は担当者に置けない（立てる）</td>
+          <td>消す</td>
+          <td>「組織から外れた人は担当者に置けない」が <code>setAssignee</code> の側にある</td>
+        </tr>
+        <tr>
+          <td class="nowrap">立てるときに指名しても届く</td>
+          <td>消す</td>
+          <td>指名する欄が無くなる。「設定した相手に届く」は残る</td>
+        </tr>
+        <tr>
+          <td class="nowrap">タグを付けたスレッドが一覧に出る</td>
+          <td>立ててから <code>setThreadTags</code> で付ける形に直す</td>
+          <td>立てると同時には付けられなくなる</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>単体は518件から516件になった。E2E は2件足して25件から27件になった。
+  凍結中の1件は、リンクの不在を見ていたので、タイトル欄の不在を見る形に書き換えた。</p>
+
+  <ul>
+    <li>一覧で種別とタイトルだけを入れて立てると、画面が変わらずに番号の知らせが出る</li>
+    <li>詳細の「議論」を押すとタイトル欄が出て、立てると子スレッドの欄に行が増える</li>
+  </ul>
+
+  <p>絞り込み中に立てた行が一覧に出ないことは、E2E に置かない。
+  サーバー側で条件を組み立てた結果であり、ブラウザの中でしか起きない壊れ方ではない。</p>
+
+  <h2>書き換えるドキュメント</h2>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>場所</th><th>直す前の記述</th><th>なぜ変えるか</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="nowrap"><a href="../../features/thread/index.html">機能 / スレッド</a></td>
+          <td>関連する画面に <code>/p/{key}/new</code> がある</td>
+          <td>画面が無くなる。立てる形の節を書き足す</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../features/tag/index.html">機能 / タグ</a></td>
+          <td>スレッドを立てるフォームには、チェックの一覧だけを置く</td>
+          <td>立てる時点でタグを選べなくなる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../features/attachment/index.html">機能 / 添付ファイル</a></td>
+          <td>立てる処理は親子と期間とタグを一つの取引で検査するので、添付の欄を置いていない</td>
+          <td>その画面自体が無くなり、検査も親だけになる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../glossary.html#tag">用語 / タグ</a></td>
+          <td>付けるのはスレッド詳細の属性欄と、スレッドを立てるフォーム</td>
+          <td>付ける場所が詳細だけになる</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../glossary.html#attachment">用語 / 添付ファイル</a></td>
+          <td>スレッドを立てる画面には欄を置いていない</td>
+          <td>同上</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../glossary.html#parent-child">用語 / 親子関係</a></td>
+          <td>親を指す欄の場所に触れていない</td>
+          <td>付け替えがどこにあるかを書く</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../ui/pages/o/[slug]/p/[key]/index.html">UI / スレッド一覧</a></td>
+          <td>右上に「スレッドを立てる」の押しボタン</td>
+          <td>今回の主対象</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../ui/pages/o/[slug]/p/[key]/t/[number]/index.html">UI / スレッド詳細</a></td>
+          <td>右の欄の並びと、子を作る導線の説明</td>
+          <td>並びが変わり、導線がその場で開く</td>
+        </tr>
+        <tr>
+          <td class="nowrap">UI / スレッドを立てる</td>
+          <td>画面のモックが1枚ある</td>
+          <td>画面ごと消す。索引とサイドバーからも外す</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><a href="../../devops/coding-conventions/index.html">規約 / コーディング</a></td>
+          <td>スレッドを立てるときにタグを付けるので、スレッド側がタグ側を呼ぶ</td>
+          <td>その呼び出しが消える。規約は残し、実例を過去の話として書く</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>過去のセッション記録は書き換えない。
+  当時の決定の記録であり、今回の記録がその上に重なる。</p>
+
+  <h2>変えないもの</h2>
+
+  <p>種別は、立てたあとも変えられない。
+  議論を課題に作り変えられないことは<a href="../../issues/thread-mutability/index.html">スレッドの可変性</a>に書いてあり、今回それに触らない。
+  入口が軽くなるぶん、間違えて立てたときの立て直しは楽になる。</p>
+
+  <p>親を指す欄は、番号を打つ形のままにする。
+  プロジェクトのスレッドが数百件になると選択肢では選べない、という理由は変わっていない。
+  今回動かすのは置き場所と、いまの親が読めるかどうかである。</p>
+
+  <p>期間と担当者とタグは、詳細でしか入れられなくなる。
+  立てた直後に開けば、どれも右の欄にある。</p>
+
+  <h2>関連する場所</h2>
+  <div class="cards">
+    <a class="card" href="mock.html"><span class="card-no">MOCK</span><p class="card-title">修正イメージ</p><p class="card-desc">一覧の一行と、右の欄</p></a>
+    <a class="card" href="../../features/thread/index.html"><span class="card-no">FEATURE</span><p class="card-title">スレッド</p><p class="card-desc">種別と親子</p></a>
+    <a class="card" href="../../features/tag/index.html"><span class="card-no">FEATURE</span><p class="card-title">タグ</p><p class="card-desc">付ける場所が一つになる</p></a>
+    <a class="card" href="../../ui/pages/o/[slug]/p/[key]/index.html"><span class="card-no">UI</span><p class="card-title">スレッド一覧</p><p class="card-desc">いまの画面</p></a>
+    <a class="card" href="../20260909-1405-thread-detail-layout/index.html"><span class="card-no">SESSION</span><p class="card-title">書く場所を、対象の隣へ</p><p class="card-desc">本文の入口を本文の直下へ移した</p></a>
+    <a class="card" href="../../issues/thread-mutability/index.html"><span class="card-no">ISSUE</span><p class="card-title">スレッドの可変性</p><p class="card-desc">種別は変えられない</p></a>
+  </div>
+
+  <div class="sheet-foot">
+    <span>セッション / 立てる入口を、一覧の中へ</span>
+    <span>2026-09-10 09:51</span>
+    <span>TASK3 設計ドキュメント</span>
+  </div>
+
+</div>
+</main>
+
+<script src="../../sidebar.js" defer></script>
+</body>
+</html>

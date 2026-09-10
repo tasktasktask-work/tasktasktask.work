@@ -310,6 +310,44 @@
 .p-child[data-archived="true"] { background: repeating-linear-gradient(45deg, transparent, transparent 6px, rgba(23,27,34,.02) 6px, rgba(23,27,34,.02) 12px); }
 .p-child[data-archived="true"] .ttl { color: var(--ink-soft); }
 
+/* 親の付け替え -------------------------------------------------------------
+   属性の表から出して、子スレッドの真上へ置いた欄である。
+   表の中に居た頃は .app-props が入力欄の体裁を持っていた。
+   出た先には無いので、ここで同じ大きさに揃える。 */
+.p-parent { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; margin: 0; }
+.p-parent input {
+  width: 7rem; font: inherit; font-size: .78rem; padding: .2rem .3rem;
+  border: 1px solid var(--rule-strong); background: var(--card); color: var(--ink);
+}
+.p-parent .app-btn { padding: .22rem .5rem; font-size: .7rem; }
+.p-parent .err { flex-basis: 100%; font-size: .72rem; color: var(--ki); }
+.p-parent .ok { flex-basis: 100%; font-size: .72rem; color: var(--midori); }
+
+/* 子を立てる欄 --------------------------------------------------------------
+   「このスレッドを親にして 課題 / 議論 / 質問 を作成する」の三語が、
+   そのまま種別のラジオである。押した語が種別なので、選択欄を別に置かない。
+
+   どれかが選ばれるまでタイトル欄は出ない。開く役は :has() が持つので、
+   JavaScript が動かない環境でも、押せば欄が出て送信できる。 */
+.p-child-new .pick { margin: 0; font-size: .74rem; color: var(--ink-soft); line-height: 1.9; }
+/* 見た目はリンクに寄せるが、押しどころはラジオそのものである。
+   display: none にすると、キーボードで辿れなくなる */
+.p-child-new .pick input { position: absolute; opacity: 0; pointer-events: none; }
+.p-child-new .pick label { cursor: pointer; color: var(--ai); border-bottom: 1px dotted var(--ai); }
+.p-child-new .pick label:hover { color: var(--shu); border-color: var(--shu); }
+.p-child-new .pick input:checked + label {
+  color: var(--shu); border-bottom-style: solid; font-weight: 700;
+}
+.p-child-new .pick input:focus-visible + label { outline: 2px solid var(--ai); outline-offset: 2px; }
+.p-child-new .compose { display: none; margin-top: .5rem; }
+.p-child-new:has(input:checked) .compose { display: flex; gap: .3rem; flex-wrap: wrap; }
+.p-child-new .compose input[type="text"] {
+  flex: 1 1 8rem; min-width: 0; font: inherit; font-size: .78rem;
+  padding: .25rem .35rem; border: 1px solid var(--rule-strong);
+  background: var(--card); color: var(--ink);
+}
+.p-child-new .err { flex-basis: 100%; font-size: .72rem; color: var(--ki); }
+
 /* コメント --------------------------------------------------------------- */
 .p-comment { display: flex; gap: .8rem; padding: 1.1rem 0; border-bottom: 1px solid var(--rule); }
 .p-comment:last-child { border-bottom: 0; }

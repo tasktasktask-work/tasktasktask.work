@@ -138,12 +138,7 @@ async function newThread(scope: OrgScope, projectId: string): Promise<string> {
   const made = await createThread(scope, projectId, {
     type: 'kadai',
     title: '検索APIの実装',
-    body: '',
     parentNumber: null,
-    assigneeUserId: null,
-    startsOn: null,
-    endsOn: null,
-    tagIds: [],
   });
   if (!made.ok) {
     throw new Error('立てられませんでした');

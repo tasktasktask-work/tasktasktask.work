@@ -186,6 +186,9 @@ export function PeriodForm({
  *
  * 選択肢の一覧にしていないのは、プロジェクトのスレッドが数百件になると
  * 選べなくなるためである。親にしたいスレッドは、たいてい直前に見ている。
+ *
+ * この欄だけは属性の表の外に居る。子スレッドの真上に置いてあり、
+ * 入力欄の体裁は .p-parent が持つ。他の四つは .app-props から借りている。
  */
 export function ParentForm({
   target,
@@ -200,7 +203,7 @@ export function ParentForm({
   );
 
   return (
-    <form action={action} onSubmit={withoutReset(action)}>
+    <form className="p-parent" action={action} onSubmit={withoutReset(action)}>
       {hidden(target)}
       <input
         type="text"
@@ -209,7 +212,6 @@ export function ParentForm({
         onChange={(event) => setValue(event.target.value)}
         placeholder={`${target.projectKey}-3`}
         aria-label="親スレッド"
-        style={{ width: '7rem' }}
       />
       <button className="app-btn ghost" type="submit" disabled={saving}>
         保存

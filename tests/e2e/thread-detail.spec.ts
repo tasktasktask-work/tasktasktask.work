@@ -26,7 +26,7 @@ test.describe('スレッド詳細で書く', () => {
     const heading = page.getByRole('heading', { name: '検索の設計' });
     await expect(heading).toBeVisible();
 
-    const field = page.getByLabel('タイトル');
+    const field = page.getByLabel('タイトル', { exact: true });
     await expect(field).toBeHidden();
 
     // 「本文編集済み」の印と紛れないよう、完全一致で拾う
@@ -59,11 +59,11 @@ test.describe('スレッド詳細で書く', () => {
 
     const head = page.locator('.app-head');
     await head.getByText('編集', { exact: true }).click();
-    await page.getByLabel('タイトル').fill('書きかけ');
+    await page.getByLabel('タイトル', { exact: true }).fill('書きかけ');
     await head.getByRole('button', { name: 'やめる' }).click();
 
     await expect(page.getByRole('heading', { name: '検索の設計' })).toBeVisible();
-    await expect(page.getByLabel('タイトル')).toBeHidden();
+    await expect(page.getByLabel('タイトル', { exact: true })).toBeHidden();
   });
 
   test('ファイルを選ぶだけで、押しボタンを押さずに添付が終わる', async ({ page, sown }) => {

@@ -290,6 +290,15 @@ export default async function ThreadPage({
         </div>
 
         <aside className="app-aside">
+          {/* 押す回数が多いものから積む。
+              添付の欄は高さが変わらないので、一番上に置いても下の欄は動かない */}
+          {canWrite ? (
+            <section>
+              <h3>添付を足す</h3>
+              <ThreadAttachForm slug={slug} projectKey={project.key} number={thread.number} />
+            </section>
+          ) : null}
+
           <div className="app-props">
             <div className="row">
               <span className="k">進捗率</span>
@@ -371,24 +380,6 @@ export default async function ThreadPage({
               </div>
             ) : null}
 
-            <div className="row">
-              <span className="k">親</span>
-              <span className="v">
-                {canWrite ? (
-                  <ParentForm target={target} parentNumber={thread.parentNumber} />
-                ) : thread.parentNumber !== null ? (
-                  <Link
-                    href={threadPath(slug, project.key, thread.parentNumber)}
-                    style={{ fontSize: '.8rem', color: 'var(--ai)' }}
-                  >
-                    {threadLabel(project.key, thread.parentNumber)}
-                  </Link>
-                ) : (
-                  <span style={{ fontSize: '.82rem' }}>なし</span>
-                )}
-              </span>
-            </div>
-
             {/* ウォッチは自分あての設定である。畳んだスレッドでも付け外しできる。
                 凍結中だけは切り替えられない。読むための操作だが、実装は書き込みで、
                 例外を支払いの設定だけに絞ってある */}
@@ -417,12 +408,45 @@ export default async function ThreadPage({
             </div>
           </div>
 
-          {/* 高さの変わらないものを上に積む。
-              下の子スレッドは0件から十数件まで伸びるので、逆に置くと落とす欄の位置が動く */}
-          {canWrite ? (
+          {/*
+            親は属性の表から出して、子スレッドの真上に置く。
+            表の中の1行だと、進捗率や担当者と同じ重みにしか見えず、
+            付け替えられること自体が伝わらない。
+            いまの親は子と同じ形の行で出す。番号だけの入力欄では、どれが親かを読めない
+          */}
+          {canWrite || thread.parentNumber !== null ? (
             <section>
-              <h3>添付を足す</h3>
-              <ThreadAttachForm slug={slug} projectKey={project.key} number={thread.number} />
+              <h3>親スレッド</h3>
+
+              {thread.parentNumber !== null ? (
+                <Link
+                  className="p-child"
+                  href={threadPath(slug, project.key, thread.parentNumber)}
+                >
+                  {thread.parentType ? (
+                    <span className="p-type" data-type={thread.parentType}>
+                      {TYPE_LABEL[thread.parentType]}
+                    </span>
+                  ) : null}
+                  <span className="ttl">{thread.parentTitle}</span>
+                  <span className="meta">
+                    <span className="p-id">
+                      {threadLabel(project.key, thread.parentNumber)}
+                    </span>
+                  </span>
+                </Link>
+              ) : (
+                <div className="foot" style={{ color: 'var(--ink-faint)' }}>
+                  なし
+                </div>
+              )}
+
+              {canWrite ? (
+                <div className="foot">
+                  <ParentForm target={target} parentNumber={thread.parentNumber} />
+                  <p className="app-hint">空にすると親から外れます</p>
+                </div>
+              ) : null}
             </section>
           ) : null}
 

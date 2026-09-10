@@ -181,6 +181,17 @@
             </div>
 
             <aside class="app-aside">
+              <section>
+                <h3>添付を足す</h3>
+                <form class="p-attach-drop">
+                  <div class="zone">
+                    ここへ落とすか、ファイルを選んでください
+                    <input type="file" multiple aria-label="添付するファイル">
+                  </div>
+                  <p class="note">1ファイル 10.0 MB、一度に合計 30.0 MB まで。形式は問いません</p>
+                </form>
+              </section>
+
               <div class="app-props">
               <div class="row"><span class="k">進捗率</span><span class="v">
                 <form><input type="number" value="40" style="width:4.5rem"><span style="font-size:.78rem;color:var(--ink-soft)">%</span><button class="app-btn ghost">保存</button></form>
@@ -220,23 +231,25 @@
                   </details>
                 </span>
               </span></div>
-              <div class="row"><span class="k">親</span><span class="v">
-                <form><input type="text" value="WEB-3" style="width:7rem"><button class="app-btn ghost">保存</button></form>
-              </span></div>
               <div class="row"><span class="k">ウォッチ</span><span class="v">
                 <form><button class="app-btn ghost">ウォッチする</button></form>
               </span></div>
               </div>
 
               <section>
-                <h3>添付を足す</h3>
-                <form class="p-attach-drop">
-                  <div class="zone">
-                    ここへ落とすか、ファイルを選んでください
-                    <input type="file" multiple aria-label="添付するファイル">
-                  </div>
-                  <p class="note">1ファイル 10.0 MB、一度に合計 30.0 MB まで。形式は問いません</p>
-                </form>
+                <h3>親スレッド</h3>
+                <a class="p-child" href="#">
+                  <span class="p-type" data-type="giron">議論</span>
+                  <span class="ttl">検索の要件をどうするか</span>
+                  <span class="meta"><span class="p-id">WEB-3</span></span>
+                </a>
+                <div class="foot">
+                  <form class="p-parent">
+                    <input type="text" value="WEB-3" aria-label="親スレッド">
+                    <button class="app-btn ghost">保存</button>
+                  </form>
+                  <p class="app-hint">空にすると親から外れます</p>
+                </div>
               </section>
 
               <section>
@@ -261,9 +274,17 @@
                   </span>
                 </a>
                 <div class="foot">
-                  <p class="app-hint">このスレッドを親にして<br>
-                    <a href="../../new/index.html">課題</a> / <a href="../../new/index.html">議論</a> / <a href="../../new/index.html">質問</a> を作成する
-                  </p>
+                  <form class="p-child-new">
+                    <p class="pick">このスレッドを親にして<br>
+                      <input type="radio" name="pg-child" id="pg-child-k"><label for="pg-child-k">課題</label> /
+                      <input type="radio" name="pg-child" id="pg-child-g"><label for="pg-child-g">議論</label> /
+                      <input type="radio" name="pg-child" id="pg-child-s"><label for="pg-child-s">質問</label> を作成する
+                    </p>
+                    <div class="compose">
+                      <input type="text" placeholder="タイトル" aria-label="タイトル">
+                      <button class="app-btn ghost">立てる</button>
+                    </div>
+                  </form>
                 </div>
               </section>
             </aside>
@@ -363,9 +384,16 @@
   中身を確かめるために結局押すことになる。</p>
 
   <p>右の欄では、高さの変わらないものを上に積む。
-  属性、添付を足す欄、子スレッドの順である。
+  添付を足す欄、属性、親スレッド、子スレッドの順である。
   子スレッドは0件から十数件まで伸びるので、上に置くと、
-  その下の落とす欄の位置がスレッドごとに変わる。</p>
+  その下の落とす欄の位置がスレッドごとに変わる。
+  添付の欄は高さが固定なので、一番上に置いても下の欄は動かない。
+  押す回数が多いものから順に並ぶ。</p>
+
+  <p>親は属性の表から出して、子スレッドの真上に置いてある。
+  表の中の1行だと、進捗率や担当者と同じ重みにしか見えず、付け替えられること自体が伝わらない。
+  出したうえで、いまの親を子と同じ形の行で見せる。
+  番号だけが入った入力欄では、どのスレッドが親なのかを読めない。</p>
 
   <p>子スレッドの行は一覧の行を狭めたものではない。
   一覧は横に並べて比べるための形で、こちらは一件ずつ辿るための形である。
@@ -396,8 +424,12 @@
   <h2>関連するスレッドを作る導線</h2>
 
   <p>右の欄の子スレッドの下に「このスレッドを親にして 課題 / 議論 / 質問 を作成する」を置いてある。
-  ここから立てると、このスレッドが親に入った状態で
-  <a href="../../new/index.html">立てる画面</a>が開く。</p>
+  三つの語はそれぞれ種別のラジオで、押すと下にタイトル欄が出る。
+  押した語が種別になるので、開いた先で選び直すことはない。
+  立てると、すぐ上の子スレッドの一覧に行が増える。</p>
+
+  <p>立てたあとも、押した語は選ばれたまま残る。
+  子の課題を続けて並べるときに、毎回押し直すことにならない。</p>
 
   <p>本文のすぐ下に置いてあったものを、子スレッドの欄と一緒に移した。
   親子を扱う場所が二つに分かれているより、一つにまとまっているほうが探しやすい。</p>
@@ -496,7 +528,7 @@
 
   <div class="sheet-foot">
     <span>UI / スレッド詳細</span>
-    <span>最終更新 2026-09-09</span>
+    <span>最終更新 2026-09-10</span>
     <span>TASK3 設計ドキュメント</span>
   </div>
 

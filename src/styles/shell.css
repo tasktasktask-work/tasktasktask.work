@@ -77,6 +77,39 @@
 }
 .app-btn.ghost { background: var(--card); color: var(--ink-mid); border-color: var(--rule-strong); }
 
+/* 立てる欄 ------------------------------------------------------------------
+   一覧の見出しとタブのあいだに置く、一行のフォームである。
+   埋めるのは種別とタイトルだけで、残りは立てた先の画面で入れる。
+
+   すぐ下の絞り込みの帯と形が似るので、地の色と縦罫で役を分ける。
+   絞り込みは紙の地、こちらは札の地に朱の縦罫を一本。
+   同じ見た目の帯が二本並ぶと、どちらが読むための欄かが分からない。 */
+.app-new {
+  display: flex; flex-wrap: wrap; gap: .45rem; align-items: center;
+  padding: .55rem .7rem; margin-bottom: .9rem;
+  background: var(--card); border: 1px solid var(--rule);
+  border-left: 3px solid var(--shu);
+}
+.app-new select {
+  font-family: var(--font-body); font-size: .82rem;
+  padding: .32rem .45rem; border: 1px solid var(--rule-strong);
+  border-radius: 2px; background: var(--paper); color: var(--ink);
+}
+.app-new input[type="text"] {
+  flex: 1 1 14rem; min-width: 0;
+  font-family: var(--font-body); font-size: .86rem;
+  padding: .32rem .5rem; border: 1px solid var(--rule-strong);
+  border-radius: 2px; background: var(--paper); color: var(--ink);
+}
+.app-new input[type="text"]:focus { outline: 2px solid var(--ai); outline-offset: -2px; }
+/* 立てた番号の知らせ。行を折り返して欄の下へ置く。
+   絞り込みの条件から外れると一覧に行が出ないので、これが唯一の結果になる */
+.app-new .told {
+  flex-basis: 100%; font-family: var(--font-mono); font-size: .72rem; color: var(--ink-soft);
+}
+.app-new .told a { color: var(--ai); }
+.app-new .err { flex-basis: 100%; font-size: .74rem; color: var(--ki); }
+
 .app-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--rule); margin-bottom: 1rem; }
 .app-tabs a {
   padding: .4rem .95rem; font-size: .83rem; text-decoration: none;

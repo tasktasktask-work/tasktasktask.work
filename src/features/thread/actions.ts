@@ -7,7 +7,7 @@ import { currentScope } from '#features/organization/scope.ts';
 import { projectPath } from '#features/project/path.ts';
 import { resolveProject } from '#features/project/queries.ts';
 import type { OrgScope } from '#lib/db.ts';
-import { parseThreadNumber, threadPath } from './path.ts';
+import { parseThreadNumber } from './path.ts';
 import {
   createThread,
   deleteThread,
@@ -102,23 +102,22 @@ const createForm = z.object({
   key: z.string().min(1),
   type: threadType,
   title: z.string().min(1, 'タイトルを入力してください'),
-  body: z.string().optional(),
   parent: z.string().optional(),
-  assignee: z.string().optional(),
-  startsOn: z.string().optional(),
-  endsOn: z.string().optional(),
 });
 
-/** 空欄は null にする。日付欄も担当者欄も、未入力は「無い」である。 */
-const blankToNull = (value: string | undefined): string | null => {
-  const trimmed = (value ?? '').trim();
-  return trimmed === '' ? null : trimmed;
-};
+/**
+ * 立てた結果。
+ *
+ * 番号を返すのは、立てても画面が移動しないためである。
+ * 一覧は絞り込みの条件で行を落とすので、立てた行がその場に出るとは限らない。
+ * 出なかったときに残る手がかりが、この番号だけになる。
+ */
+export type CreateThreadState = ThreadActionState & { created?: number };
 
 export async function createThreadAction(
-  _prev: ThreadActionState,
+  _prev: CreateThreadState,
   form: FormData,
-): Promise<ThreadActionState> {
+): Promise<CreateThreadState> {
   const parsed = createForm.safeParse(Object.fromEntries(form));
   if (!parsed.success) {
     return { error: z.prettifyError(parsed.error) };
@@ -139,33 +138,28 @@ export async function createThreadAction(
     return { error: '親は WEB-3 のような形か、番号だけで指定してください' };
   }
 
-  /*
-   * チェックボックスは同じ名前の欄が並ぶ。
-   * Object.fromEntries は最後の一つしか残さないので、
-   * 三つ選んでも一つしか届かない。ここだけ getAll で取り直す。
-   */
-  const tagIds = z.array(z.uuid()).safeParse(form.getAll('tags').map(String));
-  if (!tagIds.success) {
-    return { error: 'タグの指定が正しくありません' };
-  }
-
   const result = await createThread(found.scope, project.id, {
     type: input.type,
     title: input.title,
-    body: input.body ?? '',
     parentNumber,
-    assigneeUserId: blankToNull(input.assignee),
-    startsOn: blankToNull(input.startsOn),
-    endsOn: blankToNull(input.endsOn),
-    tagIds: tagIds.data,
   });
   if (!result.ok) {
     return { error: say(result.reason) };
   }
 
   revalidatePath(`/o/${input.slug}/p/${input.key}`);
-  redirect(threadPath(input.slug, project.key, result.number));
+  // 子として立てたときは、親の画面の子スレッド欄に行が増える
+  if (parentNumber !== null) {
+    revalidatePath(`/o/${input.slug}/p/${input.key}/t/${parentNumber}`);
+  }
+  return { created: result.number };
 }
+
+/** 空欄は null にする。日付欄も担当者欄も、未入力は「無い」である。 */
+const blankToNull = (value: string | undefined): string | null => {
+  const trimmed = (value ?? '').trim();
+  return trimmed === '' ? null : trimmed;
+};
 
 /* --------------------------------------------------------------------------
    直す

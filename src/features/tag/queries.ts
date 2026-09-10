@@ -9,7 +9,6 @@ import {
   VISIBLE_PROJECT_IDS,
 } from '#lib/db.ts';
 import { many } from '#lib/row.ts';
-import { attachTagsTo } from './attach.ts';
 import { isTagColor, NAME_MAX } from './colors.ts';
 
 /* ==========================================================================
@@ -302,6 +301,46 @@ async function writable(
     [scope.organizationId, scope.userId, threadId],
   );
   return rowCount === 1;
+}
+
+/**
+ * 指定した id のタグを結び付ける。
+ *
+ * 既に付いているものは何もしない（ON CONFLICT DO NOTHING）。
+ * 二つの画面から同時に同じタグを付けても、片方が主キー違反で落ちない。
+ *
+ * 組織の外の id と、消えたタグの id は SELECT の側で落ちる。
+ * WHERE で弾いているのではなく、入れる行がそもそも作られない。
+ * 「他組織のタグ id を差し込む」形の攻撃は、ここで空振りになる。
+ *
+ * 書き込みの可否は呼ぶ側が確かめ終えている前提である。
+ * この関数は判定を持たない。
+ *
+ * 2026-09-10 まで attach.ts として切り出してあった。
+ * スレッドを立てるときにタグも付けられた頃、#features/thread/queries.ts から
+ * 呼ばれていて、判定を持つこの模組を向こうから読ませないための分割だった
+ * （devops/coding-conventions#module-cycle）。
+ * 立てる欄が種別とタイトルだけになり、その呼び出しが無くなったので畳み戻した。
+ */
+async function attachTagsTo(
+  client: PoolClient,
+  organizationId: string,
+  threadId: string,
+  tagIds: readonly string[],
+): Promise<void> {
+  if (tagIds.length === 0) {
+    return;
+  }
+  await client.query(
+    `INSERT INTO thread_tags (thread_id, tag_id)
+     SELECT $2, g.id
+       FROM tags g
+      WHERE g.organization_id = $1
+        AND g.deleted_at IS NULL
+        AND g.id = ANY($3::uuid[])
+     ON CONFLICT DO NOTHING`,
+    [organizationId, threadId, tagIds],
+  );
 }
 
 /**

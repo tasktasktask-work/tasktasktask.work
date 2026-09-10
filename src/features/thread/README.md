@@ -14,7 +14,9 @@
 - `ThreadRows.tsx` 一覧の行
 - `ThreadChildren.tsx` 詳細の右の欄に出す子スレッド。一覧の行とは別の形である
 - `ThreadFilters.tsx` 絞り込みの帯。JavaScript を使わない GET のフォーム
-- `NewThreadForm.tsx` / `ThreadProps.tsx` / `ThreadEditForms.tsx` 入力の欄
+- `QuickThreadForm.tsx` 一覧に置く、種別とタイトルだけの一行
+- `ChildThreadForm.tsx` 詳細の右の欄。三語のラジオが種別になる
+- `ThreadProps.tsx` / `ThreadEditForms.tsx` 入力の欄
 
 本文の描画は `#features/comment/Markdown.tsx` を使う。
 Markdown の仕組みはコメントと共通で、二つ作らない。
@@ -25,6 +27,17 @@ Markdown の仕組みはコメントと共通で、二つ作らない。
 どれもそのプロジェクトを閲覧できる人なら行える。
 
 例外は削除だけで、組織管理者が、畳んだあとにだけ行える。
+
+## 立てるのに要るのは三つだけ
+
+`createThread` が受け取るのは種別とタイトルと親の番号である。
+本文も担当者も期間もタグも、立てたあとに詳細画面から入れる。
+画面が渡さない値を引数に残すと、「どこから担当者が渡るのか」を探した人が
+「どこからも渡らない」に行き着く。
+
+`createThreadAction` は行き先を返さない。立てても画面は移動せず、立てた番号を返す。
+一覧は絞り込みの条件で行を落とすので、立てた行がその場に出るとは限らない。
+出なかったときに残る手がかりが、その番号だけになる。
 
 ## 決まりごと
 
@@ -41,6 +54,10 @@ Markdown の仕組みはコメントと共通で、二つ作らない。
 - 詳細画面の書き換えの欄は、読み表示と同じ部品が出す（`ThreadTitle` / `ThreadBody`）。
   隠す役は CSS の `:has()` が持つので、両者が隣り合っていることが前提になる。
   あいだに何かを挟むと、読み表示が消えなくなる
+- 子を立てる欄も同じ手口で開く（`.p-child-new:has(input:checked)`）。
+  三語のラジオとタイトル欄が同じフォームの中に居ることが前提になる
+- 親を付け替える欄（`ParentForm`）だけは属性の表の外に居る。
+  入力欄の体裁は `.p-parent` が持つ。他の四つは `.app-props` から借りている
 - `threadWritable()` はコメント側とタグ側からも使う。書き写さない
 - 時刻の表示は `#lib/datetime.ts` を通し、組織のタイムゾーンを渡す
 - import には必ず拡張子を書く（[規約](../../../docs/devops/coding-conventions/index.html#imports)）

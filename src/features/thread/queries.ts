@@ -1,7 +1,6 @@
 import type pg from 'pg';
 import { z } from 'zod';
 import { notifyUsers } from '#features/notification/queries.ts';
-import { attachTagsTo } from '#features/tag/attach.ts';
 import {
   nextThreadNumber,
   type OrgScope,
@@ -270,6 +269,8 @@ const threadDetail = z.object({
   assigneeName: z.string().nullable(),
   parentNumber: z.number().int().nullable(),
   parentTitle: z.string().nullable(),
+  /** 親の種別。詳細画面の親スレッド欄で、子と同じ形の行を出すのに使う。 */
+  parentType: threadType.nullable(),
   childCount: z.number().int(),
   archived: z.boolean(),
   /** プロジェクトごと畳まれている。個々の archived_at とは別に見る。 */
@@ -318,6 +319,7 @@ export async function resolveThread(
             u.display_name              AS "assigneeName",
             parent.number               AS "parentNumber",
             parent.title                AS "parentTitle",
+            parent.type                 AS "parentType",
             children.count::int         AS "childCount",
             (t.archived_at IS NOT NULL) AS archived,
             (p.archived_at IS NOT NULL) AS "projectArchived",
@@ -398,17 +400,17 @@ function checkPeriod(type: ThreadType, period: Period): ThreadProblem | null {
    作る
    -------------------------------------------------------------------------- */
 
+/*
+ * 立てるのに要るのはこの三つだけである。
+ * 本文も担当者も期間もタグも、立てたあとに詳細画面で入れる。
+ * 画面が渡さない値をここで受け取ると、「どこから担当者が渡るのか」を
+ * 探した人が「どこからも渡らない」に行き着く。
+ */
 export type CreateThread = {
   readonly type: ThreadType;
   readonly title: string;
-  readonly body: string;
   /** 親のスレッド番号。同じプロジェクトのものに限る。 */
   readonly parentNumber: number | null;
-  readonly assigneeUserId: string | null;
-  readonly startsOn: string | null;
-  readonly endsOn: string | null;
-  /** 立てると同時に付けるタグ。組織の外の id は挿入の側で落ちる。 */
-  readonly tagIds: readonly string[];
 };
 
 export type CreateResult = { ok: true; number: number } | { ok: false; reason: ThreadProblem };
@@ -428,11 +430,6 @@ export async function createThread(
   const title = input.title.trim();
   if (title === '') {
     return { ok: false, reason: 'invalid-title' };
-  }
-
-  const bad = checkPeriod(input.type, input);
-  if (bad) {
-    return { ok: false, reason: bad };
   }
 
   return transaction(async (client) => {
@@ -467,50 +464,19 @@ export async function createThread(
       parentId = parent.id;
     }
 
-    if (input.assigneeUserId !== null) {
-      const ok = await isAssignable(client, scope.organizationId, input.assigneeUserId);
-      if (!ok) {
-        return { ok: false, reason: 'not-org-member' };
-      }
-    }
-
     const number = await nextThreadNumber(client, scope.organizationId);
 
     const inserted = await client.query<{ id: string }>(
+      // body は NOT NULL DEFAULT '' である。渡さないと空文字が入る
       `INSERT INTO threads
-         (organization_id, project_id, number, type, title, body,
-          parent_thread_id, assignee_user_id, starts_on, ends_on, created_by_user_id)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+         (organization_id, project_id, number, type, title,
+          parent_thread_id, created_by_user_id)
+       VALUES ($1,$2,$3,$4,$5,$6,$7)
        RETURNING id`,
-      [
-        scope.organizationId,
-        projectId,
-        number,
-        input.type,
-        title,
-        input.body,
-        parentId,
-        input.assigneeUserId,
-        input.startsOn,
-        input.endsOn,
-        scope.userId,
-      ],
+      [scope.organizationId, projectId, number, input.type, title, parentId, scope.userId],
     );
-    const threadId = inserted.rows[0]?.id;
-    if (!threadId) {
+    if (!inserted.rows[0]?.id) {
       throw new Error('スレッドの挿入が行を返しませんでした');
-    }
-
-    // タグは同じ取引の中で付ける。分けると、スレッドだけが立って
-    // タグの付いていない行が残る道ができる。
-    await attachTagsTo(client, scope.organizationId, threadId, input.tagIds);
-
-    // 立てた時点で担当者を付けられる。ここで知らせないと、
-    // 指名されたことに気づく手立てが無い。
-    if (input.assigneeUserId !== null) {
-      await notifyUsers(client, scope, 'assigned', { threadId, projectId, commentId: null }, [
-        input.assigneeUserId,
-      ]);
     }
 
     return { ok: true, number };

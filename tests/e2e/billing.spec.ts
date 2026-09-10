@@ -53,7 +53,9 @@ test.describe('凍結', () => {
     await freeze(sown.organizationId);
 
     await page.goto(`/o/${sown.tag}/p/${sown.projectKey}`);
-    await expect(page.getByRole('link', { name: 'スレッドを立てる' })).toHaveCount(0);
+    // 立てる欄は無効にせず、欄ごと出さない
+    await expect(page.getByLabel('タイトル', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: '立てる' })).toHaveCount(0);
     // 一覧そのものは読める
     await expect(page.getByText('検索の設計')).toBeVisible();
   });
